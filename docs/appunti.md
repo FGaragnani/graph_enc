@@ -1,5 +1,6 @@
-# Docs
+# Appunti
 
+---
 ## [DNA-BERT](DNA-BERT.pdf)
 
 ### Sequence Analysis
@@ -107,6 +108,42 @@ $$
 $$
 with $m$ a fixed parameter *per-head*. Intuitively, ALiBi discourages attentions scores to very distant tokens, without any learning necessary.
 
+---
+## [Nucleotide Transformer](nucleotide_transformer.pdf)
+
+### Model
+
+Standard Transformer Encoder. Employs $6$-mers for tokens and learned positional embeddings (the NT-v2 uses rotary positional embeddings). The input is passed to a stack of Encoder Blocks, and finally to an LM head for predicting the Masked Tokens.
+
+#### Encoder Block
+
+1. LayerNorm, followed by Multi-Head Self-Attention.
+2. Skip Connection with input.
+3. LayerNorm, followed by a MLP of the form: GELU -> Linear -> GELU -> Linear.
+
+### Training
+
+Just like [DNA-BERT](DNA-BERT.pdf), from each input sequence a subset of $15\%$ of tokens is sampled. Inside the subset:
+
+- $80\%$ gets masked (i.e., replaced with [MASK]);
+- $10\%$ gets replaced with a random 'standard' token (no [CLS], [MASK] or [PAD]);
+
+---
+## [EVO](Evo.pdf)
+
+---
+## [EVO2](Evo2.pdf)
+
+---
+## [HyenaDNA](HyenaDNA.pdf)
+
+---
+## [JanusDNA](JanusDNA.pdf)
+
+---
+## [NucEL](NucEL.pdf)
+
+---
 ## Global Info
 
 ### Benchmarks
