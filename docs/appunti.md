@@ -131,6 +131,14 @@ Just like [DNA-BERT](DNA-BERT.pdf), from each input sequence a subset of $15\%$ 
 ---
 ## [EVO](Evo.pdf)
 
+They start the work by stating - quite important, actually - that most of the existing works on DNA sequence modeling relies on the Transformer architecture, which scales quadratically with the input length. This is a problem, since DNA sequences are usually very long (up to millions of nucleotides).
+
+### Model
+
+The model mimics the Hyena architecture. Compared to [HyenaDNA](HyenaDNA.pdf), they scale the model $1000x$, and increase the data by $100x$.
+It is not a single encoder, but an entire LM. It is trained via next-token prediction. 
+
+
 ---
 ## [EVO2](Evo2.pdf)
 
@@ -144,7 +152,40 @@ Just like [DNA-BERT](DNA-BERT.pdf), from each input sequence a subset of $15\%$ 
 ## [NucEL](NucEL.pdf)
 
 ---
+## [OMICSFusion](OMICSFusion.pdf)
+
+---
 ## Global Info
+
+### Nostra Architettura
+
+La Lovino ha detto che secondo lei un'ottima idea sarebbe concentrarsi sul masking, facendolo più mirato. Nelle specifico, che sbagliare un introne è molto meno grave di sbagliare un esone (gli introni vengono scartati poi, gli esoni no).
+
+Quindi a me vengono in mente queste cosine:
+
+1. **Loss pesata**: 
+    $$
+        \mathcal{L} = \sum_{i \in \text{M}_T} w_i \cdot \text{CE}(y_i, \hat{y}_i)
+    $$
+    dove $M_T$ è l'insieme dei token mascherati, e $w_i$ è un peso che dipende dal token da predire. Quindi la CE (dopotutto, essendo comunque un LM, bisogna predire distribuzioni di probabilità sul vocabolario) viene pesata di più se il token da predire è un esone, o comunque è più importante.
+
+2. **Masking semantico**:
+    Non saprei come chiamarlo altrimenti. L'idea, comunque, è di non mascherare a caso il $15\%$ dei token o cose simili, ma di scegliere chi mascherare in maniera più significativa. Ad esempio, mascherare solo esoni e non introni. Qui servono più conoscenze di biologia che io tristemente non ho :(.
+
+3. **Task Ausiliaria**:
+    Visto che comunque dobbiamo in un qualche modo iniettare l'informazione d'importanza dei token (se usiamo una/entrambe delle idee sopra), si potrebbe pensare di aggiungere una task ausiliaria di classificazione sui token mascherati. Ovviamente l'Encoder ($E_\phi$) viene usato per entrambi i compiti, ma si hanno poi due teste (MLP sembra troppo poco, i lavori usano tutti teste LM) distinte: una per MLM ($H_\text{MLM}$) e una per la classificazione ($H_\text{CLS}$). Quindi, quello che si fa alla fine della fiera sarebbe:
+    $$
+    \begin{align*}
+        \mathbf{z} & = E_\phi(\mathbf{x}) \\
+        \hat{\mathbf{y}}_\text{MLM} & = H_\text{MLM}(\mathbf{z}) \\
+        \hat{\mathbf{y}}_\text{CLS} & = H_\text{CLS}(\mathbf{z}) \\
+        \mathcal{L} & = \text{CE}(y, \hat{y}_{\text{MLM}}) + \lambda \cdot \text{CE}(c, \hat{y}_{\text{CLS}})
+    \end{align*}
+    $$
+    Con credo $\lambda$ tipo $\simeq 0.1$ perchè comunque il task principale è sempre la ricostruzione.
+
+4. **Hyena**:
+    Non ho trovati lavori di solo encoding che sfruttino Hyena -- DNA-BERT, Nucleotide Transformer etc. usano tutti Transformer standard. Quindi potrebbe essere interessante provare a fare un encoder basato su Hyena, anche perchè si allena più in fretta di un Transformer. Bugia: [OMICSFusion](OMICSFusion.pdf) usa Hyena come encoder. Però si può provare uguale.
 
 ### Benchmarks
 
