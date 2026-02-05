@@ -50,10 +50,15 @@ torchrun --nproc_per_node=2 src/train/train.py \
   --mlm_probability 0.15 \
   --output_dir ${output_dir} \
   --num_train_epochs 3 \
-  --per_device_train_batch_size 16 \
-  --per_device_eval_batch_size 16 \
-  --learning_rate 5e-5 \
-  --warmup_steps 500 \
+  --per_device_train_batch_size 32 \
+  --per_device_eval_batch_size 32 \
+  --learning_rate 5e-4 \
+  --max_steps 500000 \
+  --warmup_steps 30000 \
+  --weight_decay 1e-5 \
+  --adam_beta1 0.9 \
+  --adam_beta2 0.98 \
+  --adam_eps 1e-6 \
   --save_strategy epoch \
   --evaluation_strategy epoch \
   --do_train \
