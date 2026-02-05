@@ -420,6 +420,17 @@ def main():
     # Distributed training:
     # The .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
+    def _resolve_local_path(path_value: Optional[str]) -> Optional[str]:
+        if path_value is None:
+            return None
+        if os.path.isfile(path_value) or os.path.isdir(path_value):
+            return os.path.abspath(path_value)
+        return path_value
+
+    model_args.config_name = _resolve_local_path(model_args.config_name)
+    model_args.tokenizer_name = _resolve_local_path(model_args.tokenizer_name)
+    model_args.model_name_or_path = _resolve_local_path(model_args.model_name_or_path)
+
     config_kwargs = {
         "cache_dir": model_args.cache_dir,
         "revision": model_args.model_revision,
