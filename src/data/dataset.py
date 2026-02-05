@@ -192,6 +192,8 @@ class DataCollatorForCDSMaskedLM(DataCollatorForLanguageModeling):
         self.pad_to_max_length = pad_to_max_length
 
     def __call__(self, examples):
+        if not examples:
+            return {}
         if "text" in examples[0]:
             texts = [ex["text"] for ex in examples]
             cds_masks = [ex["cds_mask"] for ex in examples]
