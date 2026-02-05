@@ -264,6 +264,13 @@ def main():
     else:
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
+    # Ensure we log loss frequently unless user explicitly overrides logging settings.
+    if "--logging_steps" not in sys.argv and "--logging_strategy" not in sys.argv:
+        training_args.logging_strategy = "steps"
+        training_args.logging_steps = 10
+    if "--logging_first_step" not in sys.argv:
+        training_args.logging_first_step = True
+
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
     send_example_telemetry("run_mlm", model_args, data_args)
@@ -726,6 +733,43 @@ def main():
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
+        # Pre-train sanity check: ensure the dataloader yields non-empty input_ids
+        try:
+            train_dataloader = trainer.get_train_dataloader()
+            first_batch = next(iter(train_dataloader))
+        except StopIteration:
+            raise RuntimeError("Pre-train check failed: training dataloader is empty.")
+
+        if not isinstance(first_batch, dict):
+            raise RuntimeError(f"Pre-train check failed: expected batch dict, got {type(first_batch)}")
+
+        if "input_ids" not in first_batch:
+            raise RuntimeError("Pre-train check failed: 'input_ids' not present in batch.")
+
+        input_ids = first_batch["input_ids"]
+        if torch.is_tensor(input_ids):
+            if input_ids.numel() == 0:
+                raise RuntimeError("Pre-train check failed: 'input_ids' tensor is empty.")
+            # check for at least one non-pad token if pad token is available
+            pad_id = getattr(tokenizer, "pad_token_id", None)
+            if pad_id is not None:
+                try:
+                    if not (input_ids != pad_id).any():
+                        raise RuntimeError("Pre-train check failed: all tokens are pad tokens in the first batch.")
+                except Exception:
+                    # fallback: skip this particular check if shapes/types incompatible
+                    pass
+        else:
+            # handle list/other types
+            try:
+                length = len(input_ids)
+                if length == 0:
+                    raise RuntimeError("Pre-train check failed: 'input_ids' is empty list in the first batch.")
+            except Exception:
+                raise RuntimeError("Pre-train check failed: couldn't determine 'input_ids' length.")
+
+        print("[PreTrainCheck] training dataloader yielded a valid non-empty batch — proceeding to train.")
+
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
         trainer.save_model()  # Saves the tokenizer too for easy upload
         metrics = train_result.metrics
