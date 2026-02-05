@@ -19,7 +19,7 @@ module load cuda/11.8
 source activate dna
 
 cd /homes/fgaragnani/ai4bio/graph_enc
-export PYTHONPATH=.
+export PYTHONPATH=.:..:$PYTHONPATH
 
 export HF_HUB_CACHE="/work/tesi_fgaragnani/checkpoints/"
 export HF_HOME="/work/tesi_fgaragnani/checkpoints/"
