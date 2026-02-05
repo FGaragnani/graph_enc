@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 # Copyright 2020 The HuggingFace Team All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# /// script
-# dependencies = [
-#     "transformers @ git+https://github.com/huggingface/transformers.git",
-#     "albumentations >= 1.4.16",
-#     "accelerate >= 0.12.0",
-#     "torch >= 1.3",
-#     "datasets >= 2.14.0",
-#     "sentencepiece != 0.1.92",
-#     "protobuf",
-#     "evaluate",
-#     "scikit-learn",
-# ]
-# ///
-
 """
 Fine-tuning the library models for masked language modeling (BERT, ALBERT, RoBERTa...) on a text file or a dataset.
 
@@ -41,12 +27,12 @@ import os
 import sys
 from dataclasses import dataclass, field
 from itertools import chain
+from typing import Optional
 
 import datasets
 import evaluate
 import torch
 from datasets import load_dataset
-from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import Subset
 
 import transformers
@@ -54,7 +40,6 @@ from transformers import (
     CONFIG_MAPPING,
     MODEL_FOR_MASKED_LM_MAPPING,
     AutoConfig,
-    AutoModelForMaskedLM,
     AutoTokenizer,
     DataCollatorForLanguageModeling,
     HfArgumentParser,
@@ -63,17 +48,19 @@ from transformers import (
     is_torch_tpu_available,
     set_seed,
 )
+from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version
+from transformers.utils.hub import send_example_telemetry
 from transformers.utils.versions import require_version
 
-from graph_enc.src.data.dataset import ChromosomeDataset
+from graph_enc.src.data.dataset import ChromosomeDataset, CDSMaskingDataset, DataCollatorForCDSMaskedLM
 from graph_enc.src.model.model import BertForMaskedLM
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-check_min_version("4.57.0.dev0")
+check_min_version("4.29.0")
 
-require_version("datasets>=2.14.0", "To fix: pip install -r examples/pytorch/language-modeling/requirements.txt")
+require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/language-modeling/requirements.txt")
 
 logger = logging.getLogger(__name__)
 MODEL_CONFIG_CLASSES = list(MODEL_FOR_MASKED_LM_MAPPING.keys())
@@ -86,7 +73,7 @@ class ModelArguments:
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune, or train from scratch.
     """
 
-    model_name_or_path: str | None = field(
+    model_name_or_path: Optional[str] = field(
         default=None,
         metadata={
             "help": (
@@ -94,11 +81,11 @@ class ModelArguments:
             )
         },
     )
-    model_type: str | None = field(
+    model_type: Optional[str] = field(
         default=None,
         metadata={"help": "If training from scratch, pass a model type from the list: " + ", ".join(MODEL_TYPES)},
     )
-    config_overrides: str | None = field(
+    config_overrides: Optional[str] = field(
         default=None,
         metadata={
             "help": (
@@ -107,13 +94,13 @@ class ModelArguments:
             )
         },
     )
-    config_name: str | None = field(
+    config_name: Optional[str] = field(
         default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
     )
-    tokenizer_name: str | None = field(
+    tokenizer_name: Optional[str] = field(
         default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
     )
-    cache_dir: str | None = field(
+    cache_dir: Optional[str] = field(
         default=None,
         metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
     )
@@ -125,33 +112,22 @@ class ModelArguments:
         default="main",
         metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."},
     )
-    token: str = field(
-        default=None,
-        metadata={
-            "help": (
-                "The token to use as HTTP bearer authorization for remote files. If not specified, will use the token "
-                "generated when running `hf auth login` (stored in `~/.huggingface`)."
-            )
-        },
-    )
-    trust_remote_code: bool = field(
+    use_auth_token: bool = field(
         default=False,
         metadata={
             "help": (
-                "Whether to trust the execution of code from datasets/models defined on the Hub."
-                " This option should only be set to `True` for repositories you trust and in which you have read the"
-                " code, as it will execute code present on the Hub on your local machine."
+                "Will use the token generated when running `huggingface-cli login` (necessary to use this script "
+                "with private models)."
             )
         },
     )
-    dtype: str | None = field(
-        default=None,
+    low_cpu_mem_usage: bool = field(
+        default=False,
         metadata={
             "help": (
-                "Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed, the "
-                "dtype will be automatically derived from the model's weights."
-            ),
-            "choices": ["auto", "bfloat16", "float16", "float32"],
+                "It is an option to create the model as an empty shell, then only materialize its parameters when the pretrained weights are loaded."
+                "set True will benefit LLM loading time and RAM consumption."
+            )
         },
     )
 
@@ -168,27 +144,27 @@ class DataTrainingArguments:
     Arguments pertaining to what data we are going to input our model for training and eval.
     """
 
-    dataset_name: str | None = field(
+    dataset_name: Optional[str] = field(
         default=None, metadata={"help": "The name of the dataset to use (via the datasets library)."}
     )
-    dataset_config_name: str | None = field(
+    dataset_config_name: Optional[str] = field(
         default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)."}
     )
-    train_file: str | None = field(default=None, metadata={"help": "The input training data file (a text file)."})
-    validation_file: str | None = field(
+    train_file: Optional[str] = field(default=None, metadata={"help": "The input training data file (a text file)."})
+    validation_file: Optional[str] = field(
         default=None,
         metadata={"help": "An optional input evaluation data file to evaluate the perplexity on (a text file)."},
     )
     overwrite_cache: bool = field(
         default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
     )
-    validation_split_percentage: int | None = field(
+    validation_split_percentage: Optional[int] = field(
         default=5,
         metadata={
             "help": "The percentage of the train set used as validation set in case there's no validation split"
         },
     )
-    max_seq_length: int | None = field(
+    max_seq_length: Optional[int] = field(
         default=None,
         metadata={
             "help": (
@@ -197,7 +173,7 @@ class DataTrainingArguments:
             )
         },
     )
-    preprocessing_num_workers: int | None = field(
+    preprocessing_num_workers: Optional[int] = field(
         default=None,
         metadata={"help": "The number of processes to use for the preprocessing."},
     )
@@ -217,7 +193,7 @@ class DataTrainingArguments:
             )
         },
     )
-    max_train_samples: int | None = field(
+    max_train_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": (
@@ -226,7 +202,7 @@ class DataTrainingArguments:
             )
         },
     )
-    max_eval_samples: int | None = field(
+    max_eval_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": (
@@ -236,11 +212,11 @@ class DataTrainingArguments:
         },
     )
     streaming: bool = field(default=False, metadata={"help": "Enable streaming mode"})
-    fasta_path: str | None = field(
+    fasta_path: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the FASTA file for chromosome sequences."},
     )
-    gtf_path: str | None = field(
+    gtf_path: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the GTF file with CDS annotations."},
     )
@@ -261,12 +237,7 @@ class DataTrainingArguments:
         if has_cds_inputs and (self.fasta_path is None or self.gtf_path is None):
             raise ValueError("Both --fasta_path and --gtf_path are required when using the CDS dataset.")
 
-        if (
-            not has_cds_inputs
-            and self.dataset_name is None
-            and self.train_file is None
-            and self.validation_file is None
-        ):
+        if not has_cds_inputs and self.dataset_name is None and self.train_file is None and self.validation_file is None:
             raise ValueError("Need either a dataset name or a training/validation file.")
         else:
             if self.train_file is not None:
@@ -277,109 +248,6 @@ class DataTrainingArguments:
                 extension = self.validation_file.split(".")[-1]
                 if extension not in ["csv", "json", "txt"]:
                     raise ValueError("`validation_file` should be a csv, a json or a txt file.")
-
-
-class CDSMaskingDataset(TorchDataset):
-    def __init__(self, base_dataset: ChromosomeDataset):
-        self.base_dataset = base_dataset
-
-    def __len__(self) -> int:
-        return len(self.base_dataset)
-
-    def __getitem__(self, idx: int) -> dict:
-        sequence, cds_mask = self.base_dataset[idx]
-        return {"text": sequence, "cds_mask": cds_mask}
-
-
-class DataCollatorForCDSMaskedLM(DataCollatorForLanguageModeling):
-    def __init__(
-        self,
-        tokenizer,
-        mlm_probability=0.15,
-        pad_to_multiple_of=None,
-        max_length=None,
-        pad_to_max_length=False,
-    ):
-        super().__init__(tokenizer=tokenizer, mlm_probability=mlm_probability, pad_to_multiple_of=pad_to_multiple_of)
-        self.max_length = max_length
-        self.pad_to_max_length = pad_to_max_length
-
-    def __call__(self, examples):
-        if "text" in examples[0]:
-            texts = [ex["text"] for ex in examples]
-            cds_masks = [ex["cds_mask"] for ex in examples]
-            padding = "max_length" if self.pad_to_max_length and self.max_length is not None else True
-            batch = self.tokenizer(
-                texts,
-                padding=padding,
-                truncation=True,
-                max_length=self.max_length,
-                return_special_tokens_mask=True,
-                return_offsets_mapping=True,
-            )
-
-            offset_mappings = batch.pop("offset_mapping")
-            token_cds_masks = []
-            for cds_mask, offsets in zip(cds_masks, offset_mappings):
-                token_mask = []
-                for start, end in offsets:
-                    if start == end:
-                        token_mask.append(0)
-                    else:
-                        token_mask.append(1 if any(cds_mask[start:end]) else 0)
-                token_cds_masks.append(token_mask)
-
-            batch["cds_mask"] = token_cds_masks
-            batch = {k: torch.tensor(v) for k, v in batch.items()}
-        else:
-            batch = self.tokenizer.pad(
-                examples,
-                padding=True,
-                return_special_tokens_mask=True,
-                pad_to_multiple_of=self.pad_to_multiple_of,
-            )
-
-        if self.tokenizer.mask_token is None:
-            raise ValueError("This tokenizer does not have a mask token which is necessary for masked language modeling.")
-
-        input_ids = batch["input_ids"]
-        labels = input_ids.clone()
-
-        special_tokens_mask = batch.pop("special_tokens_mask")
-        if not torch.is_tensor(special_tokens_mask):
-            special_tokens_mask = torch.tensor(special_tokens_mask, dtype=torch.bool)
-        else:
-            special_tokens_mask = special_tokens_mask.bool()
-
-        cds_mask = batch.pop("cds_mask")
-        if not torch.is_tensor(cds_mask):
-            cds_mask = torch.tensor(cds_mask, dtype=torch.float)
-        else:
-            cds_mask = cds_mask.float()
-
-        probability_matrix = torch.full(labels.shape, self.mlm_probability, device=labels.device)
-        probability_matrix = probability_matrix * cds_mask
-        probability_matrix.masked_fill_(special_tokens_mask, value=0.0)
-
-        masked_indices = torch.bernoulli(probability_matrix).bool()
-        labels[~masked_indices] = -100
-
-        indices_replaced = (
-            torch.bernoulli(torch.full(labels.shape, 0.8, device=labels.device)).bool() & masked_indices
-        )
-        input_ids[indices_replaced] = self.tokenizer.mask_token_id
-
-        indices_random = (
-            torch.bernoulli(torch.full(labels.shape, 0.5, device=labels.device)).bool()
-            & masked_indices
-            & ~indices_replaced
-        )
-        random_words = torch.randint(len(self.tokenizer), labels.shape, dtype=torch.long, device=labels.device)
-        input_ids[indices_random] = random_words[indices_random]
-
-        batch["input_ids"] = input_ids
-        batch["labels"] = labels
-        return batch
 
 
 def main():
@@ -394,6 +262,10 @@ def main():
         model_args, data_args, training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
     else:
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
+    # information sent is the one passed as arguments along with your Python/PyTorch versions.
+    send_example_telemetry("run_mlm", model_args, data_args)
 
     # Setup logging
     logging.basicConfig(
@@ -415,11 +287,26 @@ def main():
 
     # Log on each process the small summary:
     logger.warning(
-        f"Process rank: {training_args.local_process_index}, device: {training_args.device}, n_gpu: {training_args.n_gpu}, "
-        + f"distributed training: {training_args.parallel_mode.value == 'distributed'}, 16-bits training: {training_args.fp16}"
+        f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
+        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
     # Set the verbosity to info of the Transformers logger (on main process only):
     logger.info(f"Training/evaluation parameters {training_args}")
+
+    # Detecting last checkpoint.
+    last_checkpoint = None
+    if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
+        last_checkpoint = get_last_checkpoint(training_args.output_dir)
+        if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
+            raise ValueError(
+                f"Output directory ({training_args.output_dir}) already exists and is not empty. "
+                "Use --overwrite_output_dir to overcome."
+            )
+        elif last_checkpoint is not None and training_args.resume_from_checkpoint is None:
+            logger.info(
+                f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
+                "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
+            )
 
     # Set seed before initializing model.
     set_seed(training_args.seed)
@@ -460,6 +347,8 @@ def main():
             max_train_samples = min(len(cds_train_dataset), data_args.max_train_samples)
             cds_train_dataset = Subset(cds_train_dataset, list(range(max_train_samples)))
         if training_args.do_eval and data_args.max_eval_samples is not None:
+            if cds_eval_dataset is None:
+                raise ValueError("CDS evaluation dataset is not available.")
             max_eval_samples = min(len(cds_eval_dataset), data_args.max_eval_samples)
             cds_eval_dataset = Subset(cds_eval_dataset, list(range(max_eval_samples)))
         raw_datasets = None
@@ -469,28 +358,25 @@ def main():
             data_args.dataset_name,
             data_args.dataset_config_name,
             cache_dir=model_args.cache_dir,
-            token=model_args.token,
+            use_auth_token=True if model_args.use_auth_token else None,
             streaming=data_args.streaming,
-            trust_remote_code=model_args.trust_remote_code,
         )
-        if "validation" not in raw_datasets:
+        if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset(
                 data_args.dataset_name,
                 data_args.dataset_config_name,
                 split=f"train[:{data_args.validation_split_percentage}%]",
                 cache_dir=model_args.cache_dir,
-                token=model_args.token,
+                use_auth_token=True if model_args.use_auth_token else None,
                 streaming=data_args.streaming,
-                trust_remote_code=model_args.trust_remote_code,
             )
             raw_datasets["train"] = load_dataset(
                 data_args.dataset_name,
                 data_args.dataset_config_name,
                 split=f"train[{data_args.validation_split_percentage}%:]",
                 cache_dir=model_args.cache_dir,
-                token=model_args.token,
+                use_auth_token=True if model_args.use_auth_token else None,
                 streaming=data_args.streaming,
-                trust_remote_code=model_args.trust_remote_code,
             )
     else:
         data_files = {}
@@ -506,28 +392,28 @@ def main():
             extension,
             data_files=data_files,
             cache_dir=model_args.cache_dir,
-            token=model_args.token,
+            use_auth_token=True if model_args.use_auth_token else None,
         )
 
         # If no validation data is there, validation_split_percentage will be used to divide the dataset.
-        if "validation" not in raw_datasets:
+        if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset(
                 extension,
                 data_files=data_files,
                 split=f"train[:{data_args.validation_split_percentage}%]",
                 cache_dir=model_args.cache_dir,
-                token=model_args.token,
+                use_auth_token=True if model_args.use_auth_token else None,
             )
             raw_datasets["train"] = load_dataset(
                 extension,
                 data_files=data_files,
                 split=f"train[{data_args.validation_split_percentage}%:]",
                 cache_dir=model_args.cache_dir,
-                token=model_args.token,
+                use_auth_token=True if model_args.use_auth_token else None,
             )
 
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
-    # https://huggingface.co/docs/datasets/loading_datasets.
+    # https://huggingface.co/docs/datasets/loading_datasets.html.
 
     # Load pretrained model and tokenizer
     #
@@ -537,8 +423,7 @@ def main():
     config_kwargs = {
         "cache_dir": model_args.cache_dir,
         "revision": model_args.model_revision,
-        "token": model_args.token,
-        "trust_remote_code": model_args.trust_remote_code,
+        "use_auth_token": True if model_args.use_auth_token else None,
     }
     if model_args.config_name:
         config = AutoConfig.from_pretrained(model_args.config_name, **config_kwargs)
@@ -556,8 +441,7 @@ def main():
         "cache_dir": model_args.cache_dir,
         "use_fast": model_args.use_fast_tokenizer,
         "revision": model_args.model_revision,
-        "token": model_args.token,
-        "trust_remote_code": model_args.trust_remote_code,
+        "use_auth_token": True if model_args.use_auth_token else None,
     }
     if model_args.tokenizer_name:
         tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name, **tokenizer_kwargs)
@@ -565,21 +449,19 @@ def main():
         tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, **tokenizer_kwargs)
     else:
         raise ValueError(
-            "You are instantiating a new tokenizer from scratch. This is not supported by this script. "
+            "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
 
     if model_args.model_name_or_path:
-        dtype = model_args.dtype if model_args.dtype in ["auto", None] else getattr(torch, model_args.dtype)
         model = BertForMaskedLM.from_pretrained(
             model_args.model_name_or_path,
             from_tf=bool(".ckpt" in model_args.model_name_or_path),
             config=config,
             cache_dir=model_args.cache_dir,
             revision=model_args.model_revision,
-            token=model_args.token,
-            trust_remote_code=model_args.trust_remote_code,
-            dtype=dtype,
+            use_auth_token=True if model_args.use_auth_token else None,
+            low_cpu_mem_usage=model_args.low_cpu_mem_usage,
         )
     else:
         logger.info("Training new model from scratch")
@@ -594,6 +476,8 @@ def main():
     # Preprocessing the datasets.
     # First we tokenize all the texts.
     if not use_cds_dataset:
+        if raw_datasets is None:
+            raise ValueError("Raw datasets are required when not using the CDS dataset.")
         if training_args.do_train:
             column_names = list(raw_datasets["train"].features)
         else:
@@ -612,12 +496,13 @@ def main():
     else:
         if data_args.max_seq_length > tokenizer.model_max_length:
             logger.warning(
-                f"The max_seq_length passed ({data_args.max_seq_length}) is larger than the maximum length for the "
+                f"The max_seq_length passed ({data_args.max_seq_length}) is larger than the maximum length for the"
                 f"model ({tokenizer.model_max_length}). Using max_seq_length={tokenizer.model_max_length}."
             )
         max_seq_length = min(data_args.max_seq_length, tokenizer.model_max_length)
 
     if not use_cds_dataset and data_args.line_by_line:
+        assert raw_datasets is not None
         # When using line_by_line, we just tokenize each nonempty line.
         padding = "max_length" if data_args.pad_to_max_length else False
 
@@ -653,6 +538,7 @@ def main():
                     remove_columns=[text_column_name],
                 )
     elif not use_cds_dataset:
+        assert raw_datasets is not None
         # Otherwise, we tokenize every text, then concatenate them together before splitting them in smaller parts.
         # We use `return_special_tokens_mask=True` because DataCollatorForLanguageModeling (see below) is more
         # efficient when it receives the `special_tokens_mask`.
@@ -680,11 +566,12 @@ def main():
         # max_seq_length.
         def group_texts(examples):
             # Concatenate all texts.
-            concatenated_examples = {k: list(chain(*examples[k])) for k in examples}
+            concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
             total_length = len(concatenated_examples[list(examples.keys())[0]])
-            # We drop the small remainder, and if the total_length < max_seq_length  we exclude this batch and return an empty dict.
-            # We could add padding if the model supported it instead of this drop, you can customize this part to your needs.
-            total_length = (total_length // max_seq_length) * max_seq_length
+            # We drop the small remainder, we could add padding if the model supported it instead of this drop, you can
+            # customize this part to your needs.
+            if total_length >= max_seq_length:
+                total_length = (total_length // max_seq_length) * max_seq_length
             # Split by chunks of max_len.
             result = {
                 k: [t[i : i + max_seq_length] for i in range(0, total_length, max_seq_length)]
@@ -697,7 +584,7 @@ def main():
         # might be slower to preprocess.
         #
         # To speed up this part, we use multiprocessing. See the documentation of the map method for more information:
-        # https://huggingface.co/docs/datasets/process#map
+        # https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.map
 
         with training_args.main_process_first(desc="grouping texts together"):
             if not data_args.streaming:
@@ -735,6 +622,8 @@ def main():
             if data_args.max_eval_samples is not None:
                 max_eval_samples = min(len(eval_dataset), data_args.max_eval_samples)
                 eval_dataset = eval_dataset.select(range(max_eval_samples))
+        if eval_dataset is None:
+            raise ValueError("Evaluation dataset is not available.")
 
         def preprocess_logits_for_metrics(logits, labels):
             if isinstance(logits, tuple):
@@ -743,7 +632,7 @@ def main():
                 logits = logits[0]
             return logits.argmax(dim=-1)
 
-        metric = evaluate.load("accuracy", cache_dir=model_args.cache_dir)
+        metric = evaluate.load("accuracy")
 
         def compute_metrics(eval_preds):
             preds, labels = eval_preds
@@ -793,6 +682,8 @@ def main():
         checkpoint = None
         if training_args.resume_from_checkpoint is not None:
             checkpoint = training_args.resume_from_checkpoint
+        elif last_checkpoint is not None:
+            checkpoint = last_checkpoint
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
         trainer.save_model()  # Saves the tokenizer too for easy upload
         metrics = train_result.metrics
