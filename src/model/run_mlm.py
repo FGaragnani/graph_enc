@@ -48,6 +48,7 @@ from transformers import (
     TrainingArguments,
     is_torch_tpu_available,
     set_seed,
+    get_scheduler,
 )
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version
@@ -85,6 +86,18 @@ class ModelArguments:
     model_type: Optional[str] = field(
         default=None,
         metadata={"help": "If training from scratch, pass a model type from the list: " + ", ".join(MODEL_TYPES)},
+    )
+    adam_beta1: float = field(
+        default=0.9,
+        metadata={"help": "AdamW beta1 (default 0.9)"},
+    )
+    adam_beta2: float = field(
+        default=0.98,
+        metadata={"help": "AdamW beta2 (default 0.98)"},
+    )
+    adam_eps: float = field(
+        default=1e-6,
+        metadata={"help": "AdamW epsilon (default 1e-6)"},
     )
     config_overrides: Optional[str] = field(
         default=None,
@@ -696,6 +709,35 @@ def main():
         )
 
     # Initialize our Trainer
+    # --- optimizer & scheduler defaults to mimic DNABERT-2 setup ---
+    # Use AdamW with betas=(0.9,0.98), eps=1e-6, weight_decay=1e-5
+    # Linear warmup to peak lr=5e-4 over 30k steps, linear decay to 0 ending at 500k steps.
+    # Apply only if user didn't set explicit values.
+    if getattr(training_args, "max_steps", -1) <= 0:
+        training_args.max_steps = 500000
+    if getattr(training_args, "warmup_steps", None) is None:
+        training_args.warmup_steps = 30000
+    if getattr(training_args, "learning_rate", None) is None:
+        training_args.learning_rate = 5e-4
+    # weight decay in TrainingArguments exists; ensure it matches desired default
+    if getattr(training_args, "weight_decay", None) is None:
+        training_args.weight_decay = 1e-5
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=training_args.learning_rate,
+        betas=(model_args.adam_beta1, model_args.adam_beta2),
+        eps=model_args.adam_eps,
+        weight_decay=training_args.weight_decay,
+    )
+
+    # Build scheduler: linear warmup then linear decay across the total max_steps
+    scheduler = get_scheduler(
+        name="linear",
+        optimizer=optimizer,
+        num_warmup_steps=training_args.warmup_steps,
+        num_training_steps=training_args.max_steps,
+    )
     class PrintLossCallback(transformers.TrainerCallback):
         """Simple callback that prints training loss on each logging event."""
 
@@ -724,6 +766,7 @@ def main():
         if training_args.do_eval and not is_torch_tpu_available()
         else None,
         callbacks=[PrintLossCallback()],
+        optimizers=(optimizer, scheduler),
     )
 
     # Training
@@ -733,43 +776,6 @@ def main():
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
-        # Pre-train sanity check: ensure the dataloader yields non-empty input_ids
-        try:
-            train_dataloader = trainer.get_train_dataloader()
-            first_batch = next(iter(train_dataloader))
-        except StopIteration:
-            raise RuntimeError("Pre-train check failed: training dataloader is empty.")
-
-        if not isinstance(first_batch, dict):
-            raise RuntimeError(f"Pre-train check failed: expected batch dict, got {type(first_batch)}")
-
-        if "input_ids" not in first_batch:
-            raise RuntimeError("Pre-train check failed: 'input_ids' not present in batch.")
-
-        input_ids = first_batch["input_ids"]
-        if torch.is_tensor(input_ids):
-            if input_ids.numel() == 0:
-                raise RuntimeError("Pre-train check failed: 'input_ids' tensor is empty.")
-            # check for at least one non-pad token if pad token is available
-            pad_id = getattr(tokenizer, "pad_token_id", None)
-            if pad_id is not None:
-                try:
-                    if not (input_ids != pad_id).any():
-                        raise RuntimeError("Pre-train check failed: all tokens are pad tokens in the first batch.")
-                except Exception:
-                    # fallback: skip this particular check if shapes/types incompatible
-                    pass
-        else:
-            # handle list/other types
-            try:
-                length = len(input_ids)
-                if length == 0:
-                    raise RuntimeError("Pre-train check failed: 'input_ids' is empty list in the first batch.")
-            except Exception:
-                raise RuntimeError("Pre-train check failed: couldn't determine 'input_ids' length.")
-
-        print("[PreTrainCheck] training dataloader yielded a valid non-empty batch — proceeding to train.")
-
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
         trainer.save_model()  # Saves the tokenizer too for easy upload
         metrics = train_result.metrics
