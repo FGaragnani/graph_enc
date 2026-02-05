@@ -21,6 +21,7 @@ https://huggingface.co/models?filter=fill-mask
 """
 # You can also adapt this script on your own masked language modeling task. Pointers for this are left as comments.
 
+import json
 import logging
 import math
 import os
@@ -438,7 +439,14 @@ def main():
     }
     if model_args.config_name:
         if os.path.isfile(model_args.config_name):
-            config = AutoConfig.from_json_file(model_args.config_name)
+            with open(model_args.config_name, "r", encoding="utf-8") as config_file:
+                config_dict = json.load(config_file)
+            config_model_type = model_args.model_type or config_dict.get("model_type")
+            if config_model_type is None:
+                raise ValueError(
+                    "Config JSON does not specify `model_type`, and --model_type was not provided."
+                )
+            config = CONFIG_MAPPING[config_model_type].from_dict(config_dict)
         else:
             config = AutoConfig.from_pretrained(model_args.config_name, trust_remote_code=True, **config_kwargs)
     elif model_args.model_name_or_path:
