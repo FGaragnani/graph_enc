@@ -219,12 +219,25 @@ class DataCollatorForCDSMaskedLM(DataCollatorForLanguageModeling):
             batch["cds_mask"] = token_cds_masks
             batch = {k: torch.tensor(v) for k, v in batch.items()}
         else:
-            batch = self.tokenizer.pad(
-                examples,
-                padding=True,
-                return_special_tokens_mask=True,
-                pad_to_multiple_of=self.pad_to_multiple_of,
-            )
+            try:
+                batch = self.tokenizer.pad(
+                    examples,
+                    padding=True,
+                    return_special_tokens_mask=True,
+                    pad_to_multiple_of=self.pad_to_multiple_of,
+                )
+            except TypeError:
+                batch = self.tokenizer.pad(
+                    examples,
+                    padding=True,
+                    pad_to_multiple_of=self.pad_to_multiple_of,
+                )
+                special_masks = []
+                for input_ids in batch["input_ids"]:
+                    special_masks.append(
+                        self.tokenizer.get_special_tokens_mask(input_ids, already_has_special_tokens=True)
+                    )
+                batch["special_tokens_mask"] = special_masks
 
         if self.tokenizer.mask_token is None:
             raise ValueError("This tokenizer does not have a mask token which is necessary for masked language modeling.")
