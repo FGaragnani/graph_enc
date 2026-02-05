@@ -67,6 +67,7 @@ from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 
 from graph_enc.src.data.dataset import ChromosomeDataset
+from graph_enc.src.model.model import BertForMaskedLM
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -570,7 +571,7 @@ def main():
 
     if model_args.model_name_or_path:
         dtype = model_args.dtype if model_args.dtype in ["auto", None] else getattr(torch, model_args.dtype)
-        model = AutoModelForMaskedLM.from_pretrained(
+        model = BertForMaskedLM.from_pretrained(
             model_args.model_name_or_path,
             from_tf=bool(".ckpt" in model_args.model_name_or_path),
             config=config,
@@ -582,7 +583,7 @@ def main():
         )
     else:
         logger.info("Training new model from scratch")
-        model = AutoModelForMaskedLM.from_config(config, trust_remote_code=model_args.trust_remote_code)
+        model = BertForMaskedLM(config)
 
     # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
     # on a small vocab and want a smaller embedding size, remove this test.
