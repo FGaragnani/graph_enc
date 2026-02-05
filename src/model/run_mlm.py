@@ -88,18 +88,6 @@ class ModelArguments:
         default=None,
         metadata={"help": "If training from scratch, pass a model type from the list: " + ", ".join(MODEL_TYPES)},
     )
-    adam_beta1: float = field(
-        default=0.9,
-        metadata={"help": "AdamW beta1 (default 0.9)"},
-    )
-    adam_beta2: float = field(
-        default=0.98,
-        metadata={"help": "AdamW beta2 (default 0.98)"},
-    )
-    adam_eps: float = field(
-        default=1e-6,
-        metadata={"help": "AdamW epsilon (default 1e-6)"},
-    )
     config_overrides: Optional[str] = field(
         default=None,
         metadata={
@@ -774,8 +762,8 @@ def main():
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=training_args.learning_rate,
-        betas=(model_args.adam_beta1, model_args.adam_beta2),
-        eps=model_args.adam_eps,
+        betas=(training_args.adam_beta1, training_args.adam_beta2),
+        eps=training_args.adam_epsilon,
         weight_decay=training_args.weight_decay,
     )
 
