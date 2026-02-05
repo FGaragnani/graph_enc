@@ -52,8 +52,8 @@ torchrun --nproc_per_node=2 src/train/train.py \
   --per_device_train_batch_size 16 \
   --per_device_eval_batch_size 16 \
   --learning_rate 5e-4 \
-  --max_steps 50000 \
-  --warmup_steps 3000 \
+  --max_steps 10000 \
+  --warmup_steps 600 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
