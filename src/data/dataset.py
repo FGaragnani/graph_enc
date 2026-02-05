@@ -1,9 +1,11 @@
-from torch.utils.data import Dataset
+import torch
+from torch.utils.data import Dataset as TorchDataset
+from transformers import DataCollatorForLanguageModeling
 
 from collections import defaultdict
 from typing import List, Dict, Tuple
 
-class ChromosomeDataset(Dataset):
+class ChromosomeDataset(TorchDataset):
 
     def __init__(self, fasta_path: str, gtf_path: str, only_protein_coding: bool = True):
         """
@@ -157,3 +159,105 @@ class ChromosomeDataset(Dataset):
             mask = mask[::-1]
 
         return dna_sequence, mask
+    
+class CDSMaskingDataset(TorchDataset):
+    def __init__(self, base_dataset: ChromosomeDataset):
+        self.base_dataset = base_dataset
+
+    def __len__(self) -> int:
+        return len(self.base_dataset)
+
+    def __getitem__(self, idx: int) -> dict:
+        sequence, cds_mask = self.base_dataset[idx]
+        return {"text": sequence, "cds_mask": cds_mask}
+
+
+class DataCollatorForCDSMaskedLM(DataCollatorForLanguageModeling):
+    def __init__(
+        self,
+        tokenizer,
+        mlm_probability=0.15,
+        pad_to_multiple_of=None,
+        max_length=None,
+        pad_to_max_length=False,
+    ):
+        super().__init__(tokenizer=tokenizer, mlm_probability=mlm_probability, pad_to_multiple_of=pad_to_multiple_of)
+        self.max_length = max_length
+        self.pad_to_max_length = pad_to_max_length
+
+    def __call__(self, examples):
+        if "text" in examples[0]:
+            texts = [ex["text"] for ex in examples]
+            cds_masks = [ex["cds_mask"] for ex in examples]
+            padding = "max_length" if self.pad_to_max_length and self.max_length is not None else True
+            batch = self.tokenizer(
+                texts,
+                padding=padding,
+                truncation=True,
+                max_length=self.max_length,
+                return_special_tokens_mask=True,
+                return_offsets_mapping=True,
+            )
+
+            offset_mappings = batch.pop("offset_mapping")
+            token_cds_masks = []
+            for cds_mask, offsets in zip(cds_masks, offset_mappings):
+                token_mask = []
+                for start, end in offsets:
+                    if start == end:
+                        token_mask.append(0)
+                    else:
+                        token_mask.append(1 if any(cds_mask[start:end]) else 0)
+                token_cds_masks.append(token_mask)
+
+            batch["cds_mask"] = token_cds_masks
+            batch = {k: torch.tensor(v) for k, v in batch.items()}
+        else:
+            batch = self.tokenizer.pad(
+                examples,
+                padding=True,
+                return_special_tokens_mask=True,
+                pad_to_multiple_of=self.pad_to_multiple_of,
+            )
+
+        if self.tokenizer.mask_token is None:
+            raise ValueError("This tokenizer does not have a mask token which is necessary for masked language modeling.")
+
+        input_ids = batch["input_ids"]
+        labels = input_ids.clone()
+
+        special_tokens_mask = batch.pop("special_tokens_mask")
+        if not torch.is_tensor(special_tokens_mask):
+            special_tokens_mask = torch.tensor(special_tokens_mask, dtype=torch.bool)
+        else:
+            special_tokens_mask = special_tokens_mask.bool()
+
+        cds_mask = batch.pop("cds_mask")
+        if not torch.is_tensor(cds_mask):
+            cds_mask = torch.tensor(cds_mask, dtype=torch.float)
+        else:
+            cds_mask = cds_mask.float()
+
+        probability_matrix = torch.full(labels.shape, self.mlm_probability, device=labels.device)
+        probability_matrix = probability_matrix * cds_mask
+        probability_matrix.masked_fill_(special_tokens_mask, value=0.0)
+
+        masked_indices = torch.bernoulli(probability_matrix).bool()
+        labels[~masked_indices] = -100
+
+        indices_replaced = (
+            torch.bernoulli(torch.full(labels.shape, 0.8, device=labels.device)).bool() & masked_indices
+        )
+        input_ids[indices_replaced] = self.tokenizer.mask_token_id
+
+        indices_random = (
+            torch.bernoulli(torch.full(labels.shape, 0.5, device=labels.device)).bool()
+            & masked_indices
+            & ~indices_replaced
+        )
+        random_words = torch.randint(len(self.tokenizer), labels.shape, dtype=torch.long, device=labels.device)
+        input_ids[indices_random] = random_words[indices_random]
+
+        batch["input_ids"] = input_ids
+        batch["labels"] = labels
+        return batch
