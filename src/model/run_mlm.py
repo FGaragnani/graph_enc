@@ -323,6 +323,9 @@ def main():
     # download the dataset.
     use_cds_dataset = data_args.fasta_path is not None and data_args.gtf_path is not None
 
+    if use_cds_dataset and hasattr(training_args, "remove_unused_columns"):
+        training_args.remove_unused_columns = False
+
     if use_cds_dataset:
         base_dataset = ChromosomeDataset(
             fasta_path=data_args.fasta_path,
@@ -686,6 +689,22 @@ def main():
         )
 
     # Initialize our Trainer
+    class PrintLossCallback(transformers.TrainerCallback):
+        """Simple callback that prints training loss on each logging event."""
+
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            if logs is None:
+                print("loss=None")
+                return
+            loss = logs.get("loss") or logs.get("loss/mean")
+            if loss is not None:
+                try:
+                    print(f"[Train] Step {state.global_step} Loss: {float(loss):.4f}")
+                except Exception:
+                    print(f"[Train] Step {state.global_step} Loss: {loss}")
+            else:
+                print(logs)
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -697,6 +716,7 @@ def main():
         preprocess_logits_for_metrics=preprocess_logits_for_metrics
         if training_args.do_eval and not is_torch_tpu_available()
         else None,
+        callbacks=[PrintLossCallback()],
     )
 
     # Training
