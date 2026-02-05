@@ -49,8 +49,8 @@ torchrun --nproc_per_node=2 src/train/train.py \
   --max_seq_length 512 \
   --mlm_probability 0.15 \
   --output_dir ${output_dir} \
-  --per_device_train_batch_size 32 \
-  --per_device_eval_batch_size 32 \
+  --per_device_train_batch_size 16 \
+  --per_device_eval_batch_size 16 \
   --learning_rate 5e-4 \
   --max_steps 500000 \
   --warmup_steps 30000 \
