@@ -63,10 +63,16 @@ class ChromosomeDataset(TorchDataset):
                 strand = fields[6]
                 attributes = fields[8]
 
-                attrs = dict(
-                    item.strip().replace('"', '').split(' ')
-                    for item in attributes.strip(';').split('; ')
-                )
+                attrs = {}
+                for item in attributes.strip().strip(";").split(";"):
+                    item = item.strip()
+                    if not item:
+                        continue
+                    if " " not in item:
+                        attrs[item] = ""
+                        continue
+                    key, value = item.split(" ", 1)
+                    attrs[key] = value.strip().strip('"')
                 transcript_id = attrs.get("transcript_id")
                 if transcript_id is None:
                     print(f"Warning: No transcript_id found in attributes: {attributes}")
