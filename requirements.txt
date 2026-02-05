@@ -1,5 +1,5 @@
 einops==0.6.1
-transformers==4.29.2
+transformers==4.57.0
 peft==0.3.0
 omegaconf==2.3.0
 torch==1.13.1
