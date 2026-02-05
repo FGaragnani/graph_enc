@@ -50,8 +50,8 @@ torchrun --nproc_per_node=2 src/train/train.py \
   --mlm_probability 0.15 \
   --output_dir ${output_dir} \
   --num_train_epochs 3 \
-  --per_device_train_batch_size 32 \
-  --per_device_eval_batch_size 32 \
+  --per_device_train_batch_size 16 \
+  --per_device_eval_batch_size 16 \
   --learning_rate 5e-5 \
   --warmup_steps 500 \
   --save_strategy epoch \
