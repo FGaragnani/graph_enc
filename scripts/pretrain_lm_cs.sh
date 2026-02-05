@@ -4,7 +4,7 @@
 #SBATCH --error=/work/tesi_fgaragnani/logs/%x_%j.err
 #SBATCH --open-mode=truncate
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-node=1
+#SBATCH --gpus-per-node=2
 #SBATCH --mem=40G
 #SBATCH --cpus-per-task=8
 #SBATCH --partition=all_usr_prod
@@ -38,7 +38,7 @@ export MASTER_PORT=`comm -23 <(seq 5000 6000 | sort) <(ss -Htan | awk '{print $4
 run_name="${SLURM_JOB_NAME}"
 output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/${model_name}"
 
-python src/train/train.py \
+torchrun --nproc_per_node=2 src/train/train.py \
   --model_type bert \
   --config_name src/model/bert_config.json \
   --tokenizer_name ./src/model \
