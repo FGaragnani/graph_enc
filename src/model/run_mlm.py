@@ -28,6 +28,7 @@ import os
 import sys
 from dataclasses import dataclass, field
 from itertools import chain
+from collections import defaultdict
 from typing import Optional
 
 import datasets
@@ -359,12 +360,33 @@ def main():
             total_len = len(cds_dataset)
             if total_len < 2:
                 raise ValueError("CDS dataset is too small to create a validation split.")
-            val_size = int(total_len * data_args.validation_split_percentage / 100)
-            val_size = max(1, min(val_size, total_len - 1))
+            # Gene-level split to reduce leakage across isoforms/transcripts
+            gene_to_indices = defaultdict(list)
+            for idx, entry in enumerate(base_dataset.cds_annotations):
+                gene_id = entry.get("gene_id") or entry.get("transcript_id")
+                gene_to_indices[gene_id].append(idx)
+
+            gene_ids = list(gene_to_indices.keys())
             generator = torch.Generator().manual_seed(training_args.seed)
-            indices = torch.randperm(total_len, generator=generator).tolist()
-            val_idx = indices[:val_size]
-            train_idx = indices[val_size:]
+            perm = torch.randperm(len(gene_ids), generator=generator).tolist()
+            gene_ids = [gene_ids[i] for i in perm]
+
+            val_target = max(1, int(total_len * data_args.validation_split_percentage / 100))
+            val_idx = []
+            train_idx = []
+            val_count = 0
+            for gene_id in gene_ids:
+                indices = gene_to_indices[gene_id]
+                if val_count < val_target:
+                    val_idx.extend(indices)
+                    val_count += len(indices)
+                else:
+                    train_idx.extend(indices)
+
+            # Ensure both splits are non-empty
+            if not train_idx or not val_idx:
+                raise ValueError("Gene-level split resulted in an empty train or validation set.")
+
             cds_train_dataset = Subset(cds_dataset, train_idx)
             cds_eval_dataset = Subset(cds_dataset, val_idx)
         if training_args.do_train and data_args.max_train_samples is not None:
