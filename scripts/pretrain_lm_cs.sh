@@ -36,7 +36,7 @@ export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_PORT=`comm -23 <(seq 5000 6000 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1`
 
 run_name="${SLURM_JOB_NAME}"
-output_dir="/leonardo_scratch/large/userexternal/fgaragna/checkpoints/ai4bio/${run_name}"
+output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/${model_name}"
 
 python src/train/train.py \
   --model_type bert \
