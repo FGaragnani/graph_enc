@@ -657,6 +657,32 @@ def main():
                 max_train_samples = min(len(train_dataset), data_args.max_train_samples)
                 train_dataset = train_dataset.select(range(max_train_samples))
 
+    # If user provided only max_steps, compute num_train_epochs so Trainer will reach that many update steps
+    if getattr(training_args, "max_steps", 0) and training_args.max_steps > 0:
+        try:
+            # Determine world size for multi-GPU (DDP). Prefer training_args.world_size if set.
+            if hasattr(training_args, "world_size") and getattr(training_args, "world_size"):
+                world_size = int(training_args.world_size)
+            else:
+                world_size = (
+                    torch.distributed.get_world_size()
+                    if torch.distributed.is_available() and torch.distributed.is_initialized()
+                    else 1
+                )
+
+            grad_acc = max(1, getattr(training_args, "gradient_accumulation_steps", 1))
+            per_device = int(getattr(training_args, "per_device_train_batch_size", 1))
+            effective_batch_size = per_device * max(1, world_size) * grad_acc
+
+            steps_per_epoch = max(1, math.ceil(len(train_dataset) / effective_batch_size))
+            training_args.num_train_epochs = math.ceil(training_args.max_steps / steps_per_epoch)
+            print(
+                f"[Info] Computed num_train_epochs={training_args.num_train_epochs} "
+                f"(steps_per_epoch={steps_per_epoch}, effective_batch_size={effective_batch_size}, world_size={world_size})"
+            )
+        except Exception as e:
+            print(f"[Warning] Could not compute num_train_epochs from max_steps: {e}")
+
     if training_args.do_eval:
         if use_cds_dataset:
             eval_dataset = cds_eval_dataset
