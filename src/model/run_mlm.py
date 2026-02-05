@@ -437,7 +437,10 @@ def main():
         "use_auth_token": True if model_args.use_auth_token else None,
     }
     if model_args.config_name:
-        config = AutoConfig.from_pretrained(model_args.config_name, trust_remote_code=True, **config_kwargs)
+        if os.path.isfile(model_args.config_name):
+            config = AutoConfig.from_json_file(model_args.config_name)
+        else:
+            config = AutoConfig.from_pretrained(model_args.config_name, trust_remote_code=True, **config_kwargs)
     elif model_args.model_name_or_path:
         config = AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True, **config_kwargs)
     else:
