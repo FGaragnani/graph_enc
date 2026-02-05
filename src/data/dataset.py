@@ -47,7 +47,8 @@ class ChromosomeDataset(TorchDataset):
 
         transcripts: Dict[str, Dict] = defaultdict(lambda: {
             "strand": "",
-            "cds_coords": []
+            "cds_coords": [],
+            "gene_id": None,
         })
 
         with open(self.gtf_path, "r") as f:
@@ -74,6 +75,7 @@ class ChromosomeDataset(TorchDataset):
                     key, value = item.split(" ", 1)
                     attrs[key] = value.strip().strip('"')
                 transcript_id = attrs.get("transcript_id")
+                gene_id = attrs.get("gene_id")
                 if transcript_id is None:
                     print(f"Warning: No transcript_id found in attributes: {attributes}")
                     continue
@@ -83,6 +85,8 @@ class ChromosomeDataset(TorchDataset):
 
                 entry = transcripts[transcript_id]
                 entry["strand"] = strand
+                if entry.get("gene_id") is None:
+                    entry["gene_id"] = gene_id
                 entry["cds_coords"].append((start, end))
 
         dataset = []
@@ -97,6 +101,7 @@ class ChromosomeDataset(TorchDataset):
             
             dataset.append({
                 "transcript_id": transcript_id,
+                "gene_id": data.get("gene_id"),
                 "strand": data["strand"],
                 "cds_coords": coords
             })
