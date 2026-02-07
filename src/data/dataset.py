@@ -4,7 +4,7 @@ from torch.utils.data import Dataset as TorchDataset
 from transformers import DataCollatorForLanguageModeling
 
 from collections import defaultdict
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 class ChromosomeDataset(TorchDataset):
 
@@ -150,7 +150,7 @@ class ChromosomeDataset(TorchDataset):
                 merged.append((start, end))
         return merged
 
-    def _sample_non_cds_window(self, window_len: int) -> Tuple[int, int] | None:
+    def _sample_non_cds_window(self, window_len: int) -> Optional[Tuple[int, int]]:
         if window_len <= 0:
             return None
         chrom_len = len(self.sequences)
