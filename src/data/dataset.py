@@ -1,3 +1,4 @@
+import random
 import torch
 from torch.utils.data import Dataset as TorchDataset
 from transformers import DataCollatorForLanguageModeling
@@ -7,7 +8,13 @@ from typing import List, Dict, Tuple
 
 class ChromosomeDataset(TorchDataset):
 
-    def __init__(self, fasta_path: str, gtf_path: str, only_protein_coding: bool = True):
+    def __init__(
+        self,
+        fasta_path: str,
+        gtf_path: str,
+        only_protein_coding: bool = True,
+        non_cds_sample_prob: float = 0.5,
+    ):
         """
         Initialize the ChromosomeDataset with paths to FASTA and GTF files.
 
@@ -19,8 +26,12 @@ class ChromosomeDataset(TorchDataset):
         self.fasta_path = fasta_path
         self.gtf_path = gtf_path
         self.only_protein_coding = only_protein_coding
+        self.non_cds_sample_prob = non_cds_sample_prob
         self.sequences = self._load_fasta()
         self.cds_annotations = self._load_gtf()
+        self._global_cds_intervals = self._merge_intervals(
+            [coord for entry in self.cds_annotations for coord in entry["cds_coords"]]
+        )
 
     def _load_fasta(self) -> str:
         """
@@ -125,6 +136,55 @@ class ChromosomeDataset(TorchDataset):
             complement = str.maketrans('ACGT', 'TGCA')
             subsequence = subsequence.translate(complement)[::-1]
         return subsequence
+
+    def _merge_intervals(self, intervals: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        if not intervals:
+            return []
+        intervals = sorted(intervals, key=lambda x: x[0])
+        merged = [intervals[0]]
+        for start, end in intervals[1:]:
+            last_start, last_end = merged[-1]
+            if start <= last_end:
+                merged[-1] = (last_start, max(last_end, end))
+            else:
+                merged.append((start, end))
+        return merged
+
+    def _sample_non_cds_window(self, window_len: int) -> Tuple[int, int] | None:
+        if window_len <= 0:
+            return None
+        chrom_len = len(self.sequences)
+        if window_len > chrom_len:
+            return None
+
+        non_cds_intervals = []
+        prev_end = 0
+        for start, end in self._global_cds_intervals:
+            if start > prev_end:
+                non_cds_intervals.append((prev_end, start))
+            prev_end = max(prev_end, end)
+        if prev_end < chrom_len:
+            non_cds_intervals.append((prev_end, chrom_len))
+
+        available = []
+        total_positions = 0
+        for start, end in non_cds_intervals:
+            max_start = end - window_len
+            if max_start >= start:
+                count = max_start - start + 1
+                available.append((start, max_start, count))
+                total_positions += count
+
+        if total_positions == 0:
+            return None
+
+        pick = random.randint(0, total_positions - 1)
+        for start, max_start, count in available:
+            if pick < count:
+                window_start = start + pick
+                return window_start, window_start + window_len
+            pick -= count
+        return None
     
     def __len__(self) -> int:
         """
@@ -155,14 +215,22 @@ class ChromosomeDataset(TorchDataset):
         cds_end = max(end for _, end in cds_coords)
 
         flank_len = cds_len // 2
-        region_start = max(0, cds_start - flank_len)
-        region_end = min(len(self.sequences), cds_end + flank_len)
+        window_len = (cds_end - cds_start) + (2 * flank_len)
 
-        dna_sequence = self.sequences[region_start:region_end]
-        mask = [0] * (region_end - region_start)
-        for start, end in cds_coords:
-            for i in range(max(start, region_start), min(end, region_end)):
-                mask[i - region_start] = 1
+        use_non_cds = random.random() < self.non_cds_sample_prob
+        non_cds_window = self._sample_non_cds_window(window_len) if use_non_cds else None
+        if non_cds_window is not None:
+            region_start, region_end = non_cds_window
+            dna_sequence = self.sequences[region_start:region_end]
+            mask = [0] * (region_end - region_start)
+        else:
+            region_start = max(0, cds_start - flank_len)
+            region_end = min(len(self.sequences), cds_end + flank_len)
+            dna_sequence = self.sequences[region_start:region_end]
+            mask = [0] * (region_end - region_start)
+            for start, end in cds_coords:
+                for i in range(max(start, region_start), min(end, region_end)):
+                    mask[i - region_start] = 1
 
         if strand == "-":
             complement = str.maketrans('ACGT', 'TGCA')
@@ -188,11 +256,13 @@ class DataCollatorForCDSMaskedLM(DataCollatorForLanguageModeling):
         self,
         tokenizer,
         mlm_probability=0.15,
+        non_cds_mlm_probability=0.03,
         pad_to_multiple_of=None,
         max_length=None,
         pad_to_max_length=False,
     ):
         super().__init__(tokenizer=tokenizer, mlm_probability=mlm_probability, pad_to_multiple_of=pad_to_multiple_of)
+        self.non_cds_mlm_probability = non_cds_mlm_probability
         self.max_length = max_length
         self.pad_to_max_length = pad_to_max_length
 
@@ -258,14 +328,17 @@ class DataCollatorForCDSMaskedLM(DataCollatorForLanguageModeling):
         else:
             special_tokens_mask = special_tokens_mask.bool()
 
-        cds_mask = batch.pop("cds_mask")
-        if not torch.is_tensor(cds_mask):
-            cds_mask = torch.tensor(cds_mask, dtype=torch.float)
-        else:
-            cds_mask = cds_mask.float()
+        cds_mask = batch.pop("cds_mask", None)
+        if cds_mask is not None:
+            if not torch.is_tensor(cds_mask):
+                cds_mask = torch.tensor(cds_mask, dtype=torch.float)
+            else:
+                cds_mask = cds_mask.float()
 
-        probability_matrix = torch.full(labels.shape, self.mlm_probability, device=labels.device)
-        probability_matrix = probability_matrix * cds_mask
+        probability_matrix = torch.full(labels.shape, self.non_cds_mlm_probability, device=labels.device)
+        if cds_mask is not None:
+            cds_probability = torch.full(labels.shape, self.mlm_probability, device=labels.device)
+            probability_matrix = torch.where(cds_mask > 0.0, cds_probability, probability_matrix)
         probability_matrix.masked_fill_(special_tokens_mask, value=0.0)
 
         masked_indices = torch.bernoulli(probability_matrix).bool()
