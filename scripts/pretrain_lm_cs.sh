@@ -58,7 +58,8 @@ torchrun --nproc_per_node=2 src/train/train.py \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
   --adam_eps 1e-6 \
-  --save_strategy epoch \
+  --save_strategy steps \
+  --save_steps 2000 \
   --evaluation_strategy epoch \
   --do_train \
   --do_eval
