@@ -215,13 +215,9 @@ class DataTrainingArguments:
         },
     )
     streaming: bool = field(default=False, metadata={"help": "Enable streaming mode"})
-    fasta_path: Optional[str] = field(
+    data_path: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the FASTA file for chromosome sequences."},
-    )
-    gtf_path: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to the GTF file with CDS annotations."},
+        metadata={"help": "Path to the directory containing FASTA and GTF files."},
     )
     only_protein_coding: bool = field(
         default=True,
@@ -236,9 +232,9 @@ class DataTrainingArguments:
         if self.streaming:
             require_version("datasets>=2.0.0", "The streaming feature requires `datasets>=2.0.0`")
 
-        has_cds_inputs = self.fasta_path is not None or self.gtf_path is not None
-        if has_cds_inputs and (self.fasta_path is None or self.gtf_path is None):
-            raise ValueError("Both --fasta_path and --gtf_path are required when using the CDS dataset.")
+        has_cds_inputs = self.data_path is not None
+        if has_cds_inputs and self.data_path is None:
+            raise ValueError("The --data_path is required when using the CDS dataset.")
 
         if not has_cds_inputs and self.dataset_name is None and self.train_file is None and self.validation_file is None:
             raise ValueError("Need either a dataset name or a training/validation file.")
@@ -337,8 +333,7 @@ def main():
 
     if use_cds_dataset:
         base_dataset = ChromosomeDataset(
-            fasta_path=data_args.fasta_path,
-            gtf_path=data_args.gtf_path,
+            data_path=data_args.data_path,
             only_protein_coding=data_args.only_protein_coding,
         )
         cds_dataset = CDSMaskingDataset(base_dataset)

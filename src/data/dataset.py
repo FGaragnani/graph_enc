@@ -1,3 +1,4 @@
+import os
 import random
 import torch
 from torch.utils.data import Dataset as TorchDataset
@@ -10,8 +11,7 @@ class ChromosomeDataset(TorchDataset):
 
     def __init__(
         self,
-        fasta_path: str,
-        gtf_path: str,
+        data_path: str,
         only_protein_coding: bool = True,
         non_cds_sample_prob: float = 0.5,
     ):
@@ -19,21 +19,22 @@ class ChromosomeDataset(TorchDataset):
         Initialize the ChromosomeDataset with paths to FASTA and GTF files.
 
         Args:
-            fasta_path (str): Path to the FASTA file containing chromosome sequences.
-            gtf_path (str): Path to the GTF file containing gene annotations.
+            data_path (str): Path to the directory containing FASTA and GTF files.
             only_protein_coding (bool): Whether to include only protein-coding genes. Defaults to True.
         """
-        self.fasta_path = fasta_path
-        self.gtf_path = gtf_path
+        self.data_path = data_path
         self.only_protein_coding = only_protein_coding
         self.non_cds_sample_prob = non_cds_sample_prob
-        self.sequences = self._load_fasta()
-        self.cds_annotations = self._load_gtf()
+
+        if os.path.isdir(self.data_path):
+            self.sequences, self.cds_annotations = self._load_from_folder(self.data_path)
+        else:
+            raise ValueError(f"Provided data_path '{self.data_path}' is not a directory containing FASTA and GTF files.")
         self._global_cds_intervals = self._merge_intervals(
             [coord for entry in self.cds_annotations for coord in entry["cds_coords"]]
         )
 
-    def _load_fasta(self) -> str:
+    def _load_fasta_file(self, fasta_path: str) -> str:
         """
         Loads into memory the sequences from the FASTA file.
         
@@ -41,7 +42,7 @@ class ChromosomeDataset(TorchDataset):
             str: The nucleotide sequences as a single concatenated string.
         """
         sequences = []
-        with open(self.fasta_path, 'r') as fasta_file:
+        with open(fasta_path, 'r') as fasta_file:
             sequence = ""
             for line in fasta_file:
                 if line.startswith('>'):
@@ -54,7 +55,7 @@ class ChromosomeDataset(TorchDataset):
                 sequences.append(sequence)
         return "".join(sequences)
     
-    def _load_gtf(self) -> List[dict]:
+    def _load_gtf_file(self, gtf_path: str, offset: int = 0) -> List[dict]:
 
         transcripts: Dict[str, Dict] = defaultdict(lambda: {
             "strand": "",
@@ -62,7 +63,7 @@ class ChromosomeDataset(TorchDataset):
             "gene_id": None,
         })
 
-        with open(self.gtf_path, "r") as f:
+        with open(gtf_path, "r") as f:
             for line in f:
                 if line.startswith("#"):
                     continue
@@ -70,8 +71,8 @@ class ChromosomeDataset(TorchDataset):
                 if fields[2] != "CDS":
                     continue
 
-                start = int(fields[3]) - 1  # Convert to 0-based index
-                end = int(fields[4])  # End is exclusive in Python slicing
+                start = int(fields[3]) - 1 + offset  # Convert to 0-based index
+                end = int(fields[4]) + offset  # End is exclusive in Python slicing
                 strand = fields[6]
                 attributes = fields[8]
 
@@ -118,6 +119,47 @@ class ChromosomeDataset(TorchDataset):
             })
         
         return dataset
+
+    def _load_from_folder(self, root_dir: str) -> Tuple[str, List[dict]]:
+        sequences = []
+        annotations = []
+        offset = 0
+
+        subdirs = [
+            os.path.join(root_dir, name)
+            for name in os.listdir(root_dir)
+            if os.path.isdir(os.path.join(root_dir, name))
+        ]
+        for subdir in sorted(subdirs):
+            fasta_file, gtf_file = self._find_fasta_gtf_files(subdir)
+            seq = self._load_fasta_file(fasta_file)
+            ann = self._load_gtf_file(gtf_file, offset=offset)
+            sequences.append(seq)
+            annotations.extend(ann)
+            offset += len(seq)
+
+        return "".join(sequences), annotations
+
+    def _find_fasta_gtf_files(self, folder: str) -> Tuple[str, str]:
+        fasta_exts = (".fa", ".fasta", ".fna")
+        fasta_files = []
+        gtf_files = []
+        for name in os.listdir(folder):
+            path = os.path.join(folder, name)
+            if not os.path.isfile(path):
+                continue
+            lower = name.lower()
+            if lower.endswith(fasta_exts):
+                fasta_files.append(path)
+            elif lower.endswith(".gtf"):
+                gtf_files.append(path)
+
+        if not fasta_files:
+            raise FileNotFoundError(f"No FASTA file found in {folder}")
+        if not gtf_files:
+            raise FileNotFoundError(f"No GTF file found in {folder}")
+
+        return sorted(fasta_files)[0], sorted(gtf_files)[0]
 
     def _get_indexed_sequence(self, st_idx: int, end_idx: int, reverse: bool) -> str:
         """
