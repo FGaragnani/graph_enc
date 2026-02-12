@@ -42,8 +42,7 @@ torchrun --nproc_per_node=2 --master_port=29517 src/train/train.py \
   --model_type bert \
   --config_name src/model/bert_config.json \
   --tokenizer_name ./src/model \
-  --fasta_path /homes/fgaragnani/ai4bio/graph_enc/data/human_chr_6/Homo_sapiens.GRCh38.dna.chromosome.6.fa \
-  --gtf_path /homes/fgaragnani/ai4bio/graph_enc/data/human_chr_6/chr6_CDS.gtf \
+  --data_path /homes/fgaragnani/ai4bio/graph_enc/data/ \
   --use_cds_mask true \
   --only_protein_coding true \
   --max_seq_length 512 \
