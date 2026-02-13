@@ -10,7 +10,7 @@
 #SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
-#SBATCH --time=02:00:00
+#SBATCH --time=12:00:00
 
 module load anaconda3/2022.05
 module load profile/deeplrn
