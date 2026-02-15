@@ -326,7 +326,7 @@ def main():
     #
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
-    use_cds_dataset = data_args.fasta_path is not None and data_args.gtf_path is not None
+    use_cds_dataset = data_args.data_path is not None
 
     if use_cds_dataset and hasattr(training_args, "remove_unused_columns"):
         training_args.remove_unused_columns = False
