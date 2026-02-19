@@ -5,7 +5,7 @@
 #SBATCH --open-mode=truncate
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-node=2
-#SBATCH --mem=40G
+#SBATCH --mem=80G
 #SBATCH --cpus-per-task=8
 #SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
