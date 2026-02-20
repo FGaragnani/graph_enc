@@ -502,6 +502,7 @@ def main():
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
+    logger.info(f"Vocabulary size: {len(tokenizer)}")
 
     if model_args.model_name_or_path:
         model = BertForMaskedLM.from_pretrained(
@@ -769,21 +770,6 @@ def main():
         num_warmup_steps=training_args.warmup_steps,
         num_training_steps=training_args.max_steps,
     )
-    class PrintLossCallback(transformers.TrainerCallback):
-        """Simple callback that prints training loss on each logging event."""
-
-        def on_log(self, args, state, control, logs=None, **kwargs):
-            if logs is None:
-                print("loss=None")
-                return
-            loss = logs.get("loss") or logs.get("loss/mean")
-            if loss is not None:
-                try:
-                    print(f"[Train] Step {state.global_step} Loss: {float(loss):.4f}")
-                except Exception:
-                    print(f"[Train] Step {state.global_step} Loss: {loss}")
-            else:
-                print(logs)
 
     trainer = Trainer(
         model=model,
@@ -796,7 +782,6 @@ def main():
         preprocess_logits_for_metrics=preprocess_logits_for_metrics
         if training_args.do_eval and not is_torch_tpu_available()
         else None,
-        callbacks=[PrintLossCallback()],
         optimizers=(optimizer, scheduler),
     )
 
