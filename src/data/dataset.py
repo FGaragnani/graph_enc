@@ -258,8 +258,8 @@ class ChromosomeDataset(TorchDataset):
         cds_start = min(start for start, _ in cds_coords)
         cds_end = max(end for _, end in cds_coords)
 
-        flank_len = cds_len * self.item_length_proportion if self.item_length_proportion is not None else 0.5
-        window_len = (cds_end - cds_start) + (2 * flank_len)
+        flank_len = int(cds_len * self.item_length_proportion) if self.item_length_proportion is not None else int(cds_len * 0.5)
+        window_len = int((cds_end - cds_start) + (2 * flank_len))
 
         use_non_cds = random.random() < self.non_cds_sample_prob
         non_cds_window = self._sample_non_cds_window(window_len) if use_non_cds else None
@@ -268,8 +268,8 @@ class ChromosomeDataset(TorchDataset):
             dna_sequence = self.sequences[region_start:region_end]
             mask = [0] * (region_end - region_start)
         else:
-            region_start = max(0, cds_start - flank_len)
-            region_end = min(len(self.sequences), cds_end + flank_len)
+            region_start = int(max(0, cds_start - flank_len))
+            region_end = int(min(len(self.sequences), cds_end + flank_len))
             dna_sequence = self.sequences[region_start:region_end]
             mask = [0] * (region_end - region_start)
             for start, end in cds_coords:
