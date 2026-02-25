@@ -670,7 +670,6 @@ def main():
     # If user provided only max_steps, compute num_train_epochs so Trainer will reach that many update steps
     if getattr(training_args, "max_steps", 0) and training_args.max_steps > 0:
         try:
-            # Determine world size for multi-GPU (DDP). Prefer training_args.world_size if set.
             if hasattr(training_args, "world_size") and getattr(training_args, "world_size"):
                 world_size = int(training_args.world_size)
             else:
@@ -708,8 +707,6 @@ def main():
 
         def preprocess_logits_for_metrics(logits, labels):
             if isinstance(logits, tuple):
-                # Depending on the model and config, logits may contain extra tensors,
-                # like past_key_values, but logits always come first
                 logits = logits[0]
             return logits.argmax(dim=-1)
 
@@ -729,10 +726,12 @@ def main():
     # Data collator
     # This one will take care of randomly masking the tokens.
     pad_to_multiple_of_8 = data_args.line_by_line and training_args.fp16 and not data_args.pad_to_max_length
-    if use_cds_dataset and data_args.use_cds_mask:
+    if use_cds_dataset:
+        # Use custom collator for CDS dataset
         data_collator = DataCollatorForCDSMaskedLM(
             tokenizer=tokenizer,
             mlm_probability=data_args.mlm_probability,
+            non_cds_mlm_probability=data_args.mlm_probability if not data_args.use_cds_mask else 0.03,
             pad_to_multiple_of=8 if pad_to_multiple_of_8 else None,
             max_length=max_seq_length,
             pad_to_max_length=data_args.pad_to_max_length,
@@ -744,11 +743,6 @@ def main():
             pad_to_multiple_of=8 if pad_to_multiple_of_8 else None,
         )
 
-    # Initialize our Trainer
-    # --- optimizer & scheduler defaults to mimic DNABERT-2 setup ---
-    # Use AdamW with betas=(0.9,0.98), eps=1e-6, weight_decay=1e-5
-    # Linear warmup to peak lr=5e-4 over 30k steps, linear decay to 0 ending at 500k steps.
-    # Apply only if user didn't set explicit values.
     if getattr(training_args, "max_steps", -1) <= 0:
         training_args.max_steps = 500000
     if getattr(training_args, "warmup_steps", None) is None:
