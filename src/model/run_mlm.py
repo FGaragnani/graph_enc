@@ -227,6 +227,10 @@ class DataTrainingArguments:
         default=True,
         metadata={"help": "Mask only tokens overlapping CDS when using FASTA+GTF dataset."},
     )
+    item_length_proportion: Optional[float] = field(
+        default=None,
+        metadata={"help": "Proportion of the CDS length to use as flanking regions. If not set, defaults to 0.5."},
+    )
 
     def __post_init__(self):
         if self.streaming:

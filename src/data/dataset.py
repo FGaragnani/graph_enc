@@ -14,6 +14,7 @@ class ChromosomeDataset(TorchDataset):
         data_path: str,
         only_protein_coding: bool = True,
         non_cds_sample_prob: float = 0.5,
+        item_length_proportion: Optional[float] = None,
     ):
         """
         Initialize the ChromosomeDataset with paths to FASTA and GTF files.
@@ -22,9 +23,10 @@ class ChromosomeDataset(TorchDataset):
             data_path (str): Path to the directory containing FASTA and GTF files.
             only_protein_coding (bool): Whether to include only protein-coding genes. Defaults to True.
         """
-        self.data_path = data_path
-        self.only_protein_coding = only_protein_coding
-        self.non_cds_sample_prob = non_cds_sample_prob
+        self.data_path: str = data_path
+        self.only_protein_coding: bool = only_protein_coding
+        self.non_cds_sample_prob: float = non_cds_sample_prob
+        self.item_length_proportion: Optional[float] = item_length_proportion
 
         if os.path.isdir(self.data_path):
             self.sequences, self.cds_annotations = self._load_from_folder(self.data_path)
@@ -256,7 +258,7 @@ class ChromosomeDataset(TorchDataset):
         cds_start = min(start for start, _ in cds_coords)
         cds_end = max(end for _, end in cds_coords)
 
-        flank_len = cds_len // 2
+        flank_len = cds_len * self.item_length_proportion if self.item_length_proportion is not None else 0.5
         window_len = (cds_end - cds_start) + (2 * flank_len)
 
         use_non_cds = random.random() < self.non_cds_sample_prob
