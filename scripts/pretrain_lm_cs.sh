@@ -47,11 +47,12 @@ torchrun --nproc_per_node=2 --master_port=29517 src/train/train.py \
   --only_protein_coding true \
   --max_seq_length 512 \
   --mlm_probability 0.15 \
+  --item_length_proportion 1.0 \
   --output_dir ${output_dir} \
   --per_device_train_batch_size 16 \
   --per_device_eval_batch_size 16 \
   --learning_rate 5e-4 \
-  --max_steps 10000 \
+  --max_steps 20000 \
   --warmup_steps 600 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
