@@ -350,7 +350,7 @@ def main():
             # Gene-level split to reduce leakage across isoforms/transcripts
             gene_to_indices = defaultdict(list)
             for idx, entry in enumerate(base_dataset.cds_annotations):
-                gene_id = entry.get("gene_id") or entry.get("transcript_id")
+                gene_id = entry["cds_coord"].get("gene_id") or entry["cds_coord"].get("transcript_id")
                 gene_to_indices[gene_id].append(idx)
 
             gene_ids = list(gene_to_indices.keys())
@@ -366,7 +366,7 @@ def main():
                 indices = gene_to_indices[gene_id]
                 if val_count < val_target:
                     val_idx.extend(indices)
-                    val_count += len(indices)
+                    val_count += 1
                 else:
                     train_idx.extend(indices)
 
