@@ -145,8 +145,7 @@ class ChromosomeDataset(TorchDataset):
                 } for i in range(
                     int((((self._length_cds_coord(entry["cds_coords"]) * self.item_length_proportion) + 1) // 2)))
                 ]
-                for window in sliding_windows:
-                    annotations.extend(window) 
+                annotations.extend(sliding_windows)
 
             offset += len(seq)
 
