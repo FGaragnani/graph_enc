@@ -358,7 +358,7 @@ def main():
             perm = torch.randperm(len(gene_ids), generator=generator).tolist()
             gene_ids = [gene_ids[i] for i in perm]
 
-            val_target = max(1, int(total_len * data_args.validation_split_percentage / 100))
+            val_target = max(1, int(len(gene_ids) * data_args.validation_split_percentage / 100))
             val_idx = []
             train_idx = []
             val_count = 0
@@ -376,6 +376,10 @@ def main():
 
             cds_train_dataset = Subset(cds_dataset, train_idx)
             cds_eval_dataset = Subset(cds_dataset, val_idx)
+
+            if len(cds_train_dataset) < len(cds_eval_dataset):
+                raise ValueError("Training set is smaller than validation set after gene-level split.")
+
         if training_args.do_train and data_args.max_train_samples is not None:
             max_train_samples = min(len(cds_train_dataset), data_args.max_train_samples)
             cds_train_dataset = Subset(cds_train_dataset, list(range(max_train_samples)))
