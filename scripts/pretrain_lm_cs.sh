@@ -62,5 +62,4 @@ torchrun --nproc_per_node=2 --master_port=${MASTER_PORT} src/train/train.py \
   --save_steps 2000 \
   --evaluation_strategy epoch \
   --do_train \
-  --do_eval \
-  --overwrite_output_dir
+  --do_eval 
