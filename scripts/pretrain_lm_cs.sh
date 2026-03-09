@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=pretrain_dna-bert2_cs
-#SBATCH --output=/work/tesi_fgaragnani/logs/%x_%j.out
-#SBATCH --error=/work/tesi_fgaragnani/logs/%x_%j.err
+#SBATCH --output=/work/tesi_fgaragnani/logs_ai4bio/%x_%j.out
+#SBATCH --error=/work/tesi_fgaragnani/logs_ai4bio/%x_%j.err
 #SBATCH --open-mode=truncate
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-node=2
