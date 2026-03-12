@@ -349,8 +349,8 @@ def main():
                 raise ValueError("CDS dataset is too small to create a validation split.")
             # Gene-level split to reduce leakage across isoforms/transcripts
             gene_to_indices = defaultdict(list)
-            for idx, entry in enumerate(base_dataset.cds_annotations):
-                gene_id = entry["cds_coord"].get("gene_id") or entry["cds_coord"].get("transcript_id")
+            for idx, entry in enumerate(base_dataset.dataset):
+                gene_id = entry["gene_id"]
                 gene_to_indices[gene_id].append(idx)
 
             gene_ids = list(gene_to_indices.keys())
