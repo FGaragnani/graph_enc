@@ -133,6 +133,14 @@ class ModelArguments:
             )
         },
     )
+    hidden_dropout_prob: Optional[float] = field(
+        default=None,
+        metadata={"help": "Override config.hidden_dropout_prob (applies to embeddings/FFN/output dropout)."},
+    )
+    attention_probs_dropout_prob: Optional[float] = field(
+        default=None,
+        metadata={"help": "Override config.attention_probs_dropout_prob (self-attention dropout)."},
+    )
 
     def __post_init__(self):
         if self.config_overrides is not None and (self.config_name is not None or self.model_name_or_path is not None):
@@ -494,6 +502,12 @@ def main():
             logger.info(f"Overriding config: {model_args.config_overrides}")
             config.update_from_string(model_args.config_overrides)
             logger.info(f"New config: {config}")
+
+    # Allow dropout overrides regardless of whether config is loaded from file/checkpoint or built from scratch.
+    if model_args.hidden_dropout_prob is not None:
+        config.hidden_dropout_prob = model_args.hidden_dropout_prob
+    if model_args.attention_probs_dropout_prob is not None:
+        config.attention_probs_dropout_prob = model_args.attention_probs_dropout_prob
 
     tokenizer_kwargs = {
         "cache_dir": model_args.cache_dir,

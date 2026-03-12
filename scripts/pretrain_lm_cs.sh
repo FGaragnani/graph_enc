@@ -41,6 +41,8 @@ output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/${model_name}"
 torchrun --nproc_per_node=2 --master_port=${MASTER_PORT} src/train/train.py \
   --model_type bert \
   --config_name src/model/bert_config.json \
+  --hidden_dropout_prob 0.1 \
+  --attention_probs_dropout_prob 0.1 \
   --tokenizer_name ./src/model \
   --data_path /homes/fgaragnani/ai4bio/graph_enc/data/ \
   --use_cds_mask true \
@@ -51,7 +53,7 @@ torchrun --nproc_per_node=2 --master_port=${MASTER_PORT} src/train/train.py \
   --output_dir ${output_dir} \
   --per_device_train_batch_size 16 \
   --per_device_eval_batch_size 16 \
-  --learning_rate 2e-3 \
+  --learning_rate 5e-4 \
   --max_steps 40000 \
   --warmup_steps 1200 \
   --weight_decay 1e-5 \
