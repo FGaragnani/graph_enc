@@ -62,6 +62,7 @@ torchrun --nproc_per_node=2 --master_port=${MASTER_PORT} src/train/train.py \
   --adam_eps 1e-6 \
   --save_strategy steps \
   --save_steps 2000 \
+  --ddp_find_unused_parameters false \
   --evaluation_strategy epoch \
   --do_train \
   --do_eval \
