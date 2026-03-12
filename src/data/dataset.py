@@ -290,7 +290,6 @@ class ChromosomeDataset(TorchDataset):
 
         region_start = int(max(0, cds_start - flank_left))
         region_end = int(min(len(sequence), cds_end + flank_right))
-        print("[BertDebug] region_len: ", region_end - region_start, "\nsequence_len: ", len(sequence))
         dna_sequence = sequence[region_start:region_end]
         mask = [0] * (region_end - region_start)
         for i in range(max(cds_start, region_start), min(cds_end, region_end)):
