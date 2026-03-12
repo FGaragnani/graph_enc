@@ -118,7 +118,7 @@ class ChromosomeDataset(TorchDataset):
         
         return dataset
 
-    def _collapse_gene_annotations(self, annotations: List[dict]) -> dict[str, dict]:
+    def _collapse_gene_annotations(self, annotations):
         gene_annotations: Dict[str, dict] = {}
         for ann in annotations:
             gene_id = ann["gene_id"]
