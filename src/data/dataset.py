@@ -162,7 +162,7 @@ class ChromosomeDataset(TorchDataset):
             for seq in cds_coords:
                 start, end = seq
                 cds_len = end - start
-                num_windows = int(((cds_len * self.item_length_proportion) + 1) // 2)
+                num_windows = max(1, int(((cds_len * self.item_length_proportion) + 1) // 2))
                 for i in range(num_windows):
                     dataset.append({
                         "gene_id": gene_id,

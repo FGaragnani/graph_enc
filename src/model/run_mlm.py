@@ -29,7 +29,7 @@ import sys
 from dataclasses import dataclass, field
 from itertools import chain
 from collections import defaultdict
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import datasets
 import evaluate
@@ -239,14 +239,20 @@ class DataTrainingArguments:
         default=None,
         metadata={"help": "Proportion of the CDS length to use as flanking regions. If not set, defaults to 0.5."},
     )
+    debug_print_sample_stats_batches: int = field(
+        default=5,
+        metadata={
+            "help": "Number of initial collated batches for which to print per-sample masking percentage and unique token-id counts. Set 0 to disable."
+        },
+    )
 
     def __post_init__(self):
         if self.streaming:
             require_version("datasets>=2.0.0", "The streaming feature requires `datasets>=2.0.0`")
 
         has_cds_inputs = self.data_path is not None
-        if has_cds_inputs and self.data_path is None:
-            raise ValueError("The --data_path is required when using the CDS dataset.")
+        if has_cds_inputs and not os.path.isdir(self.data_path):
+            raise ValueError(f"--data_path must be an existing directory. Got: {self.data_path}")
 
         if not has_cds_inputs and self.dataset_name is None and self.train_file is None and self.validation_file is None:
             raise ValueError("Need either a dataset name or a training/validation file.")
@@ -259,6 +265,50 @@ class DataTrainingArguments:
                 extension = self.validation_file.split(".")[-1]
                 if extension not in ["csv", "json", "txt"]:
                     raise ValueError("`validation_file` should be a csv, a json or a txt file.")
+
+
+class DebugCollatorWrapper:
+    """Wrap a collator and print lightweight per-sample stats for early batches."""
+
+    def __init__(self, base_collator, tokenizer, max_batches_to_log: int = 5):
+        self.base_collator = base_collator
+        self.tokenizer = tokenizer
+        self.max_batches_to_log = max(0, int(max_batches_to_log))
+        self._logged_batches = 0
+
+    def __call__(self, examples):
+        batch = self.base_collator(examples)
+        if self._logged_batches < self.max_batches_to_log:
+            self._print_sample_stats(batch)
+            self._logged_batches += 1
+        return batch
+
+    def _print_sample_stats(self, batch: Dict[str, Any]):
+        input_ids = batch.get("input_ids")
+        labels = batch.get("labels")
+        if input_ids is None or labels is None:
+            return
+        if not torch.is_tensor(input_ids) or not torch.is_tensor(labels):
+            return
+
+        attention_mask = batch.get("attention_mask")
+        if attention_mask is not None and torch.is_tensor(attention_mask):
+            token_presence_mask = attention_mask.bool()
+        else:
+            pad_id = self.tokenizer.pad_token_id
+            token_presence_mask = input_ids.ne(pad_id) if pad_id is not None else torch.ones_like(input_ids, dtype=torch.bool)
+
+        masked_token_mask = labels.ne(-100)
+        denom = token_presence_mask.sum(dim=1).clamp_min(1)
+        masked_pct = (masked_token_mask.sum(dim=1).float() / denom.float()) * 100.0
+
+        unique_counts = []
+        for sample_ids, sample_present in zip(input_ids, token_presence_mask):
+            present_ids = sample_ids[sample_present]
+            unique_counts.append(int(torch.unique(present_ids).numel()) if present_ids.numel() else 0)
+
+        for idx, (pct, uniq) in enumerate(zip(masked_pct.tolist(), unique_counts)):
+            print(f"[BatchStats] sample={idx} masked_tokens_pct={pct:.2f} unique_token_ids={uniq}")
 
 
 def main():
@@ -347,6 +397,7 @@ def main():
         base_dataset = ChromosomeDataset(
             data_path=data_args.data_path,
             only_protein_coding=data_args.only_protein_coding,
+            item_length_proportion=data_args.item_length_proportion,
         )
         cds_dataset = CDSMaskingDataset(base_dataset)
         cds_train_dataset = cds_dataset
@@ -686,7 +737,7 @@ def main():
                 train_dataset = train_dataset.select(range(max_train_samples))
 
     # If user provided only max_steps, compute num_train_epochs so Trainer will reach that many update steps
-    if getattr(training_args, "max_steps", 0) and training_args.max_steps > 0:
+    if training_args.do_train and getattr(training_args, "max_steps", 0) and training_args.max_steps > 0:
         try:
             if hasattr(training_args, "world_size") and getattr(training_args, "world_size"):
                 world_size = int(training_args.world_size)
@@ -746,7 +797,7 @@ def main():
     pad_to_multiple_of_8 = data_args.line_by_line and training_args.fp16 and not data_args.pad_to_max_length
     if use_cds_dataset:
         # Use custom collator for CDS dataset
-        data_collator = DataCollatorForCDSMaskedLM(
+        base_collator = DataCollatorForCDSMaskedLM(
             tokenizer=tokenizer,
             mlm_probability=data_args.mlm_probability,
             non_cds_mlm_probability=data_args.mlm_probability if not data_args.use_cds_mask else 0.03,
@@ -755,11 +806,17 @@ def main():
             pad_to_max_length=data_args.pad_to_max_length,
         )
     else:
-        data_collator = DataCollatorForLanguageModeling(
+        base_collator = DataCollatorForLanguageModeling(
             tokenizer=tokenizer,
             mlm_probability=data_args.mlm_probability,
             pad_to_multiple_of=8 if pad_to_multiple_of_8 else None,
         )
+
+    data_collator = DebugCollatorWrapper(
+        base_collator=base_collator,
+        tokenizer=tokenizer,
+        max_batches_to_log=data_args.debug_print_sample_stats_batches,
+    )
 
     if getattr(training_args, "max_steps", -1) <= 0:
         training_args.max_steps = 500000
