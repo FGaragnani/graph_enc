@@ -32,9 +32,8 @@ class ChromosomeDataset(TorchDataset):
             self.sequences, self.cds_annotations = self._load_from_folder(self.data_path)
         else:
             raise ValueError(f"Provided data_path '{self.data_path}' is not a directory containing FASTA and GTF files.")
-        self._global_cds_intervals = self._merge_intervals(
-            [coord for entry in self.cds_annotations for coord in entry["cds_coord"]["cds_coords"]]
-        )
+        self.cds_annotations = self._collapse_gene_annotations(self.cds_annotations)
+        self.dataset = self._create_dataset(self.cds_annotations)
 
     def _load_fasta_file(self, fasta_path: str) -> str:
         """
@@ -122,6 +121,58 @@ class ChromosomeDataset(TorchDataset):
         
         return dataset
 
+    def _collapse_gene_annotations(self, annotations: List[dict]) -> dict[str, dict]:
+        gene_annotations: Dict[str, dict] = {}
+        for ann in annotations:
+            gene_id = ann["gene_id"]
+            if gene_id not in gene_annotations:
+                gene_annotations[gene_id] = {
+                    "strand": ann["strand"],
+                    "cds_coords": []
+                }
+            gene_annotations[gene_id]["cds_coords"].extend(ann["cds_coords"])
+
+        for gene_id, data in gene_annotations.items():
+            data["cds_coords"] = self._merge_intervals(data["cds_coords"])
+
+            gene_annotations[gene_id]["sequence"] = [
+                self._get_indexed_sequence(start, end, reverse=False)
+                for start, end in data["cds_coords"]
+            ]
+
+            new_coords: List[Tuple[int, int]] = []
+            for seq in gene_annotations[gene_id]["cds_coords"]:
+                start, end = seq
+                if not new_coords:
+                    new_coords.append((0, end - start))
+                else:
+                    new_coords.append((new_coords[-1][1], new_coords[-1][1] + (end - start)))
+            gene_annotations[gene_id]["cds_coords"] = new_coords
+
+        return {
+            gene_id: {
+                "strand": data["strand"],
+                "cds_coords": data["cds_coords"],
+                "sequence": data["sequence"]
+            } for gene_id, data in gene_annotations.items()
+        }
+    
+    def _create_dataset(self, annotations: dict[str, dict]) -> List[dict]:
+        dataset: List[dict] = []
+        for gene_id, entry in annotations.items():
+            cds_coords = entry["cds_coords"]
+            for seq in cds_coords:
+                start, end = seq
+                cds_len = end - start
+                num_windows = int(((cds_len * self.item_length_proportion) + 1) // 2)
+                for i in range(num_windows):
+                    dataset.append({
+                        "gene_id": gene_id,
+                        "cds_coord": seq,
+                        "sliding_window_id": i
+                    })
+        return dataset
+
     def _load_from_folder(self, root_dir: str) -> Tuple[str, List[dict]]:
         sequences = []
         annotations = []
@@ -137,15 +188,7 @@ class ChromosomeDataset(TorchDataset):
             seq = self._load_fasta_file(fasta_file)
             ann = self._load_gtf_file(gtf_file, offset=offset)
             sequences.append(seq)
-            
-            for entry in ann:
-                sliding_windows = [{
-                    "cds_coord": entry,
-                    "sliding_window_id": i
-                } for i in range(
-                    int((((self._length_cds_coord(entry["cds_coords"]) * self.item_length_proportion) + 1) // 2)))
-                ]
-                annotations.extend(sliding_windows)
+            annotations.extend(ann)
 
             offset += len(seq)
 
@@ -205,42 +248,6 @@ class ChromosomeDataset(TorchDataset):
             else:
                 merged.append((start, end))
         return merged
-
-    def _sample_non_cds_window(self, window_len: int) -> Optional[Tuple[int, int]]:
-        if window_len <= 0:
-            return None
-        chrom_len = len(self.sequences)
-        if window_len > chrom_len:
-            return None
-
-        non_cds_intervals = []
-        prev_end = 0
-        for start, end in self._global_cds_intervals:
-            if start > prev_end:
-                non_cds_intervals.append((prev_end, start))
-            prev_end = max(prev_end, end)
-        if prev_end < chrom_len:
-            non_cds_intervals.append((prev_end, chrom_len))
-
-        available = []
-        total_positions = 0
-        for start, end in non_cds_intervals:
-            max_start = end - window_len
-            if max_start >= start:
-                count = max_start - start + 1
-                available.append((start, max_start, count))
-                total_positions += count
-
-        if total_positions == 0:
-            return None
-
-        pick = random.randint(0, total_positions - 1)
-        for start, max_start, count in available:
-            if pick < count:
-                window_start = start + pick
-                return window_start, window_start + window_len
-            pick -= count
-        return None
     
     def __len__(self) -> int:
         """
@@ -249,7 +256,7 @@ class ChromosomeDataset(TorchDataset):
         Returns:
             int: Length of the nucleotide sequences.
         """
-        return len(self.cds_annotations)
+        return len(self.dataset)
 
     def __getitem__(self, idx: int) -> Tuple[str, List[int]]:
         """
@@ -261,14 +268,14 @@ class ChromosomeDataset(TorchDataset):
             Tuple[str, List[int]]: The CDS nucleotide sequence and a mask indicating CDS regions.
         """
 
-        ann = self.cds_annotations[idx]
+        ann = self.dataset[idx]
+
         entry = ann["cds_coord"]
         sliding_window_id = ann["sliding_window_id"]
-
-        strand = entry["strand"]
-
-        cds_coords = entry["cds_coords"]
-        cds_len = self._length_cds_coord(cds_coords)
+        gene_id = ann["gene_id"]
+        
+        strand = self.cds_annotations[gene_id]["strand"]
+        sequence = self.cds_annotations[gene_id]["sequence"]
 
         #    [CCC MMM CCC]
         #         3,5
@@ -276,27 +283,19 @@ class ChromosomeDataset(TorchDataset):
         # 0: [CCC MMM C]
         # 1: [ CC MMM CC]
         # 2: [  C MMM CCC]
-        cds_start = min(start for start, _ in cds_coords)
-        cds_end = max(end for _, end in cds_coords)
+        cds_start, cds_end = entry
+        cds_len = cds_end - cds_start
 
         flank_left = int(cds_len * self.item_length_proportion) - sliding_window_id
         flank_right = int(cds_len * self.item_length_proportion // 2) + sliding_window_id
-        window_len = int((cds_end - cds_start) + (flank_left) + (flank_right))
+        # window_len = int((cds_end - cds_start) + (flank_left) + (flank_right))
 
-        use_non_cds = random.random() < self.non_cds_sample_prob
-        non_cds_window = self._sample_non_cds_window(window_len) if use_non_cds else None
-        if non_cds_window is not None:
-            region_start, region_end = non_cds_window
-            dna_sequence = self.sequences[region_start:region_end]
-            mask = [0] * (region_end - region_start)
-        else:
-            region_start = int(max(0, cds_start - flank_left))
-            region_end = int(min(len(self.sequences), cds_end + flank_right))
-            dna_sequence = self.sequences[region_start:region_end]
-            mask = [0] * (region_end - region_start)
-            for start, end in cds_coords:
-                for i in range(max(start, region_start), min(end, region_end)):
-                    mask[i - region_start] = 1
+        region_start = int(max(0, cds_start - flank_left))
+        region_end = int(min(len(sequence), cds_end + flank_right))
+        dna_sequence = sequence[region_start:region_end]
+        mask = [0] * (region_end - region_start)
+        for i in range(max(cds_start, region_start), min(cds_end, region_end)):
+            mask[i - region_start] = 1
 
         if strand == "-":
             complement = str.maketrans('ACGT', 'TGCA')
