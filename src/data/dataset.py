@@ -155,7 +155,7 @@ class ChromosomeDataset(TorchDataset):
             } for gene_id, data in gene_annotations.items()
         }
     
-    def _create_dataset(self, annotations: dict[str, dict]) -> List[dict]:
+    def _create_dataset(self, annotations):
         dataset: List[dict] = []
         for gene_id, entry in annotations.items():
             cds_coords = entry["cds_coords"]
