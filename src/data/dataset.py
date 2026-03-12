@@ -108,9 +108,6 @@ class ChromosomeDataset(TorchDataset):
                 raise ValueError(f"No CDS coordinates found for transcript {transcript_id}")
             coords = data["cds_coords"]
             coords.sort(key=lambda x: x[0])
-
-            if data["strand"] == "-":
-                coords = coords[::-1]
             
             dataset.append({
                 "transcript_id": transcript_id,
@@ -135,10 +132,11 @@ class ChromosomeDataset(TorchDataset):
         for gene_id, data in gene_annotations.items():
             data["cds_coords"] = self._merge_intervals(data["cds_coords"])
 
-            gene_annotations[gene_id]["sequence"] = [
+            sequence = [
                 self._get_indexed_sequence(start, end, reverse=False)
                 for start, end in data["cds_coords"]
             ]
+            gene_annotations[gene_id]["sequence"] = "".join(sequence)
 
             new_coords: List[Tuple[int, int]] = []
             for seq in gene_annotations[gene_id]["cds_coords"]:
