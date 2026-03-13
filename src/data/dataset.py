@@ -286,7 +286,6 @@ class ChromosomeDataset(TorchDataset):
 
         flank_left = int(cds_len * self.item_length_proportion) - sliding_window_id
         flank_right = int(cds_len * self.item_length_proportion // 2) + sliding_window_id
-        # window_len = int((cds_end - cds_start) + (flank_left) + (flank_right))
 
         region_start = int(max(0, cds_start - flank_left))
         region_end = int(min(len(sequence), cds_end + flank_right))
