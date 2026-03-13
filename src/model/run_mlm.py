@@ -615,6 +615,7 @@ def main():
 
     if data_args.max_seq_length is None:
         max_seq_length = tokenizer.model_max_length
+        print("[DnaBert2] model_max_length:", tokenizer.model_max_length)
         if max_seq_length > 1024:
             logger.warning(
                 "The chosen tokenizer supports a `model_max_length` that is longer than the default `block_size` value"
