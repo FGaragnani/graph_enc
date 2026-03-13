@@ -350,7 +350,6 @@ class DataCollatorForCDSMaskedLM(DataCollatorForLanguageModeling):
                 max_length=self.max_length,
                 return_special_tokens_mask=True,
                 return_offsets_mapping=True,
-                return_length=True,
             )
 
             offset_mappings = batch.pop("offset_mapping")
