@@ -47,12 +47,12 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --data_path /homes/fgaragnani/ai4bio/graph_enc/data/ \
   --use_cds_mask true \
   --only_protein_coding false \
-  --max_seq_length 1024 \
+  --max_seq_length 768 \
   --mlm_probability 0.15 \
   --item_length_proportion 1.0 \
   --output_dir ${output_dir} \
-  --per_device_train_batch_size 4 \
-  --per_device_eval_batch_size 4 \
+  --per_device_train_batch_size 8 \
+  --per_device_eval_batch_size 8 \
   --learning_rate 5e-4 \
   --max_steps 40000 \
   --warmup_steps 1200 \

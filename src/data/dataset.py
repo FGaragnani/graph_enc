@@ -289,7 +289,7 @@ class ChromosomeDataset(TorchDataset):
         flank_left = int(cds_len * self.item_length_proportion) - sliding_window_id
         flank_right = int(cds_len * self.item_length_proportion // 2) + sliding_window_id
         window_len = flank_left + cds_len + flank_right
-        
+
         if self.min_cds_length is not None and window_len < self.min_cds_length:
             missing = self.min_cds_length - window_len
             flank_left += missing // 2
@@ -352,8 +352,6 @@ class DataCollatorForCDSMaskedLM(DataCollatorForLanguageModeling):
                 return_offsets_mapping=True,
                 return_length=True,
             )
-            tokenized_lengths = batch.pop("length", None)
-            print("[DataCollatorForCDSMaskedLM] Tokenized sequence lengths:", tokenized_lengths)
 
             offset_mappings = batch.pop("offset_mapping")
             token_cds_masks = []
