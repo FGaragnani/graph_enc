@@ -239,6 +239,10 @@ class DataTrainingArguments:
         default=None,
         metadata={"help": "Proportion of the CDS length to use as flanking regions. If not set, defaults to 0.5."},
     )
+    min_cds_len: Optional[int] = field(
+        default=None,
+        metadata={"help": "Minimum length of the CDS region to include in the dataset. If not set, no minimum length is applied."},
+    )
     debug_print_sample_stats_batches: int = field(
         default=5,
         metadata={
@@ -398,6 +402,7 @@ def main():
             data_path=data_args.data_path,
             only_protein_coding=data_args.only_protein_coding,
             item_length_proportion=data_args.item_length_proportion,
+            min_cds_length=data_args.min_cds_len,
         )
         cds_dataset = CDSMaskingDataset(base_dataset)
         cds_train_dataset = cds_dataset

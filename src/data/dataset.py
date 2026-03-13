@@ -15,6 +15,7 @@ class ChromosomeDataset(TorchDataset):
         only_protein_coding: bool = True,
         non_cds_sample_prob: float = 0.5,
         item_length_proportion: Optional[float] = None,
+        min_cds_length: Optional[int] = None,
     ):
         """
         Initialize the ChromosomeDataset with paths to FASTA and GTF files.
@@ -27,6 +28,7 @@ class ChromosomeDataset(TorchDataset):
         self.only_protein_coding: bool = only_protein_coding
         self.non_cds_sample_prob: float = non_cds_sample_prob
         self.item_length_proportion: float = item_length_proportion if item_length_proportion is not None else 0.5
+        self.min_cds_length: Optional[int] = min_cds_length
 
         if os.path.isdir(self.data_path):
             self.sequences, self.cds_annotations = self._load_from_folder(self.data_path)
@@ -286,6 +288,13 @@ class ChromosomeDataset(TorchDataset):
 
         flank_left = int(cds_len * self.item_length_proportion) - sliding_window_id
         flank_right = int(cds_len * self.item_length_proportion // 2) + sliding_window_id
+        window_len = flank_left + cds_len + flank_right
+        print("[ChromosomeDataset] CDS length: ", cds_len, ", flank left:", flank_left, ", flank right:", flank_right, ", window length:", window_len)
+
+        if self.min_cds_length is not None and window_len < self.min_cds_length:
+            missing = self.min_cds_length - window_len
+            flank_left += missing // 2
+            flank_right += missing - (missing // 2)
 
         region_start = int(max(0, cds_start - flank_left))
         region_end = int(min(len(sequence), cds_end + flank_right))
