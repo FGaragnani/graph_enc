@@ -46,7 +46,7 @@ torchrun --nproc_per_node=2 --master_port=${MASTER_PORT} src/train/train.py \
   --tokenizer_name ./src/model \
   --data_path /homes/fgaragnani/ai4bio/graph_enc/data/ \
   --use_cds_mask true \
-  --only_protein_coding true \
+  --only_protein_coding false \
   --max_seq_length 512 \
   --mlm_probability 0.15 \
   --item_length_proportion 1.0 \
@@ -61,7 +61,7 @@ torchrun --nproc_per_node=2 --master_port=${MASTER_PORT} src/train/train.py \
   --adam_beta2 0.98 \
   --adam_eps 1e-6 \
   --save_strategy steps \
-  --save_steps 2000 \
+  --save_steps 20000 \
   --ddp_find_unused_parameters false \
   --evaluation_strategy epoch \
   --do_train \
