@@ -47,6 +47,7 @@ torchrun --nproc_per_node=2 --master_port=${MASTER_PORT} src/train/train.py \
   --data_path /homes/fgaragnani/ai4bio/graph_enc/data/ \
   --use_cds_mask true \
   --only_protein_coding false \
+  --max_seq_length 512 \
   --mlm_probability 0.15 \
   --item_length_proportion 1.0 \
   --output_dir ${output_dir} \
