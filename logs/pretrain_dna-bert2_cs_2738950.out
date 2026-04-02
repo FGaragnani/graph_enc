@@ -1,0 +1,395 @@
+ERROR: Unable to locate a modulefile for 'anaconda3/2022.05'
+ERROR: Unable to locate a modulefile for 'profile/deeplrn'
+Loading cuda/11.8.0-none-none
+  ERROR: Conflicting cuda is loaded
+03/12/2026 17:36:52 - WARNING - graph_enc.src.model.run_mlm - Process rank: 1, device: cuda:1, n_gpu: 1distributed training: True, 16-bits training: False
+03/12/2026 17:36:52 - WARNING - graph_enc.src.model.run_mlm - Process rank: 0, device: cuda:0, n_gpu: 1distributed training: True, 16-bits training: False
+03/12/2026 17:36:52 - INFO - graph_enc.src.model.run_mlm - Training/evaluation parameters TrainingArguments(
+_n_gpu=1,
+adafactor=False,
+adam_beta1=0.9,
+adam_beta2=0.98,
+adam_epsilon=1e-06,
+auto_find_batch_size=False,
+bf16=False,
+bf16_full_eval=False,
+data_seed=None,
+dataloader_drop_last=False,
+dataloader_num_workers=0,
+dataloader_pin_memory=True,
+ddp_backend=None,
+ddp_bucket_cap_mb=None,
+ddp_find_unused_parameters=False,
+ddp_timeout=1800,
+debug=[],
+deepspeed=None,
+disable_tqdm=False,
+do_eval=True,
+do_predict=False,
+do_train=True,
+eval_accumulation_steps=None,
+eval_delay=0,
+eval_steps=None,
+evaluation_strategy=epoch,
+fp16=False,
+fp16_backend=auto,
+fp16_full_eval=False,
+fp16_opt_level=O1,
+fsdp=[],
+fsdp_config={'fsdp_min_num_params': 0, 'xla': False, 'xla_fsdp_grad_ckpt': False},
+fsdp_min_num_params=0,
+fsdp_transformer_layer_cls_to_wrap=None,
+full_determinism=False,
+gradient_accumulation_steps=1,
+gradient_checkpointing=False,
+greater_is_better=None,
+group_by_length=False,
+half_precision_backend=auto,
+hub_model_id=None,
+hub_private_repo=False,
+hub_strategy=every_save,
+hub_token=<HUB_TOKEN>,
+ignore_data_skip=False,
+include_inputs_for_metrics=False,
+jit_mode_eval=False,
+label_names=None,
+label_smoothing_factor=0.0,
+learning_rate=0.0005,
+length_column_name=length,
+load_best_model_at_end=False,
+local_rank=0,
+log_level=passive,
+log_level_replica=warning,
+log_on_each_node=True,
+logging_dir=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/runs/Mar12_17-36-52_gervasoni,
+logging_first_step=True,
+logging_nan_inf_filter=True,
+logging_steps=10,
+logging_strategy=steps,
+lr_scheduler_type=linear,
+max_grad_norm=1.0,
+max_steps=40000,
+metric_for_best_model=None,
+mp_parameters=,
+no_cuda=False,
+num_train_epochs=3.0,
+optim=adamw_hf,
+optim_args=None,
+output_dir=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs,
+overwrite_output_dir=True,
+past_index=-1,
+per_device_eval_batch_size=16,
+per_device_train_batch_size=16,
+prediction_loss_only=False,
+push_to_hub=False,
+push_to_hub_model_id=None,
+push_to_hub_organization=None,
+push_to_hub_token=<PUSH_TO_HUB_TOKEN>,
+ray_scope=last,
+remove_unused_columns=True,
+report_to=[],
+resume_from_checkpoint=None,
+run_name=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs,
+save_on_each_node=False,
+save_safetensors=False,
+save_steps=2000,
+save_strategy=steps,
+save_total_limit=None,
+seed=42,
+sharded_ddp=[],
+skip_memory_metrics=True,
+tf32=None,
+torch_compile=False,
+torch_compile_backend=None,
+torch_compile_mode=None,
+torchdynamo=None,
+tpu_metrics_debug=False,
+tpu_num_cores=None,
+use_ipex=False,
+use_legacy_prediction_loop=False,
+use_mps_device=False,
+warmup_ratio=0.0,
+warmup_steps=1200,
+weight_decay=1e-05,
+xpu_backend=None,
+)
+03/12/2026 17:38:35 - INFO - graph_enc.src.model.run_mlm - Vocabulary size: 4096
+03/12/2026 17:38:35 - INFO - graph_enc.src.model.run_mlm - Training new model from scratch
+[Info] Computed num_train_epochs=1 (steps_per_epoch=530662, effective_batch_size=32, world_size=2)
+[Info] Computed num_train_epochs=1 (steps_per_epoch=530662, effective_batch_size=32, world_size=2)
+[BatchStats] sample=0 masked_tokens_pct=8.57 unique_token_ids=117
+[BatchStats] sample=1 masked_tokens_pct=15.04 unique_token_ids=269
+[BatchStats] sample=2 masked_tokens_pct=7.53 unique_token_ids=84
+[BatchStats] sample=3 masked_tokens_pct=13.04 unique_token_ids=20
+[BatchStats] sample=4 masked_tokens_pct=5.56 unique_token_ids=49
+[BatchStats] sample=5 masked_tokens_pct=4.82 unique_token_ids=77
+[BatchStats] sample=6 masked_tokens_pct=6.33 unique_token_ids=69
+[BatchStats] sample=7 masked_tokens_pct=6.02 unique_token_ids=119
+[BatchStats] sample=8 masked_tokens_pct=11.52 unique_token_ids=308
+[BatchStats] sample=9 masked_tokens_pct=8.93 unique_token_ids=45
+[BatchStats] sample=10 masked_tokens_pct=5.15 unique_token_ids=84
+[BatchStats] sample=11 masked_tokens_pct=6.32 unique_token_ids=83
+[BatchStats] sample=12 masked_tokens_pct=9.27 unique_token_ids=125
+[BatchStats] sample=13 masked_tokens_pct=6.94 unique_token_ids=62
+[BatchStats] sample=14 masked_tokens_pct=8.22 unique_token_ids=67
+[BatchStats] sample=15 masked_tokens_pct=11.21 unique_token_ids=91
+[BatchStats] sample=0 masked_tokens_pct=13.92 unique_token_ids=195
+[BatchStats] sample=1 masked_tokens_pct=9.87 unique_token_ids=125
+[BatchStats] sample=2 masked_tokens_pct=14.77 unique_token_ids=76
+[BatchStats] sample=3 masked_tokens_pct=7.69 unique_token_ids=78
+[BatchStats] sample=4 masked_tokens_pct=9.38 unique_token_ids=58
+[BatchStats] sample=5 masked_tokens_pct=8.97 unique_token_ids=69
+[BatchStats] sample=6 masked_tokens_pct=6.98 unique_token_ids=130
+[BatchStats] sample=7 masked_tokens_pct=12.09 unique_token_ids=76
+[BatchStats] sample=8 masked_tokens_pct=5.80 unique_token_ids=57
+[BatchStats] sample=9 masked_tokens_pct=0.00 unique_token_ids=21
+[BatchStats] sample=10 masked_tokens_pct=9.57 unique_token_ids=239
+[BatchStats] sample=11 masked_tokens_pct=5.88 unique_token_ids=57
+[BatchStats] sample=12 masked_tokens_pct=15.62 unique_token_ids=29
+[BatchStats] sample=13 masked_tokens_pct=12.33 unique_token_ids=124
+[BatchStats] sample=14 masked_tokens_pct=5.69 unique_token_ids=107
+[BatchStats] sample=15 masked_tokens_pct=3.45 unique_token_ids=55
+{'loss': 8.4512, 'learning_rate': 4.166666666666667e-07, 'epoch': 0.0}
+[BatchStats] sample=0 masked_tokens_pct=16.28 unique_token_ids=152
+[BatchStats] sample=1 masked_tokens_pct=8.00 unique_token_ids=46
+[BatchStats] sample=2 masked_tokens_pct=11.36 unique_token_ids=275
+[BatchStats] sample=3 masked_tokens_pct=4.62 unique_token_ids=60
+[BatchStats] sample=4 masked_tokens_pct=8.00 unique_token_ids=44
+[BatchStats] sample=5 masked_tokens_pct=7.17 unique_token_ids=186
+[BatchStats] sample=6 masked_tokens_pct=11.26 unique_token_ids=255
+[BatchStats] sample=7 masked_tokens_pct=5.63 unique_token_ids=63
+[BatchStats] sample=8 masked_tokens_pct=7.55 unique_token_ids=97
+[BatchStats] sample=9 masked_tokens_pct=6.92 unique_token_ids=225
+[BatchStats] sample=10 masked_tokens_pct=6.67 unique_token_ids=53
+[BatchStats] sample=11 masked_tokens_pct=10.67 unique_token_ids=258
+[BatchStats] sample=12 masked_tokens_pct=6.35 unique_token_ids=193
+[BatchStats] sample=13 masked_tokens_pct=7.69 unique_token_ids=36
+[BatchStats] sample=14 masked_tokens_pct=9.62 unique_token_ids=45
+[BatchStats] sample=15 masked_tokens_pct=9.52 unique_token_ids=68
+[BatchStats] sample=0 masked_tokens_pct=6.52 unique_token_ids=82
+[BatchStats] sample=1 masked_tokens_pct=9.62 unique_token_ids=89
+[BatchStats] sample=2 masked_tokens_pct=12.50 unique_token_ids=60
+[BatchStats] sample=3 masked_tokens_pct=8.93 unique_token_ids=170
+[BatchStats] sample=4 masked_tokens_pct=9.68 unique_token_ids=48
+[BatchStats] sample=5 masked_tokens_pct=10.16 unique_token_ids=305
+[BatchStats] sample=6 masked_tokens_pct=11.32 unique_token_ids=45
+[BatchStats] sample=7 masked_tokens_pct=5.88 unique_token_ids=16
+[BatchStats] sample=8 masked_tokens_pct=9.76 unique_token_ids=176
+[BatchStats] sample=9 masked_tokens_pct=13.48 unique_token_ids=314
+[BatchStats] sample=10 masked_tokens_pct=9.96 unique_token_ids=336
+[BatchStats] sample=11 masked_tokens_pct=10.94 unique_token_ids=303
+[BatchStats] sample=12 masked_tokens_pct=12.00 unique_token_ids=23
+[BatchStats] sample=13 masked_tokens_pct=6.98 unique_token_ids=79
+[BatchStats] sample=14 masked_tokens_pct=0.00 unique_token_ids=19
+[BatchStats] sample=15 masked_tokens_pct=14.75 unique_token_ids=52
+[BatchStats] sample=0 masked_tokens_pct=9.62 unique_token_ids=86
+[BatchStats] sample=1 masked_tokens_pct=7.83 unique_token_ids=97
+[BatchStats] sample=2 masked_tokens_pct=6.10 unique_token_ids=72
+[BatchStats] sample=3 masked_tokens_pct=10.74 unique_token_ids=335
+[BatchStats] sample=4 masked_tokens_pct=12.14 unique_token_ids=95
+[BatchStats] sample=5 masked_tokens_pct=9.68 unique_token_ids=54
+[BatchStats] sample=6 masked_tokens_pct=4.35 unique_token_ids=65
+[BatchStats] sample=7 masked_tokens_pct=9.35 unique_token_ids=90
+[BatchStats] sample=8 masked_tokens_pct=13.95 unique_token_ids=35
+[BatchStats] sample=9 masked_tokens_pct=2.67 unique_token_ids=70
+[BatchStats] sample=10 masked_tokens_pct=15.55 unique_token_ids=205
+[BatchStats] sample=11 masked_tokens_pct=17.95 unique_token_ids=33
+[BatchStats] sample=12 masked_tokens_pct=10.35 unique_token_ids=253
+[BatchStats] sample=13 masked_tokens_pct=3.57 unique_token_ids=28
+[BatchStats] sample=14 masked_tokens_pct=5.56 unique_token_ids=96
+[BatchStats] sample=15 masked_tokens_pct=8.11 unique_token_ids=97
+[BatchStats] sample=0 masked_tokens_pct=10.16 unique_token_ids=279
+[BatchStats] sample=1 masked_tokens_pct=12.73 unique_token_ids=129
+[BatchStats] sample=2 masked_tokens_pct=6.56 unique_token_ids=51
+[BatchStats] sample=3 masked_tokens_pct=10.42 unique_token_ids=43
+[BatchStats] sample=4 masked_tokens_pct=15.43 unique_token_ids=288
+[BatchStats] sample=5 masked_tokens_pct=10.74 unique_token_ids=114
+[BatchStats] sample=6 masked_tokens_pct=14.55 unique_token_ids=48
+[BatchStats] sample=7 masked_tokens_pct=3.77 unique_token_ids=52
+[BatchStats] sample=8 masked_tokens_pct=10.00 unique_token_ids=68
+[BatchStats] sample=9 masked_tokens_pct=12.50 unique_token_ids=50
+[BatchStats] sample=10 masked_tokens_pct=10.00 unique_token_ids=64
+[BatchStats] sample=11 masked_tokens_pct=5.63 unique_token_ids=65
+[BatchStats] sample=12 masked_tokens_pct=5.47 unique_token_ids=334
+[BatchStats] sample=13 masked_tokens_pct=12.77 unique_token_ids=79
+[BatchStats] sample=14 masked_tokens_pct=7.89 unique_token_ids=32
+[BatchStats] sample=15 masked_tokens_pct=11.33 unique_token_ids=336
+[BatchStats] sample=0 masked_tokens_pct=15.56 unique_token_ids=72
+[BatchStats] sample=1 masked_tokens_pct=15.79 unique_token_ids=147
+[BatchStats] sample=2 masked_tokens_pct=6.67 unique_token_ids=48
+[BatchStats] sample=3 masked_tokens_pct=10.32 unique_token_ids=123
+[BatchStats] sample=4 masked_tokens_pct=6.58 unique_token_ids=70
+[BatchStats] sample=5 masked_tokens_pct=5.43 unique_token_ids=80
+[BatchStats] sample=6 masked_tokens_pct=8.33 unique_token_ids=35
+[BatchStats] sample=7 masked_tokens_pct=4.00 unique_token_ids=45
+[BatchStats] sample=8 masked_tokens_pct=5.17 unique_token_ids=55
+[BatchStats] sample=9 masked_tokens_pct=8.29 unique_token_ids=170
+[BatchStats] sample=10 masked_tokens_pct=6.25 unique_token_ids=166
+[BatchStats] sample=11 masked_tokens_pct=16.07 unique_token_ids=165
+[BatchStats] sample=12 masked_tokens_pct=13.77 unique_token_ids=263
+[BatchStats] sample=13 masked_tokens_pct=12.89 unique_token_ids=193
+[BatchStats] sample=14 masked_tokens_pct=15.09 unique_token_ids=42
+[BatchStats] sample=15 masked_tokens_pct=7.50 unique_token_ids=36
+[BatchStats] sample=0 masked_tokens_pct=6.90 unique_token_ids=51
+[BatchStats] sample=1 masked_tokens_pct=4.00 unique_token_ids=24
+[BatchStats] sample=2 masked_tokens_pct=19.44 unique_token_ids=32
+[BatchStats] sample=3 masked_tokens_pct=11.51 unique_token_ids=234
+[BatchStats] sample=4 masked_tokens_pct=9.18 unique_token_ids=285
+[BatchStats] sample=5 masked_tokens_pct=10.23 unique_token_ids=74
+[BatchStats] sample=6 masked_tokens_pct=9.20 unique_token_ids=74
+[BatchStats] sample=7 masked_tokens_pct=18.58 unique_token_ids=204
+[BatchStats] sample=8 masked_tokens_pct=9.62 unique_token_ids=187
+[BatchStats] sample=9 masked_tokens_pct=7.07 unique_token_ids=81
+[BatchStats] sample=10 masked_tokens_pct=10.92 unique_token_ids=100
+[BatchStats] sample=11 masked_tokens_pct=6.94 unique_token_ids=147
+[BatchStats] sample=12 masked_tokens_pct=11.49 unique_token_ids=157
+[BatchStats] sample=13 masked_tokens_pct=10.66 unique_token_ids=170
+[BatchStats] sample=14 masked_tokens_pct=8.16 unique_token_ids=46
+[BatchStats] sample=15 masked_tokens_pct=7.55 unique_token_ids=47
+[BatchStats] sample=0 masked_tokens_pct=3.23 unique_token_ids=51
+[BatchStats] sample=1 masked_tokens_pct=8.14 unique_token_ids=127
+[BatchStats] sample=2 masked_tokens_pct=15.23 unique_token_ids=289
+[BatchStats] sample=3 masked_tokens_pct=12.12 unique_token_ids=31
+[BatchStats] sample=4 masked_tokens_pct=9.80 unique_token_ids=188
+[BatchStats] sample=5 masked_tokens_pct=7.48 unique_token_ids=89
+[BatchStats] sample=6 masked_tokens_pct=9.21 unique_token_ids=66
+[BatchStats] sample=7 masked_tokens_pct=12.50 unique_token_ids=304
+[BatchStats] sample=8 masked_tokens_pct=6.35 unique_token_ids=104
+[BatchStats] sample=9 masked_tokens_pct=10.77 unique_token_ids=56
+[BatchStats] sample=10 masked_tokens_pct=8.33 unique_token_ids=44
+[BatchStats] sample=11 masked_tokens_pct=10.14 unique_token_ids=62
+[BatchStats] sample=12 masked_tokens_pct=2.44 unique_token_ids=39
+[BatchStats] sample=13 masked_tokens_pct=17.58 unique_token_ids=71
+[BatchStats] sample=14 masked_tokens_pct=6.98 unique_token_ids=79
+[BatchStats] sample=15 masked_tokens_pct=14.77 unique_token_ids=72
+[BatchStats] sample=0 masked_tokens_pct=10.11 unique_token_ids=246
+[BatchStats] sample=1 masked_tokens_pct=7.53 unique_token_ids=173
+[BatchStats] sample=2 masked_tokens_pct=13.48 unique_token_ids=312
+[BatchStats] sample=3 masked_tokens_pct=12.44 unique_token_ids=272
+[BatchStats] sample=4 masked_tokens_pct=14.87 unique_token_ids=299
+[BatchStats] sample=5 masked_tokens_pct=8.33 unique_token_ids=43
+[BatchStats] sample=6 masked_tokens_pct=5.80 unique_token_ids=171
+[BatchStats] sample=7 masked_tokens_pct=17.50 unique_token_ids=30
+[BatchStats] sample=8 masked_tokens_pct=9.52 unique_token_ids=58
+[BatchStats] sample=9 masked_tokens_pct=12.17 unique_token_ids=95
+[BatchStats] sample=10 masked_tokens_pct=5.21 unique_token_ids=81
+[BatchStats] sample=11 masked_tokens_pct=8.59 unique_token_ids=290
+[BatchStats] sample=12 masked_tokens_pct=4.44 unique_token_ids=42
+[BatchStats] sample=13 masked_tokens_pct=12.98 unique_token_ids=241
+[BatchStats] sample=14 masked_tokens_pct=13.09 unique_token_ids=338
+[BatchStats] sample=15 masked_tokens_pct=11.36 unique_token_ids=111
+{'loss': 8.4078, 'learning_rate': 4.166666666666667e-06, 'epoch': 0.0}
+{'loss': 8.2306, 'learning_rate': 8.333333333333334e-06, 'epoch': 0.0}
+{'loss': 8.0842, 'learning_rate': 1.25e-05, 'epoch': 0.0}
+{'loss': 7.9618, 'learning_rate': 1.6666666666666667e-05, 'epoch': 0.0}
+{'loss': 7.82, 'learning_rate': 2.0833333333333333e-05, 'epoch': 0.0}
+{'loss': 7.7368, 'learning_rate': 2.5e-05, 'epoch': 0.0}
+{'loss': 7.5945, 'learning_rate': 2.9166666666666666e-05, 'epoch': 0.0}
+{'loss': 7.5059, 'learning_rate': 3.3333333333333335e-05, 'epoch': 0.0}
+{'loss': 7.355, 'learning_rate': 3.75e-05, 'epoch': 0.0}
+{'loss': 7.2935, 'learning_rate': 4.1666666666666665e-05, 'epoch': 0.0}
+{'loss': 7.1447, 'learning_rate': 4.5833333333333334e-05, 'epoch': 0.0}
+{'loss': 7.0787, 'learning_rate': 5e-05, 'epoch': 0.0}
+{'loss': 6.9885, 'learning_rate': 5.416666666666667e-05, 'epoch': 0.0}
+{'loss': 6.9524, 'learning_rate': 5.833333333333333e-05, 'epoch': 0.0}
+{'loss': 6.8108, 'learning_rate': 6.25e-05, 'epoch': 0.0}
+{'loss': 6.8488, 'learning_rate': 6.666666666666667e-05, 'epoch': 0.0}
+{'loss': 6.8024, 'learning_rate': 7.083333333333334e-05, 'epoch': 0.0}
+{'loss': 6.7319, 'learning_rate': 7.5e-05, 'epoch': 0.0}
+{'loss': 6.7762, 'learning_rate': 7.916666666666666e-05, 'epoch': 0.0}
+{'loss': 6.6166, 'learning_rate': 8.333333333333333e-05, 'epoch': 0.0}
+{'loss': 6.6957, 'learning_rate': 8.75e-05, 'epoch': 0.0}
+{'loss': 6.6315, 'learning_rate': 9.166666666666667e-05, 'epoch': 0.0}
+{'loss': 6.6084, 'learning_rate': 9.583333333333334e-05, 'epoch': 0.0}
+{'loss': 6.6135, 'learning_rate': 0.0001, 'epoch': 0.0}
+{'loss': 6.5253, 'learning_rate': 0.00010416666666666667, 'epoch': 0.0}
+{'loss': 6.627, 'learning_rate': 0.00010833333333333334, 'epoch': 0.0}
+{'loss': 6.5488, 'learning_rate': 0.00011250000000000001, 'epoch': 0.0}
+{'loss': 6.5124, 'learning_rate': 0.00011666666666666667, 'epoch': 0.0}
+{'loss': 6.4425, 'learning_rate': 0.00012083333333333333, 'epoch': 0.0}
+{'loss': 6.5674, 'learning_rate': 0.000125, 'epoch': 0.0}
+{'loss': 6.4753, 'learning_rate': 0.00012916666666666667, 'epoch': 0.0}
+{'loss': 6.4631, 'learning_rate': 0.00013333333333333334, 'epoch': 0.0}
+{'loss': 6.5057, 'learning_rate': 0.0001375, 'epoch': 0.0}
+{'loss': 6.4702, 'learning_rate': 0.00014166666666666668, 'epoch': 0.0}
+{'loss': 6.4241, 'learning_rate': 0.00014583333333333335, 'epoch': 0.0}
+{'loss': 6.5125, 'learning_rate': 0.00015, 'epoch': 0.0}
+{'loss': 6.4664, 'learning_rate': 0.00015416666666666668, 'epoch': 0.0}
+{'loss': 6.4481, 'learning_rate': 0.00015833333333333332, 'epoch': 0.0}
+{'loss': 6.4226, 'learning_rate': 0.00016250000000000002, 'epoch': 0.0}
+{'loss': 6.4257, 'learning_rate': 0.00016666666666666666, 'epoch': 0.0}
+{'loss': 6.4548, 'learning_rate': 0.00017083333333333333, 'epoch': 0.0}
+{'loss': 6.4121, 'learning_rate': 0.000175, 'epoch': 0.0}
+{'loss': 6.3835, 'learning_rate': 0.00017916666666666667, 'epoch': 0.0}
+{'loss': 6.3822, 'learning_rate': 0.00018333333333333334, 'epoch': 0.0}
+{'loss': 6.4573, 'learning_rate': 0.0001875, 'epoch': 0.0}
+{'loss': 6.4023, 'learning_rate': 0.00019166666666666667, 'epoch': 0.0}
+{'loss': 6.4126, 'learning_rate': 0.00019583333333333334, 'epoch': 0.0}
+{'loss': 6.3748, 'learning_rate': 0.0002, 'epoch': 0.0}
+{'loss': 6.3848, 'learning_rate': 0.00020416666666666668, 'epoch': 0.0}
+{'loss': 6.4536, 'learning_rate': 0.00020833333333333335, 'epoch': 0.0}
+{'loss': 6.4285, 'learning_rate': 0.0002125, 'epoch': 0.0}
+{'loss': 6.4017, 'learning_rate': 0.00021666666666666668, 'epoch': 0.0}
+{'loss': 6.3849, 'learning_rate': 0.00022083333333333333, 'epoch': 0.0}
+{'loss': 6.4541, 'learning_rate': 0.00022500000000000002, 'epoch': 0.0}
+{'loss': 6.3742, 'learning_rate': 0.00022916666666666666, 'epoch': 0.0}
+{'loss': 6.3615, 'learning_rate': 0.00023333333333333333, 'epoch': 0.0}
+{'loss': 6.4197, 'learning_rate': 0.0002375, 'epoch': 0.0}
+{'loss': 6.3008, 'learning_rate': 0.00024166666666666667, 'epoch': 0.0}
+{'loss': 6.3216, 'learning_rate': 0.0002458333333333333, 'epoch': 0.0}
+{'loss': 6.4277, 'learning_rate': 0.00025, 'epoch': 0.0}
+{'loss': 6.4081, 'learning_rate': 0.00025416666666666665, 'epoch': 0.0}
+{'loss': 6.3694, 'learning_rate': 0.00025833333333333334, 'epoch': 0.0}
+{'loss': 6.4158, 'learning_rate': 0.00026250000000000004, 'epoch': 0.0}
+{'loss': 6.4342, 'learning_rate': 0.0002666666666666667, 'epoch': 0.0}
+{'loss': 6.3644, 'learning_rate': 0.0002708333333333333, 'epoch': 0.0}
+{'loss': 6.4637, 'learning_rate': 0.000275, 'epoch': 0.0}
+{'loss': 6.4184, 'learning_rate': 0.00027916666666666666, 'epoch': 0.0}
+{'loss': 6.4292, 'learning_rate': 0.00028333333333333335, 'epoch': 0.0}
+{'loss': 6.3797, 'learning_rate': 0.0002875, 'epoch': 0.0}
+{'loss': 6.4001, 'learning_rate': 0.0002916666666666667, 'epoch': 0.0}
+{'loss': 6.3014, 'learning_rate': 0.00029583333333333333, 'epoch': 0.0}
+{'loss': 6.3578, 'learning_rate': 0.0003, 'epoch': 0.0}
+{'loss': 6.3983, 'learning_rate': 0.00030416666666666667, 'epoch': 0.0}
+{'loss': 6.3049, 'learning_rate': 0.00030833333333333337, 'epoch': 0.0}
+{'loss': 6.439, 'learning_rate': 0.0003125, 'epoch': 0.0}
+{'loss': 6.2552, 'learning_rate': 0.00031666666666666665, 'epoch': 0.0}
+{'loss': 6.3817, 'learning_rate': 0.00032083333333333334, 'epoch': 0.0}
+{'loss': 6.4567, 'learning_rate': 0.00032500000000000004, 'epoch': 0.0}
+{'loss': 6.3602, 'learning_rate': 0.0003291666666666667, 'epoch': 0.0}
+{'loss': 6.316, 'learning_rate': 0.0003333333333333333, 'epoch': 0.0}
+{'loss': 6.3637, 'learning_rate': 0.0003375, 'epoch': 0.0}
+{'loss': 6.4073, 'learning_rate': 0.00034166666666666666, 'epoch': 0.0}
+{'loss': 6.4115, 'learning_rate': 0.00034583333333333335, 'epoch': 0.0}
+{'loss': 6.3463, 'learning_rate': 0.00035, 'epoch': 0.0}
+{'loss': 6.4286, 'learning_rate': 0.0003541666666666667, 'epoch': 0.0}
+{'loss': 6.3661, 'learning_rate': 0.00035833333333333333, 'epoch': 0.0}
+{'loss': 6.4736, 'learning_rate': 0.0003625, 'epoch': 0.0}
+{'loss': 6.3538, 'learning_rate': 0.00036666666666666667, 'epoch': 0.0}
+{'loss': 6.3002, 'learning_rate': 0.00037083333333333337, 'epoch': 0.0}
+{'loss': 6.3194, 'learning_rate': 0.000375, 'epoch': 0.0}
+{'loss': 6.3173, 'learning_rate': 0.00037916666666666665, 'epoch': 0.0}
+{'loss': 6.3732, 'learning_rate': 0.00038333333333333334, 'epoch': 0.0}
+{'loss': 6.3862, 'learning_rate': 0.00038750000000000004, 'epoch': 0.0}
+{'loss': 6.3467, 'learning_rate': 0.0003916666666666667, 'epoch': 0.0}
+{'loss': 6.4163, 'learning_rate': 0.0003958333333333333, 'epoch': 0.0}
+{'loss': 6.3639, 'learning_rate': 0.0004, 'epoch': 0.0}
+{'loss': 6.3888, 'learning_rate': 0.00040416666666666666, 'epoch': 0.0}
+{'loss': 6.4282, 'learning_rate': 0.00040833333333333336, 'epoch': 0.0}
+{'loss': 6.3331, 'learning_rate': 0.0004125, 'epoch': 0.0}
+{'loss': 6.3599, 'learning_rate': 0.0004166666666666667, 'epoch': 0.0}
+{'loss': 6.3695, 'learning_rate': 0.00042083333333333333, 'epoch': 0.0}
+{'loss': 6.3049, 'learning_rate': 0.000425, 'epoch': 0.0}
+{'loss': 6.3273, 'learning_rate': 0.00042916666666666667, 'epoch': 0.0}
+{'loss': 6.3897, 'learning_rate': 0.00043333333333333337, 'epoch': 0.0}
+{'loss': 6.4001, 'learning_rate': 0.0004375, 'epoch': 0.0}
+{'loss': 6.3608, 'learning_rate': 0.00044166666666666665, 'epoch': 0.0}
+{'loss': 6.4478, 'learning_rate': 0.00044583333333333335, 'epoch': 0.0}
+{'loss': 6.3396, 'learning_rate': 0.00045000000000000004, 'epoch': 0.0}
+{'loss': 6.3149, 'learning_rate': 0.0004541666666666667, 'epoch': 0.0}
+{'loss': 6.3656, 'learning_rate': 0.0004583333333333333, 'epoch': 0.0}
+{'loss': 6.4121, 'learning_rate': 0.0004625, 'epoch': 0.0}
+{'loss': 6.4046, 'learning_rate': 0.00046666666666666666, 'epoch': 0.0}
+{'loss': 6.3978, 'learning_rate': 0.00047083333333333336, 'epoch': 0.0}
+{'loss': 6.4284, 'learning_rate': 0.000475, 'epoch': 0.0}
+{'loss': 6.3487, 'learning_rate': 0.0004791666666666667, 'epoch': 0.0}

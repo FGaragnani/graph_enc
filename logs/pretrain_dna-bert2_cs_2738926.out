@@ -1,0 +1,2299 @@
+ERROR: Unable to locate a modulefile for 'anaconda3/2022.05'
+ERROR: Unable to locate a modulefile for 'profile/deeplrn'
+Loading cuda/11.8.0-none-none
+  ERROR: Conflicting cuda is loaded
+03/12/2026 16:19:33 - WARNING - graph_enc.src.model.run_mlm - Process rank: 0, device: cuda:0, n_gpu: 1distributed training: True, 16-bits training: False
+03/12/2026 16:19:33 - INFO - graph_enc.src.model.run_mlm - Training/evaluation parameters TrainingArguments(
+_n_gpu=1,
+adafactor=False,
+adam_beta1=0.9,
+adam_beta2=0.98,
+adam_epsilon=1e-06,
+auto_find_batch_size=False,
+bf16=False,
+bf16_full_eval=False,
+data_seed=None,
+dataloader_drop_last=False,
+dataloader_num_workers=0,
+dataloader_pin_memory=True,
+ddp_backend=None,
+ddp_bucket_cap_mb=None,
+ddp_find_unused_parameters=None,
+ddp_timeout=1800,
+debug=[],
+deepspeed=None,
+disable_tqdm=False,
+do_eval=True,
+do_predict=False,
+do_train=True,
+eval_accumulation_steps=None,
+eval_delay=0,
+eval_steps=None,
+evaluation_strategy=epoch,
+fp16=False,
+fp16_backend=auto,
+fp16_full_eval=False,
+fp16_opt_level=O1,
+fsdp=[],
+fsdp_config={'fsdp_min_num_params': 0, 'xla': False, 'xla_fsdp_grad_ckpt': False},
+fsdp_min_num_params=0,
+fsdp_transformer_layer_cls_to_wrap=None,
+full_determinism=False,
+gradient_accumulation_steps=1,
+gradient_checkpointing=False,
+greater_is_better=None,
+group_by_length=False,
+half_precision_backend=auto,
+hub_model_id=None,
+hub_private_repo=False,
+hub_strategy=every_save,
+hub_token=<HUB_TOKEN>,
+ignore_data_skip=False,
+include_inputs_for_metrics=False,
+jit_mode_eval=False,
+label_names=None,
+label_smoothing_factor=0.0,
+learning_rate=0.002,
+length_column_name=length,
+load_best_model_at_end=False,
+local_rank=0,
+log_level=passive,
+log_level_replica=warning,
+log_on_each_node=True,
+logging_dir=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/runs/Mar12_16-19-33_gervasoni,
+logging_first_step=True,
+logging_nan_inf_filter=True,
+logging_steps=10,
+logging_strategy=steps,
+lr_scheduler_type=linear,
+max_grad_norm=1.0,
+max_steps=40000,
+metric_for_best_model=None,
+mp_parameters=,
+no_cuda=False,
+num_train_epochs=3.0,
+optim=adamw_hf,
+optim_args=None,
+output_dir=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs,
+overwrite_output_dir=True,
+past_index=-1,
+per_device_eval_batch_size=16,
+per_device_train_batch_size=16,
+prediction_loss_only=False,
+push_to_hub=False,
+push_to_hub_model_id=None,
+push_to_hub_organization=None,
+push_to_hub_token=<PUSH_TO_HUB_TOKEN>,
+ray_scope=last,
+remove_unused_columns=True,
+report_to=[],
+resume_from_checkpoint=None,
+run_name=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs,
+save_on_each_node=False,
+save_safetensors=False,
+save_steps=2000,
+save_strategy=steps,
+save_total_limit=None,
+seed=42,
+sharded_ddp=[],
+skip_memory_metrics=True,
+tf32=None,
+torch_compile=False,
+torch_compile_backend=None,
+torch_compile_mode=None,
+torchdynamo=None,
+tpu_metrics_debug=False,
+tpu_num_cores=None,
+use_ipex=False,
+use_legacy_prediction_loop=False,
+use_mps_device=False,
+warmup_ratio=0.0,
+warmup_steps=1200,
+weight_decay=1e-05,
+xpu_backend=None,
+)
+03/12/2026 16:19:33 - WARNING - graph_enc.src.model.run_mlm - Process rank: 1, device: cuda:1, n_gpu: 1distributed training: True, 16-bits training: False
+[Info] Computed num_train_epochs=1 (steps_per_epoch=265332, effective_batch_size=32, world_size=2)
+03/12/2026 16:20:51 - INFO - graph_enc.src.model.run_mlm - Vocabulary size: 4096
+03/12/2026 16:20:51 - INFO - graph_enc.src.model.run_mlm - Training new model from scratch
+[Info] Computed num_train_epochs=1 (steps_per_epoch=265332, effective_batch_size=32, world_size=2)
+[BertDebug] region_len:  183 
+sequence_len:  2230
+[BertDebug] region_len:  252[BertDebug] region_len:  
+sequence_len:   1721584 
+
+sequence_len:  1306
+[BertDebug] region_len:  200 
+sequence_len:  2502
+[BertDebug] region_len:  723 
+sequence_len:  723
+[BertDebug] region_len:  1181 
+sequence_len:  1983
+[BertDebug] region_len:  231 
+sequence_len:  7623
+[BertDebug] region_len: [BertDebug] region_len:   3011469  
+sequence_len: 
+sequence_len:   9241499
+
+[BertDebug] region_len:  1041 
+sequence_len:  2691
+[BertDebug] region_len:  8307[BertDebug] region_len:   
+sequence_len: 16434  10941
+sequence_len: 
+ 16434
+[BertDebug] region_len:  228 
+sequence_len:  1211
+[BertDebug] region_len:  472 
+sequence_len:  13992
+[BertDebug] region_len:  276 
+sequence_len:  3270
+[BertDebug] region_len:  186 
+sequence_len:  1396
+[BertDebug] region_len:  1847 
+sequence_len:  1869
+[BertDebug] region_len:  371 
+sequence_len:  3568
+[BertDebug] region_len:  1620 
+sequence_len:  4278
+[BertDebug] region_len:  406 
+sequence_len:  4084
+[BertDebug] region_len:  192 
+sequence_len:  1834
+[BertDebug] region_len:  193 
+sequence_len:  1490
+[BertDebug] region_len:  713 
+sequence_len:  847
+[BertDebug] region_len:  267 
+sequence_len:  3908
+[BertDebug] region_len:  176 
+sequence_len:  6213
+[BertDebug] region_len:  9375 
+sequence_len:  9375
+[BertDebug] region_len:  84 
+sequence_len:  2679
+[BertDebug] region_len:  193 
+sequence_len:  3069
+[BertDebug] region_len:  399 
+sequence_len:  8108
+[BertDebug] region_len:  42 
+sequence_len:  1243
+[BertDebug] region_len:  582 
+sequence_len:  1265
+[BertDebug] region_len:  306 
+sequence_len:  3677
+{'loss': 8.4835, 'learning_rate': 1.6666666666666669e-06, 'epoch': 0.0}
+[BertDebug] region_len:  1038 
+sequence_len:  1038
+[BertDebug] region_len:  88 
+sequence_len:  1051
+[BertDebug] region_len:  361 
+sequence_len:  9706
+[BertDebug] region_len:  218 
+sequence_len:  3643
+[BertDebug] region_len:  287 [BertDebug] region_len: 
+sequence_len:   2215115 
+
+sequence_len:  1368
+[BertDebug] region_len:  162 
+sequence_len:  588
+[BertDebug] region_len:  217 
+sequence_len:  1233
+[BertDebug] region_len:  945 
+sequence_len:  945
+[BertDebug] region_len:  319 
+sequence_len:  2399
+[BertDebug] region_len:  144 
+sequence_len: [BertDebug] region_len:   3122246
+ 
+sequence_len:  3723
+[BertDebug] region_len:  [BertDebug] region_len: 269  718
+sequence_len:   
+sequence_len: 4122 
+3245
+[BertDebug] region_len:  274 
+sequence_len:  2067
+[BertDebug] region_len:  316 
+sequence_len:  4748
+[BertDebug] region_len:  193 
+sequence_len:  799[BertDebug] region_len: 
+ 147 
+sequence_len:  1191
+[BertDebug] region_len:  1485 
+sequence_len: [BertDebug] region_len:   148571
+ 
+sequence_len:  708
+[BertDebug] region_len:  227 
+sequence_len:  6115
+[BertDebug] region_len:  78 
+sequence_len:  1281
+[BertDebug] region_len:  1620 
+sequence_len: [BertDebug] region_len:   5793283
+ 
+sequence_len:  1014
+[BertDebug] region_len:  783 
+sequence_len:  783
+[BertDebug] region_len:  1134 
+sequence_len:  1134
+[BertDebug] region_len:  2772 
+sequence_len:  2772
+[BertDebug] region_len:  515 
+sequence_len:  2295
+[BertDebug] region_len:  326 
+sequence_len:  841
+[BertDebug] region_len:  984 
+sequence_len:  1305
+[BertDebug] region_len:  207 
+sequence_len:  1597
+[BertDebug] region_len:  1700 
+sequence_len:  1700
+[BertDebug] region_len:  255 
+sequence_len:  2781
+[BertDebug] region_len:  400 
+sequence_len:  758
+[BertDebug] region_len:  232 
+sequence_len:  2239
+[BertDebug] region_len:  155 
+sequence_len:  4011
+[BertDebug] region_len:  595 
+sequence_len:  3001
+[BertDebug] region_len:  2848 
+sequence_len:  5053
+[BertDebug] region_len:  143 
+sequence_len:  2624
+[BertDebug] region_len:  249 
+sequence_len:  2514
+[BertDebug] region_len:  157 
+sequence_len:  2760
+[BertDebug] region_len:  227 
+sequence_len:  2698
+[BertDebug] region_len:  484 
+sequence_len:  4924
+[BertDebug] region_len:  227 
+sequence_len:  2496
+[BertDebug] region_len:  673 
+sequence_len:  10718
+[BertDebug] region_len:  172 
+sequence_len:  965
+[BertDebug] region_len:  207 
+sequence_len:  1312
+[BertDebug] region_len:  225 
+sequence_len:  1524
+[BertDebug] region_len:  154 
+sequence_len:  1893
+[BertDebug] region_len:  360 
+sequence_len:  4988
+[BertDebug] region_len:  361 
+sequence_len:  2001
+[BertDebug] region_len:  143 
+sequence_len:  2669
+[BertDebug] region_len:  1375 
+sequence_len:  4730
+[BertDebug] region_len:  305 
+sequence_len:  4336
+[BertDebug] region_len:  85 
+sequence_len:  1647
+[BertDebug] region_len:  2113 
+sequence_len:  5038
+[BertDebug] region_len:  2327 
+sequence_len:  3147
+[BertDebug] region_len:  337 
+sequence_len:  1182
+[BertDebug] region_len:  1282 
+sequence_len:  2232
+[BertDebug] region_len:  1873 
+sequence_len:  4263
+[BertDebug] region_len:  346 
+sequence_len:  3805
+[BertDebug] region_len:  269 
+sequence_len:  9738
+[BertDebug] region_len:  46 
+sequence_len:  2704
+[BertDebug] region_len:  190 
+sequence_len:  2229
+[BertDebug] region_len:  2169 
+sequence_len:  3742
+[BertDebug] region_len:  325 
+sequence_len:  646
+[BertDebug] region_len:  994 
+sequence_len:  1642
+[BertDebug] region_len:  120 
+sequence_len:  3064
+[BertDebug] region_len:  1678 
+sequence_len:  2004
+[BertDebug] region_len:  365 
+sequence_len:  953
+[BertDebug] region_len:  400 
+sequence_len:  3318
+[BertDebug] region_len:  679 
+sequence_len:  2560
+[BertDebug] region_len:  288 
+sequence_len:  6050
+[BertDebug] region_len:  400 
+sequence_len:  6150
+[BertDebug] region_len:  364 
+sequence_len:  1951
+[BertDebug] region_len:  232 
+sequence_len:  837
+[BertDebug] region_len:  111 
+sequence_len:  1628
+[BertDebug] region_len:  653 
+sequence_len:  1392
+[BertDebug] region_len:  2614 
+sequence_len:  3703
+[BertDebug] region_len:  284 
+sequence_len:  1231
+[BertDebug] region_len:  256 
+sequence_len:  1464
+[BertDebug] region_len:  200 
+sequence_len:  742
+[BertDebug] region_len:  147 
+sequence_len:  6213
+[BertDebug] region_len:  944 
+sequence_len:  3033
+[BertDebug] region_len:  287 
+sequence_len:  3180
+[BertDebug] region_len:  435 
+sequence_len:  2250
+[BertDebug] region_len:  3500 
+sequence_len:  4498
+[BertDebug] region_len:  101 
+sequence_len:  2023
+[BertDebug] region_len:  182 
+sequence_len:  592
+[BertDebug] region_len:  357 
+sequence_len:  1467
+[BertDebug] region_len:  2249 
+sequence_len:  3729
+[BertDebug] region_len:  252 
+sequence_len:  2217
+[BertDebug] region_len:  255 
+sequence_len:  4502
+[BertDebug] region_len:  2655 
+sequence_len:  3120
+[BertDebug] region_len:  284 
+sequence_len:  6115
+[BertDebug] region_len:  817 
+sequence_len:  6633
+[BertDebug] region_len:  1248 
+sequence_len:  1248
+[BertDebug] region_len:  220 
+sequence_len:  3806
+[BertDebug] region_len:  848 
+sequence_len:  2586
+[BertDebug] region_len:  372 
+sequence_len:  1968
+[BertDebug] region_len:  1981 
+sequence_len:  2326
+[BertDebug] region_len:  1875 
+sequence_len:  1875
+[BertDebug] region_len:  172 
+sequence_len:  2155
+[BertDebug] region_len:  2146 
+sequence_len:  2523
+[BertDebug] region_len:  5922 
+sequence_len:  8600
+[BertDebug] region_len:  290 
+sequence_len:  1259
+[BertDebug] region_len:  1065 
+sequence_len:  5851
+[BertDebug] region_len:  193 
+sequence_len:  11432
+[BertDebug] region_len:  3627 
+sequence_len:  3627
+[BertDebug] region_len:  472 
+sequence_len:  1166
+[BertDebug] region_len:  259 
+sequence_len:  603
+[BertDebug] region_len:  361 
+sequence_len:  1575
+[BertDebug] region_len:  347 
+sequence_len:  3342
+[BertDebug] region_len:  220 
+sequence_len:  2930
+[BertDebug] region_len:  500 
+sequence_len:  783
+[BertDebug] region_len:  483 
+sequence_len:  2687
+[BertDebug] region_len:  16434 
+sequence_len:  16434
+[BertDebug] region_len:  262 
+sequence_len:  2658
+[BertDebug] region_len:  85 
+sequence_len:  5059
+[BertDebug] region_len:  154 
+sequence_len:  3641
+[BertDebug] region_len:  187 
+sequence_len:  2865
+[BertDebug] region_len:  141 
+sequence_len:  1997
+[BertDebug] region_len:  102 
+sequence_len:  2004
+[BertDebug] region_len:  197 
+sequence_len:  2596
+[BertDebug] region_len:  185 
+sequence_len:  3825
+[BertDebug] region_len:  343 
+sequence_len:  1098
+[BertDebug] region_len:  234 
+sequence_len:  3708
+[BertDebug] region_len:  630 
+sequence_len:  630
+[BertDebug] region_len:  301 
+sequence_len:  2920
+[BertDebug] region_len:  239 
+sequence_len:  3651
+[BertDebug] region_len:  814 
+sequence_len:  1116
+[BertDebug] region_len:  774 
+sequence_len:  1888
+[BertDebug] region_len:  2228 
+sequence_len:  2932
+[BertDebug] region_len:  180 
+sequence_len:  1157
+[BertDebug] region_len:  1590 
+sequence_len:  1590
+[BertDebug] region_len:  337 
+sequence_len:  6065
+[BertDebug] region_len:  252 
+sequence_len:  1239
+[BertDebug] region_len:  288 
+sequence_len:  1137
+[BertDebug] region_len:  207 
+sequence_len:  1587
+[BertDebug] region_len:  3495 
+sequence_len:  3495
+[BertDebug] region_len:  288 
+sequence_len:  1491
+[BertDebug] region_len:  221 
+sequence_len:  2352
+[BertDebug] region_len:  322 
+sequence_len:  4302
+[BertDebug] region_len:  2130 
+sequence_len:  2130
+[BertDebug] region_len:  1131 
+sequence_len:  1131
+[BertDebug] region_len:  113 
+sequence_len:  1143
+[BertDebug] region_len:  1409 
+sequence_len:  1409
+[BertDebug] region_len:  1608 
+sequence_len:  1608
+[BertDebug] region_len:  283 
+sequence_len:  4633
+[BertDebug] region_len:  197 
+sequence_len:  2208
+[BertDebug] region_len:  298 
+sequence_len:  5806
+[BertDebug] region_len:  207 
+sequence_len:  2506
+[BertDebug] region_len:  330 
+sequence_len:  1344
+[BertDebug] region_len:  207 
+sequence_len:  3356
+[BertDebug] region_len:  7867 
+sequence_len:  7994
+[BertDebug] region_len:  311 
+sequence_len:  3530
+[BertDebug] region_len:  123 
+sequence_len:  2844
+[BertDebug] region_len:  155 
+sequence_len:  450
+[BertDebug] region_len:  186 
+sequence_len:  4235
+[BertDebug] region_len:  147 
+sequence_len:  3436
+[BertDebug] region_len:  305 
+sequence_len:  3449
+[BertDebug] region_len:  165 
+sequence_len:  5232
+[BertDebug] region_len:  348 
+sequence_len:  1767
+[BertDebug] region_len:  298 
+sequence_len:  6130
+[BertDebug] region_len:  351 
+sequence_len:  1360
+[BertDebug] region_len:  371 
+sequence_len:  2447
+[BertDebug] region_len:  447 
+sequence_len:  519
+[BertDebug] region_len:  305 
+sequence_len:  5502
+[BertDebug] region_len:  178 
+sequence_len:  9738
+[BertDebug] region_len:  267 
+sequence_len:  3356
+[BertDebug] region_len:  378 
+sequence_len:  6197
+[BertDebug] region_len:  113 
+sequence_len:  681
+[BertDebug] region_len:  863 
+sequence_len:  900
+[BertDebug] region_len:  2121 
+sequence_len:  3883
+[BertDebug] region_len:  140 
+sequence_len:  1062
+[BertDebug] region_len:  253 
+sequence_len:  5146
+[BertDebug] region_len:  337 
+sequence_len:  2070
+[BertDebug] region_len:  1012 
+sequence_len:  1422
+[BertDebug] region_len:  283 
+sequence_len:  3785
+[BertDebug] region_len:  280 
+sequence_len:  6516
+[BertDebug] region_len:  301 
+sequence_len:  7237
+[BertDebug] region_len:  262 
+sequence_len:  2530
+[BertDebug] region_len:  224 
+sequence_len:  3396
+[BertDebug] region_len:  284 
+sequence_len:  8799
+[BertDebug] region_len:  252 
+sequence_len:  2385
+[BertDebug] region_len:  399 
+sequence_len:  774
+[BertDebug] region_len:  227 
+sequence_len:  1584
+[BertDebug] region_len:  144 
+sequence_len:  3742
+[BertDebug] region_len:  377 
+sequence_len:  1497
+[BertDebug] region_len:  134 
+sequence_len:  3462
+[BertDebug] region_len:  1986 
+sequence_len:  2239
+[BertDebug] region_len:  322 
+sequence_len:  2758
+[BertDebug] region_len:  778 
+sequence_len:  1329
+[BertDebug] region_len:  207 
+sequence_len:  1587
+[BertDebug] region_len:  142 
+sequence_len:  1522
+[BertDebug] region_len:  326 
+sequence_len:  2442
+[BertDebug] region_len:  529 
+sequence_len:  3713
+[BertDebug] region_len:  65 
+sequence_len:  186
+[BertDebug] region_len:  825 
+sequence_len:  825
+[BertDebug] region_len:  207 
+sequence_len:  6234
+[BertDebug] region_len:  221 
+sequence_len:  2635
+[BertDebug] region_len:  266 
+sequence_len:  5234
+[BertDebug] region_len:  189 
+sequence_len:  1833
+[BertDebug] region_len:  10 
+sequence_len:  2210
+[BertDebug] region_len:  1573 
+sequence_len:  1573
+[BertDebug] region_len:  448 
+sequence_len:  2415
+[BertDebug] region_len:  141 
+sequence_len:  3184
+[BertDebug] region_len:  148 
+sequence_len:  2850
+[BertDebug] region_len:  1414 
+sequence_len:  2909
+[BertDebug] region_len:  283 
+sequence_len:  1548
+[BertDebug] region_len:  848 
+sequence_len:  5454
+[BertDebug] region_len:  161 
+sequence_len:  6718
+[BertDebug] region_len:  1164 
+sequence_len:  1164
+[BertDebug] region_len:  255 
+sequence_len:  1604
+[BertDebug] region_len:  190 
+sequence_len:  1918
+[BertDebug] region_len:  178 
+sequence_len:  891
+[BertDebug] region_len:  1185 
+sequence_len:  1185
+[BertDebug] region_len:  157 
+sequence_len:  1371
+[BertDebug] region_len:  477 
+sequence_len:  900
+[BertDebug] region_len:  975 
+sequence_len:  975
+[BertDebug] region_len:  339 
+sequence_len:  987
+[BertDebug] region_len:  4057 
+sequence_len:  6996
+[BertDebug] region_len:  276 
+sequence_len:  2964
+[BertDebug] region_len:  808 
+sequence_len:  2679
+[BertDebug] region_len:  417 
+sequence_len:  3225
+[BertDebug] region_len:  1194 
+sequence_len:  1194
+[BertDebug] region_len:  189 
+sequence_len:  25779
+[BertDebug] region_len:  298 
+sequence_len:  2529
+[BertDebug] region_len:  792 
+sequence_len:  1246
+[BertDebug] region_len:  6909 
+sequence_len:  6909
+[BertDebug] region_len:  102 
+sequence_len:  1689
+[BertDebug] region_len:  241 
+sequence_len:  522
+[BertDebug] region_len:  344 
+sequence_len:  7750
+[BertDebug] region_len:  291 
+sequence_len:  2030
+[BertDebug] region_len:  206 
+sequence_len:  984
+[BertDebug] region_len:  189 
+sequence_len:  4663
+[BertDebug] region_len:  60 
+sequence_len:  1526
+[BertDebug] region_len:  381 
+sequence_len:  6747
+[BertDebug] region_len:  315 
+sequence_len:  2440
+[BertDebug] region_len:  533 
+sequence_len:  4812
+[BertDebug] region_len:  37962 
+sequence_len:  43902
+[BertDebug] region_len:  185 
+sequence_len:  7551
+[BertDebug] region_len:  228 
+sequence_len:  5712
+[BertDebug] region_len:  431 
+sequence_len:  1997
+[BertDebug] region_len:  332 
+sequence_len:  1546
+[BertDebug] region_len:  294 
+sequence_len:  2799
+[BertDebug] region_len:  301 
+sequence_len:  4209
+[BertDebug] region_len:  144 
+sequence_len:  912
+[BertDebug] region_len:  403 
+sequence_len:  903
+[BertDebug] region_len:  52 
+sequence_len:  442
+[BertDebug] region_len:  290 
+sequence_len:  9174
+[BertDebug] region_len:  1413 
+sequence_len:  1413
+[BertDebug] region_len:  289 
+sequence_len:  3582
+[BertDebug] region_len:  783 
+sequence_len:  783
+[BertDebug] region_len:  1005 
+sequence_len:  1317
+[BertDebug] region_len:  372 
+sequence_len:  4226
+[BertDebug] region_len:  151 
+sequence_len:  849
+[BertDebug] region_len:  91 
+sequence_len:  2886
+[BertDebug] region_len:  253 
+sequence_len:  1122
+[BertDebug] region_len:  176 
+sequence_len:  910
+[BertDebug] region_len:  7478 
+sequence_len:  7478
+[BertDebug] region_len:  316 
+sequence_len:  7446
+[BertDebug] region_len:  309 
+sequence_len:  1905
+[BertDebug] region_len:  555 
+sequence_len:  1088
+[BertDebug] region_len:  214 
+sequence_len:  3582
+[BertDebug] region_len:  214 
+sequence_len:  1965
+[BertDebug] region_len:  473 
+sequence_len:  8276
+[BertDebug] region_len:  344 
+sequence_len:  2787
+[BertDebug] region_len:  270 
+sequence_len:  1659
+[BertDebug] region_len:  358 
+sequence_len:  1558
+[BertDebug] region_len:  171 
+sequence_len:  3713
+[BertDebug] region_len:  200 
+sequence_len:  3739
+[BertDebug] region_len:  172 
+sequence_len:  8108
+[BertDebug] region_len:  241 
+sequence_len:  2687
+[BertDebug] region_len:  350 
+sequence_len:  3727
+[BertDebug] region_len:  138 
+sequence_len:  850
+[BertDebug] region_len:  199 
+sequence_len:  3477
+[BertDebug] region_len:  738 
+sequence_len:  1960
+[BertDebug] region_len:  326 
+sequence_len:  1689
+[BertDebug] region_len:  232 
+sequence_len:  2025
+[BertDebug] region_len:  287 
+sequence_len:  3411
+[BertDebug] region_len:  927 
+sequence_len:  927
+[BertDebug] region_len:  2133 
+sequence_len:  2133
+[BertDebug] region_len:  1498 
+sequence_len:  7020
+[BertDebug] region_len:  1298 
+sequence_len:  2205
+[BertDebug] region_len:  251 
+sequence_len:  7623
+[BertDebug] region_len:  2381 
+sequence_len:  3673
+[BertDebug] region_len:  613 
+sequence_len:  7153
+{'loss': 8.3515, 'learning_rate': 1.6666666666666667e-05, 'epoch': 0.0}
+[BertDebug] region_len:  16434 
+sequence_len:  16434
+[BertDebug] region_len:  354 
+sequence_len:  1680
+[BertDebug] region_len:  3345 
+sequence_len:  3345
+[BertDebug] region_len:  164 
+sequence_len:  1499
+[BertDebug] region_len:  250 
+sequence_len:  2815
+[BertDebug] region_len:  462 
+sequence_len:  3589
+[BertDebug] region_len:  94 
+sequence_len:  4986
+[BertDebug] region_len:  178 
+sequence_len:  6005
+[BertDebug] region_len:  129 
+sequence_len:  2187
+[BertDebug] region_len:  1136 
+sequence_len:  1500
+[BertDebug] region_len:  102 
+sequence_len:  5926
+[BertDebug] region_len:  290 
+sequence_len:  8125
+[BertDebug] region_len:  350 
+sequence_len:  4368
+[BertDebug] region_len:  9969 
+sequence_len:  9969
+[BertDebug] region_len:  120 
+sequence_len:  1650
+[BertDebug] region_len:  168 
+sequence_len:  1539
+[BertDebug] region_len:  347 
+sequence_len:  1782
+[BertDebug] region_len:  280 
+sequence_len:  1588
+[BertDebug] region_len:  309 
+sequence_len:  948
+[BertDebug] region_len:  6594 
+sequence_len:  7101
+[BertDebug] region_len:  220 
+sequence_len:  1040
+[BertDebug] region_len:  253 
+sequence_len:  1353
+[BertDebug] region_len:  197 
+sequence_len:  2255
+[BertDebug] region_len:  204 
+sequence_len:  2384
+[BertDebug] region_len:  218 
+sequence_len:  15746
+[BertDebug] region_len:  241 
+sequence_len:  5904
+[BertDebug] region_len:  4028 
+sequence_len:  5957
+[BertDebug] region_len:  246 
+sequence_len:  1282
+[BertDebug] region_len:  697 
+sequence_len:  2662
+[BertDebug] region_len:  177 
+sequence_len:  987
+[BertDebug] region_len:  130 
+sequence_len:  2306
+[BertDebug] region_len:  273 
+sequence_len:  1500
+[BertDebug] region_len:  207 
+sequence_len:  2969
+[BertDebug] region_len:  119 
+sequence_len:  6029
+[BertDebug] region_len:  496 
+sequence_len:  1617
+[BertDebug] region_len:  302 
+sequence_len:  4371
+[BertDebug] region_len:  262 
+sequence_len:  1102
+[BertDebug] region_len:  190 
+sequence_len:  3162
+[BertDebug] region_len:  150 
+sequence_len:  3677
+[BertDebug] region_len:  258 
+sequence_len:  777
+[BertDebug] region_len:  115 
+sequence_len:  1353
+[BertDebug] region_len:  151 
+sequence_len:  1565
+[BertDebug] region_len:  207 
+sequence_len:  1926
+[BertDebug] region_len:  694 
+sequence_len:  1832
+[BertDebug] region_len:  242 
+sequence_len:  2289
+[BertDebug] region_len:  304 
+sequence_len:  2198
+[BertDebug] region_len:  1722 
+sequence_len:  1722
+[BertDebug] region_len:  193 
+sequence_len:  2496
+[BertDebug] region_len:  344 
+sequence_len:  1020
+[BertDebug] region_len:  3783 
+sequence_len:  5362
+[BertDebug] region_len:  266 
+sequence_len:  1089
+[BertDebug] region_len:  312 
+sequence_len:  1050
+[BertDebug] region_len:  264 
+sequence_len:  879
+[BertDebug] region_len:  284 
+sequence_len:  2458
+[BertDebug] region_len:  610 
+sequence_len:  659
+[BertDebug] region_len:  88 
+sequence_len:  1402
+[BertDebug] region_len:  377 
+sequence_len:  774
+[BertDebug] region_len:  291 
+sequence_len:  30667
+[BertDebug] region_len:  435 
+sequence_len:  726
+[BertDebug] region_len:  2832 
+sequence_len:  2832
+[BertDebug] region_len:  158 
+sequence_len:  2389
+[BertDebug] region_len:  57 
+sequence_len:  1345
+[BertDebug] region_len:  259 
+sequence_len:  1041
+[BertDebug] region_len:  253 
+sequence_len:  2858
+[BertDebug] region_len:  178 
+sequence_len:  1388
+[BertDebug] region_len:  262 
+sequence_len:  4265
+[BertDebug] region_len:  294 
+sequence_len:  2223
+[BertDebug] region_len:  144 
+sequence_len:  3956
+[BertDebug] region_len:  388 
+sequence_len:  2329
+[BertDebug] region_len:  378 
+sequence_len:  2526
+[BertDebug] region_len:  1462 
+sequence_len:  1539
+[BertDebug] region_len:  282 
+sequence_len:  926
+[BertDebug] region_len:  288 
+sequence_len:  7148
+[BertDebug] region_len:  199 
+sequence_len:  2562
+[BertDebug] region_len:  1035 
+sequence_len:  1035
+[BertDebug] region_len:  228 
+sequence_len:  8166
+[BertDebug] region_len:  129 
+sequence_len:  1534
+[BertDebug] region_len:  197 
+sequence_len:  3059
+[BertDebug] region_len:  245 
+sequence_len:  1986
+[BertDebug] region_len:  231 
+sequence_len:  6876
+[BertDebug] region_len:  547 
+sequence_len:  3713
+[BertDebug] region_len:  231 
+sequence_len:  1629
+[BertDebug] region_len:  217 
+sequence_len:  2701
+[BertDebug] region_len:  161 
+sequence_len:  2733
+[BertDebug] region_len:  242 
+sequence_len:  5378
+[BertDebug] region_len:  1876 
+sequence_len:  3132
+[BertDebug] region_len:  232 
+sequence_len:  3344
+[BertDebug] region_len:  351 
+sequence_len:  6530
+[BertDebug] region_len:  672 
+sequence_len:  672
+[BertDebug] region_len:  256 
+sequence_len:  3082
+[BertDebug] region_len:  297 
+sequence_len:  3739
+[BertDebug] region_len:  365 
+sequence_len:  27364
+[BertDebug] region_len:  245 
+sequence_len:  2778
+[BertDebug] region_len:  203 
+sequence_len:  645
+[BertDebug] region_len:  2331 
+sequence_len:  2331
+[BertDebug] region_len:  329 
+sequence_len:  1591
+[BertDebug] region_len:  176 
+sequence_len:  6220
+[BertDebug] region_len:  283 
+sequence_len:  6177
+[BertDebug] region_len:  571 
+sequence_len:  2130
+[BertDebug] region_len:  140 
+sequence_len:  1422
+[BertDebug] region_len:  4882 
+sequence_len:  16770
+[BertDebug] region_len:  1106 
+sequence_len:  2679
+[BertDebug] region_len:  138 
+sequence_len:  4714
+[BertDebug] region_len:  349 
+sequence_len:  792
+[BertDebug] region_len:  155 
+sequence_len:  915
+[BertDebug] region_len:  129 
+sequence_len:  4443
+[BertDebug] region_len:  713 
+sequence_len:  1742
+[BertDebug] region_len:  304 
+sequence_len:  6000
+[BertDebug] region_len:  746 
+sequence_len:  942
+[BertDebug] region_len:  502 
+sequence_len:  1717
+[BertDebug] region_len:  316 
+sequence_len:  6545
+[BertDebug] region_len:  218 
+sequence_len:  780
+[BertDebug] region_len:  190 
+sequence_len:  1233
+[BertDebug] region_len:  1397 
+sequence_len:  4916
+[BertDebug] region_len:  428 
+sequence_len:  15636
+[BertDebug] region_len:  508 
+sequence_len:  977
+[BertDebug] region_len:  280 
+sequence_len:  3776
+[BertDebug] region_len:  5241 
+sequence_len:  5241
+[BertDebug] region_len:  231 
+sequence_len:  6091
+[BertDebug] region_len:  288 
+sequence_len:  4696
+[BertDebug] region_len:  344 
+sequence_len:  1187
+[BertDebug] region_len:  1110 
+sequence_len:  1110
+[BertDebug] region_len:  330 
+sequence_len:  749
+[BertDebug] region_len:  1442 
+sequence_len:  1452
+[BertDebug] region_len:  4835 
+sequence_len:  5607
+[BertDebug] region_len:  2258 
+sequence_len:  3807
+[BertDebug] region_len:  363 
+sequence_len:  3806
+[BertDebug] region_len:  190 
+sequence_len:  1760
+[BertDebug] region_len:  567 
+sequence_len:  3721
+[BertDebug] region_len:  207 
+sequence_len:  1602
+[BertDebug] region_len:  95 
+sequence_len:  1657
+[BertDebug] region_len:  393 
+sequence_len:  3285
+[BertDebug] region_len:  678 
+sequence_len:  678
+[BertDebug] region_len:  353 
+sequence_len:  1314
+[BertDebug] region_len:  175 
+sequence_len:  3753
+[BertDebug] region_len:  1239 
+sequence_len:  1254
+[BertDebug] region_len:  155 
+sequence_len:  3248
+[BertDebug] region_len:  3627 
+sequence_len:  3627
+[BertDebug] region_len:  512 
+sequence_len:  2272
+[BertDebug] region_len:  213 
+sequence_len:  3672
+[BertDebug] region_len:  4418 
+sequence_len:  4418
+[BertDebug] region_len:  1976 
+sequence_len:  4983
+[BertDebug] region_len:  262 
+sequence_len:  1964
+[BertDebug] region_len:  241 
+sequence_len:  12967
+[BertDebug] region_len:  381 
+sequence_len:  2336
+[BertDebug] region_len:  249 
+sequence_len:  7386
+[BertDebug] region_len:  80 
+sequence_len:  2436
+[BertDebug] region_len:  306 
+sequence_len:  1405
+[BertDebug] region_len:  444 
+sequence_len:  733
+[BertDebug] region_len:  654 
+sequence_len:  1202
+[BertDebug] region_len:  204 
+sequence_len:  3155
+[BertDebug] region_len:  1759 
+sequence_len:  3389
+[BertDebug] region_len:  8255 
+sequence_len:  15265
+[BertDebug] region_len:  323 
+sequence_len:  1692
+[BertDebug] region_len:  147 
+sequence_len:  600
+[BertDebug] region_len:  186 
+sequence_len:  1356
+[BertDebug] region_len:  259 
+sequence_len:  6286
+[BertDebug] region_len:  154 
+sequence_len:  2112
+[BertDebug] region_len:  354 
+sequence_len:  1308
+[BertDebug] region_len:  279 
+sequence_len:  1656
+[BertDebug] region_len:  262 
+sequence_len:  12795
+[BertDebug] region_len:  144 
+sequence_len:  3291
+[BertDebug] region_len:  535 
+sequence_len:  3081
+[BertDebug] region_len:  1184 
+sequence_len:  2514
+[BertDebug] region_len:  270 
+sequence_len:  14982
+[BertDebug] region_len:  113 
+sequence_len:  4038
+[BertDebug] region_len:  256 
+sequence_len:  1284
+[BertDebug] region_len:  560 
+sequence_len:  931
+[BertDebug] region_len:  4767 
+sequence_len:  4767
+[BertDebug] region_len:  193 
+sequence_len:  2346
+[BertDebug] region_len:  552 
+sequence_len:  1688
+[BertDebug] region_len:  120 
+sequence_len:  6130
+[BertDebug] region_len:  1795 
+sequence_len:  5286
+[BertDebug] region_len:  2337 
+sequence_len:  6283
+[BertDebug] region_len:  708 
+sequence_len:  5622
+[BertDebug] region_len:  246 
+sequence_len:  1389
+[BertDebug] region_len:  221 
+sequence_len:  3439
+[BertDebug] region_len:  399 
+sequence_len:  1926
+[BertDebug] region_len:  344 
+sequence_len:  3460
+[BertDebug] region_len:  188 
+sequence_len:  202
+[BertDebug] region_len:  4039 
+sequence_len:  6597
+[BertDebug] region_len:  228 
+sequence_len:  2930
+[BertDebug] region_len:  168 
+sequence_len:  3099
+[BertDebug] region_len:  409 
+sequence_len:  13548
+[BertDebug] region_len:  260 
+sequence_len:  6352
+[BertDebug] region_len:  9538 
+sequence_len:  28546
+[BertDebug] region_len:  897 
+sequence_len:  897
+[BertDebug] region_len:  120 
+sequence_len:  3176
+[BertDebug] region_len:  9416 
+sequence_len:  10941
+[BertDebug] region_len:  914 
+sequence_len:  7750
+[BertDebug] region_len:  246 
+sequence_len:  3812
+[BertDebug] region_len:  783 
+sequence_len:  783
+[BertDebug] region_len:  120 
+sequence_len:  5378
+[BertDebug] region_len:  351 
+sequence_len:  1398
+[BertDebug] region_len:  409 
+sequence_len:  1510
+[BertDebug] region_len:  231 
+sequence_len:  4740
+[BertDebug] region_len:  322 
+sequence_len:  920
+[BertDebug] region_len:  239 
+sequence_len:  4482
+[BertDebug] region_len:  141 
+sequence_len:  11086
+[BertDebug] region_len:  361 
+sequence_len:  1060
+[BertDebug] region_len:  674 
+sequence_len:  945
+[BertDebug] region_len:  214 
+sequence_len:  6994
+[BertDebug] region_len:  812 
+sequence_len:  2104
+[BertDebug] region_len:  220 
+sequence_len:  2316
+[BertDebug] region_len:  413 
+sequence_len:  1324
+[BertDebug] region_len:  304 
+sequence_len:  585
+[BertDebug] region_len:  372 
+sequence_len:  4061
+[BertDebug] region_len:  382 
+sequence_len:  2484
+[BertDebug] region_len:  183 
+sequence_len:  6966
+[BertDebug] region_len:  972 
+sequence_len:  972
+[BertDebug] region_len:  585 
+sequence_len:  1998
+[BertDebug] region_len:  336 
+sequence_len:  5619
+[BertDebug] region_len:  1374 
+sequence_len:  1374
+[BertDebug] region_len:  150 
+sequence_len:  3203
+[BertDebug] region_len:  281 
+sequence_len:  852
+[BertDebug] region_len:  1119 
+sequence_len:  1119
+[BertDebug] region_len:  2633 
+sequence_len:  9342
+[BertDebug] region_len:  188 
+sequence_len:  1862
+[BertDebug] region_len:  784 
+sequence_len:  1078
+[BertDebug] region_len:  155 
+sequence_len:  1898
+[BertDebug] region_len:  340 
+sequence_len:  1440
+[BertDebug] region_len:  253 
+sequence_len:  2502
+[BertDebug] region_len:  1515 
+sequence_len:  1515
+[BertDebug] region_len:  133 
+sequence_len:  1896
+[BertDebug] region_len:  118 
+sequence_len:  1363
+[BertDebug] region_len:  1495 
+sequence_len:  3503
+[BertDebug] region_len:  1472 
+sequence_len:  2021
+[BertDebug] region_len:  179 
+sequence_len:  2916
+[BertDebug] region_len:  408 
+sequence_len:  408
+[BertDebug] region_len:  246 
+sequence_len:  1732
+[BertDebug] region_len:  154 
+sequence_len:  2288
+[BertDebug] region_len:  204 
+sequence_len:  2511
+[BertDebug] region_len:  130 
+sequence_len:  1286
+[BertDebug] region_len:  357 
+sequence_len:  2973
+[BertDebug] region_len:  1872 
+sequence_len:  1872
+[BertDebug] region_len:  228 
+sequence_len:  1489
+[BertDebug] region_len:  324 
+sequence_len:  8964
+[BertDebug] region_len:  413 
+sequence_len:  2934
+[BertDebug] region_len:  144 
+sequence_len:  1584
+[BertDebug] region_len:  504 
+sequence_len:  1190
+[BertDebug] region_len:  1098 
+sequence_len:  1098
+[BertDebug] region_len:  378 
+sequence_len:  783
+[BertDebug] region_len:  893 
+sequence_len:  2267
+[BertDebug] region_len:  333 
+sequence_len:  1602
+[BertDebug] region_len:  95 
+sequence_len:  2636
+[BertDebug] region_len:  6610 
+sequence_len:  6816
+[BertDebug] region_len:  218 
+sequence_len:  3678
+[BertDebug] region_len:  385 
+sequence_len:  1040
+[BertDebug] region_len:  757 
+sequence_len:  912
+[BertDebug] region_len:  178 
+sequence_len:  1906
+[BertDebug] region_len:  162 
+sequence_len:  21913
+[BertDebug] region_len:  407 
+sequence_len:  7072
+[BertDebug] region_len:  343 
+sequence_len:  2836
+[BertDebug] region_len:  1878 
+sequence_len:  1878
+[BertDebug] region_len:  248 
+sequence_len:  780
+[BertDebug] region_len:  218 
+sequence_len:  2161
+[BertDebug] region_len:  303 
+sequence_len:  1093
+[BertDebug] region_len:  745 
+sequence_len:  846
+[BertDebug] region_len:  31 
+sequence_len:  1353
+[BertDebug] region_len:  2927 
+sequence_len:  3486
+[BertDebug] region_len:  360 
+sequence_len:  6128
+[BertDebug] region_len:  246 
+sequence_len:  887
+[BertDebug] region_len:  9080 
+sequence_len:  10036
+[BertDebug] region_len:  561 
+sequence_len:  4442
+[BertDebug] region_len:  229 
+sequence_len:  2151
+[BertDebug] region_len:  197 
+sequence_len:  894
+[BertDebug] region_len:  151 
+sequence_len:  2191
+[BertDebug] region_len:  302 
+sequence_len:  8964
+[BertDebug] region_len:  169 
+sequence_len:  4116
+[BertDebug] region_len:  295 
+sequence_len:  2745
+[BertDebug] region_len:  281 
+sequence_len:  2145
+[BertDebug] region_len:  270 
+sequence_len:  1735
+[BertDebug] region_len:  78 
+sequence_len:  1626
+[BertDebug] region_len:  325 
+sequence_len:  1944
+[BertDebug] region_len:  189 
+sequence_len:  569
+[BertDebug] region_len:  157 
+sequence_len:  5121
+[BertDebug] region_len:  141 
+sequence_len:  2493
+[BertDebug] region_len:  574 
+sequence_len:  1005
+[BertDebug] region_len:  595 
+sequence_len:  3397
+[BertDebug] region_len:  220 
+sequence_len:  2469
+[BertDebug] region_len:  284 
+sequence_len:  8257
+[BertDebug] region_len:  200 
+sequence_len:  2700
+[BertDebug] region_len:  210 
+sequence_len:  1146
+[BertDebug] region_len:  276 
+sequence_len:  3128
+[BertDebug] region_len:  193 
+sequence_len:  3810
+[BertDebug] region_len:  2284 
+sequence_len:  2964
+[BertDebug] region_len:  663 
+sequence_len:  663
+[BertDebug] region_len:  887 
+sequence_len:  10639
+[BertDebug] region_len:  751 
+sequence_len:  1507
+[BertDebug] region_len:  1727 
+sequence_len:  2034
+[BertDebug] region_len:  378 
+sequence_len:  3015
+[BertDebug] region_len:  1479 
+sequence_len:  1743
+[BertDebug] region_len:  182 
+sequence_len:  2610
+[BertDebug] region_len:  1582 
+sequence_len:  8762
+[BertDebug] region_len:  246 
+sequence_len:  6470
+[BertDebug] region_len:  145 
+sequence_len:  833
+[BertDebug] region_len:  183 
+sequence_len:  5188
+[BertDebug] region_len:  302 
+sequence_len:  3894
+[BertDebug] region_len:  154 
+sequence_len:  12393
+[BertDebug] region_len:  316 
+sequence_len:  5742
+[BertDebug] region_len:  706 
+sequence_len:  3708
+[BertDebug] region_len:  393 
+sequence_len:  2466
+[BertDebug] region_len:  424 
+sequence_len:  1785
+[BertDebug] region_len:  1671 
+sequence_len:  1671
+[BertDebug] region_len:  31 
+sequence_len:  2582
+[BertDebug] region_len:  306 
+sequence_len:  1689
+[BertDebug] region_len:  364 
+sequence_len:  946
+[BertDebug] region_len:  264 
+sequence_len:  1356
+[BertDebug] region_len:  269 
+sequence_len:  1716
+[BertDebug] region_len:  640 
+sequence_len:  3239
+[BertDebug] region_len:  11291 
+sequence_len:  114586
+[BertDebug] region_len:  775 
+sequence_len:  1404
+[BertDebug] region_len:  592 
+sequence_len:  1170
+[BertDebug] region_len:  960 
+sequence_len:  960
+[BertDebug] region_len:  445 
+sequence_len:  2199
+[BertDebug] region_len:  340 
+sequence_len:  3266
+[BertDebug] region_len:  2633 
+sequence_len:  4554
+[BertDebug] region_len:  217 
+sequence_len:  3100
+[BertDebug] region_len:  179 
+sequence_len:  647
+[BertDebug] region_len:  126 
+sequence_len:  304
+[BertDebug] region_len:  {'loss': 8.0784, 'learning_rate': 3.3333333333333335e-05, 'epoch': 0.0}256
+ 
+sequence_len:  7436
+[BertDebug] region_len:  325 
+sequence_len:  2403
+[BertDebug] region_len:  372 
+sequence_len:  3225
+[BertDebug] region_len:  1764 
+sequence_len:  3261
+[BertDebug] region_len:  2058 
+sequence_len:  2058
+[BertDebug] region_len:  406 
+sequence_len:  3474
+[BertDebug] region_len:  252 
+sequence_len:  516
+[BertDebug] region_len:  2888 
+sequence_len:  3862
+[BertDebug] region_len:  412 
+sequence_len:  583
+[BertDebug] region_len:  109 
+sequence_len:  552
+[BertDebug] region_len:  514 [BertDebug] region_len: 
+sequence_len:   1837605 
+
+sequence_len:  6150
+[BertDebug] region_len:  449 
+sequence_len:  1242
+[BertDebug] region_len:  498 
+sequence_len:  2745
+[BertDebug] region_len:  270 
+sequence_len:  3300
+[BertDebug] region_len:  172 
+sequence_len:  8566
+[BertDebug] region_len:  1068 
+sequence_len:  [BertDebug] region_len: 1068 
+197 
+sequence_len:  1471
+[BertDebug] region_len:  12280 
+sequence_len:  12280
+[BertDebug] region_len:  219 
+sequence_len:  1654
+[BertDebug] region_len:  291 
+sequence_len:  1840
+[BertDebug] region_len:  769 
+sequence_len:  1742
+[BertDebug] region_len:  103 
+sequence_len:  1756
+[BertDebug] region_len:  518 
+sequence_len:  2825
+[BertDebug] region_len:  224 
+sequence_len:  1328
+[BertDebug] region_len:  1796 
+sequence_len:  7750
+[BertDebug] region_len:  169 
+sequence_len:  6054
+[BertDebug] region_len:  183 
+sequence_len:  4146
+[BertDebug] region_len:  115 
+sequence_len:  1195
+[BertDebug] region_len:  263 
+sequence_len:  3814
+[BertDebug] region_len:  356 
+sequence_len:  426
+[BertDebug] region_len:  263 
+sequence_len:  14666
+[BertDebug] region_len:  257 
+sequence_len:  2055
+[BertDebug] region_len:  211 
+sequence_len:  3201
+[BertDebug] region_len:  225 
+sequence_len:  3477
+[BertDebug] region_len:  57 
+sequence_len:  2074
+[BertDebug] region_len:  275 
+sequence_len:  1563
+[BertDebug] region_len:  137 
+sequence_len:  2972
+[BertDebug] region_len:  190 
+sequence_len:  833
+[BertDebug] region_len:  69 
+sequence_len:  1389
+[BertDebug] region_len:  2409 
+sequence_len:  2959
+[BertDebug] region_len:  1131 
+sequence_len:  2291
+[BertDebug] region_len:  267 
+sequence_len:  902
+[BertDebug] region_len:  736 
+sequence_len:  4634
+[BertDebug] region_len:  106 
+sequence_len:  4301
+[BertDebug] region_len:  151 
+sequence_len:  1167
+[BertDebug] region_len:  2145 
+sequence_len:  2145
+[BertDebug] region_len:  141 
+sequence_len:  4128
+[BertDebug] region_len:  189 
+sequence_len:  3360
+[BertDebug] region_len:  225 
+sequence_len:  3561
+[BertDebug] region_len:  351 
+sequence_len:  7324
+[BertDebug] region_len:  1207 
+sequence_len:  1335
+[BertDebug] region_len:  211 
+sequence_len:  3734
+[BertDebug] region_len:  248 
+sequence_len:  1257
+[BertDebug] region_len:  14149 
+sequence_len:  14149
+[BertDebug] region_len:  134 
+sequence_len:  3255
+[BertDebug] region_len:  982 
+sequence_len:  2259
+[BertDebug] region_len:  304 
+sequence_len:  1239
+[BertDebug] region_len:  344 
+sequence_len:  3091
+[BertDebug] region_len:  4299 
+sequence_len:  4299
+[BertDebug] region_len:  295 
+sequence_len:  2993
+[BertDebug] region_len:  196 
+sequence_len:  875
+[BertDebug] region_len:  207 
+sequence_len:  1110
+[BertDebug] region_len:  456 
+sequence_len:  812
+[BertDebug] region_len:  1860 
+sequence_len:  1860
+[BertDebug] region_len:  189 
+sequence_len:  1917
+[BertDebug] region_len:  252 
+sequence_len:  2246
+[BertDebug] region_len:  198 
+sequence_len:  1081
+[BertDebug] region_len:  316 
+sequence_len:  1080
+[BertDebug] region_len:  276 
+sequence_len:  5957
+[BertDebug] region_len:  248 
+sequence_len:  1538
+[BertDebug] region_len:  249 
+sequence_len:  10529
+[BertDebug] region_len:  2475 
+sequence_len:  2475
+[BertDebug] region_len:  262 
+sequence_len:  2002
+[BertDebug] region_len:  253 
+sequence_len:  2544
+[BertDebug] region_len:  420 
+sequence_len:  4284
+[BertDebug] region_len:  1410 
+sequence_len:  1410
+[BertDebug] region_len:  301 
+sequence_len:  2030
+[BertDebug] region_len:  192 
+sequence_len:  6966
+[BertDebug] region_len:  435 
+sequence_len:  7446
+[BertDebug] region_len:  521 
+sequence_len:  3458
+[BertDebug] region_len:  413 
+sequence_len:  15730
+[BertDebug] region_len:  58 
+sequence_len:  1571
+[BertDebug] region_len:  578 
+sequence_len:  1182
+[BertDebug] region_len:  172 
+sequence_len:  3708
+[BertDebug] region_len:  255 
+sequence_len:  1200
+[BertDebug] region_len:  2013 
+sequence_len:  2013
+[BertDebug] region_len:  1989 
+sequence_len:  2095
+[BertDebug] region_len:  364 
+sequence_len:  2896
+[BertDebug] region_len:  196 
+sequence_len:  3082
+[BertDebug] region_len:  319 
+sequence_len:  2814
+[BertDebug] region_len:  2013 
+sequence_len:  2013
+[BertDebug] region_len:  133 
+sequence_len:  1788
+[BertDebug] region_len:  273 
+sequence_len:  5436
+[BertDebug] region_len:  4376 
+sequence_len:  5784
+[BertDebug] region_len:  406 
+sequence_len:  8762
+[BertDebug] region_len:  270 
+sequence_len:  4160
+[BertDebug] region_len:  217 
+sequence_len:  1425
+[BertDebug] region_len:  874 
+sequence_len:  1263
+[BertDebug] region_len:  214 
+sequence_len:  8553
+[BertDebug] region_len:  1161 
+sequence_len:  1161
+[BertDebug] region_len:  744 
+sequence_len:  744
+[BertDebug] region_len:  150 
+sequence_len:  2288
+[BertDebug] region_len:  266 
+sequence_len:  1342
+[BertDebug] region_len:  148 
+sequence_len:  2370
+[BertDebug] region_len:  365 
+sequence_len:  1770
+[BertDebug] region_len:  689 
+sequence_len:  3708
+[BertDebug] region_len:  158 
+sequence_len:  6370
+[BertDebug] region_len:  291 
+sequence_len:  4542
+[BertDebug] region_len:  651 
+sequence_len:  1566
+[BertDebug] region_len:  740 
+sequence_len:  2362
+[BertDebug] region_len:  183 
+sequence_len:  1212
+[BertDebug] region_len:  339 
+sequence_len:  2602
+[BertDebug] region_len:  831 
+sequence_len:  2310
+[BertDebug] region_len:  274 
+sequence_len:  14475
+[BertDebug] region_len:  417 
+sequence_len:  2060
+[BertDebug] region_len:  176 
+sequence_len:  5682
+[BertDebug] region_len:  1067 
+sequence_len:  3294
+[BertDebug] region_len:  480 
+sequence_len:  708
+[BertDebug] region_len:  134 
+sequence_len:  1300
+[BertDebug] region_len:  1031 
+sequence_len:  2294
+[BertDebug] region_len:  207 
+sequence_len:  1974
+[BertDebug] region_len:  3636 
+sequence_len:  5306
+[BertDebug] region_len:  456 
+sequence_len:  1158
+[BertDebug] region_len:  186 
+sequence_len:  2673
+[BertDebug] region_len:  441 
+sequence_len:  1320
+[BertDebug] region_len:  330 
+sequence_len:  2821
+[BertDebug] region_len:  379 
+sequence_len:  5043
+[BertDebug] region_len:  675 
+sequence_len:  744
+[BertDebug] region_len:  196 
+sequence_len:  1994
+[BertDebug] region_len:  200 
+sequence_len:  279
+[BertDebug] region_len:  231 
+sequence_len:  2126
+[BertDebug] region_len:  284 
+sequence_len:  4242
+[BertDebug] region_len:  231 
+sequence_len:  1344
+[BertDebug] region_len:  316 
+sequence_len:  2458
+[BertDebug] region_len:  178 
+sequence_len:  501
+[BertDebug] region_len:  732 
+sequence_len:  2482
+[BertDebug] region_len:  281 
+sequence_len:  2511
+[BertDebug] region_len:  317 
+sequence_len:  2841
+[BertDebug] region_len:  274 
+sequence_len:  1432
+[BertDebug] region_len:  691 
+sequence_len:  2574
+[BertDebug] region_len:  209 
+sequence_len:  1248
+[BertDebug] region_len:  768 
+sequence_len:  12271
+[BertDebug] region_len:  318 
+sequence_len:  2490
+[BertDebug] region_len:  235 
+sequence_len:  591
+[BertDebug] region_len:  1545 
+sequence_len:  1545
+[BertDebug] region_len:  262 
+sequence_len:  6133
+[BertDebug] region_len:  439 
+sequence_len:  3191
+[BertDebug] region_len:  238 
+sequence_len:  720
+[BertDebug] region_len:  217 
+sequence_len:  1410
+[BertDebug] region_len:  4751 
+sequence_len:  5226
+[BertDebug] region_len:  158 
+sequence_len:  1643
+[BertDebug] region_len:  21442 
+sequence_len:  24666
+[BertDebug] region_len:  903 
+sequence_len:  3667
+[BertDebug] region_len:  4314 
+sequence_len:  4314
+[BertDebug] region_len:  1816 
+sequence_len:  3192
+[BertDebug] region_len:  315 
+sequence_len:  2001
+[BertDebug] region_len:  403 
+sequence_len:  2829
+[BertDebug] region_len:  277 
+sequence_len:  3028
+[BertDebug] region_len:  364 
+sequence_len:  2904
+[BertDebug] region_len:  1235 
+sequence_len:  2673
+[BertDebug] region_len:  155 
+sequence_len:  662
+[BertDebug] region_len:  262 
+sequence_len:  1563
+[BertDebug] region_len:  2324 
+sequence_len:  14905
+[BertDebug] region_len:  235 
+sequence_len:  2365
+[BertDebug] region_len:  57 
+sequence_len:  1510
+[BertDebug] region_len:  143 
+sequence_len:  1002
+[BertDebug] region_len:  259 
+sequence_len:  7553
+[BertDebug] region_len:  367 
+sequence_len:  4371
+[BertDebug] region_len:  1884 
+sequence_len:  1884
+[BertDebug] region_len:  190 
+sequence_len:  13848
+[BertDebug] region_len:  367 
+sequence_len:  3644
+[BertDebug] region_len:  1393 
+sequence_len:  14905
+[BertDebug] region_len:  588 
+sequence_len:  1383
+[BertDebug] region_len:  2555 
+sequence_len:  3141
+[BertDebug] region_len:  294 
+sequence_len:  15265
+[BertDebug] region_len:  757 
+sequence_len:  1467
+[BertDebug] region_len:  1466 
+sequence_len:  4801
+[BertDebug] region_len:  2006 
+sequence_len:  3244
+[BertDebug] region_len:  1025 
+sequence_len:  3488
+[BertDebug] region_len:  228 
+sequence_len:  4812
+[BertDebug] region_len:  319 
+sequence_len:  1692
+[BertDebug] region_len:  196 
+sequence_len:  9631
+[BertDebug] region_len:  235 
+sequence_len:  1176
+[BertDebug] region_len:  395 
+sequence_len:  4200
+[BertDebug] region_len:  1284 
+sequence_len:  2793
+[BertDebug] region_len:  291 
+sequence_len:  3954
+[BertDebug] region_len:  605 
+sequence_len:  1482
+[BertDebug] region_len:  136 
+sequence_len:  1239
+[BertDebug] region_len:  325 
+sequence_len:  1877
+[BertDebug] region_len:  245 
+sequence_len:  2115
+[BertDebug] region_len:  267 
+sequence_len:  2868
+[BertDebug] region_len:  157 
+sequence_len:  12254
+[BertDebug] region_len:  94 
+sequence_len:  1575
+[BertDebug] region_len:  449 
+sequence_len:  3081
+[BertDebug] region_len:  420 
+sequence_len:  2307
+[BertDebug] region_len:  367 
+sequence_len:  4792
+[BertDebug] region_len:  245 
+sequence_len:  1710
+[BertDebug] region_len:  327 
+sequence_len:  2903
+[BertDebug] region_len:  294 
+sequence_len:  4369
+[BertDebug] region_len:  287 
+sequence_len:  6207
+[BertDebug] region_len:  2311 
+sequence_len:  4365
+[BertDebug] region_len:  1335 
+sequence_len:  1335
+[BertDebug] region_len:  1954 
+sequence_len:  2310
+[BertDebug] region_len:  652 
+sequence_len:  1263
+[BertDebug] region_len:  169 
+sequence_len:  3437
+[BertDebug] region_len:  707 
+sequence_len:  1467
+[BertDebug] region_len:  1628 
+sequence_len:  3749
+[BertDebug] region_len:  270 
+sequence_len:  11432
+[BertDebug] region_len:  126 
+sequence_len:  1699
+[BertDebug] region_len:  193 
+sequence_len:  1782
+[BertDebug] region_len:  1299 
+sequence_len:  1299
+[BertDebug] region_len:  155 
+sequence_len:  1451
+[BertDebug] region_len:  162 
+sequence_len:  3862
+[BertDebug] region_len:  598 
+sequence_len:  1737
+[BertDebug] region_len:  305 
+sequence_len:  1672
+[BertDebug] region_len:  224 
+sequence_len:  1515
+[BertDebug] region_len:  114 
+sequence_len:  5881
+[BertDebug] region_len:  260 
+sequence_len:  4128
+[BertDebug] region_len:  1506 
+sequence_len:  1506
+[BertDebug] region_len:  239 
+sequence_len:  1241
+[BertDebug] region_len:  711 
+sequence_len:  2138
+[BertDebug] region_len:  14182 
+sequence_len:  14182
+[BertDebug] region_len:  623 
+sequence_len:  3682
+[BertDebug] region_len:  295 
+sequence_len:  2578
+[BertDebug] region_len:  196 
+sequence_len:  1947
+[BertDebug] region_len:  150 
+sequence_len:  7446
+[BertDebug] region_len:  239 
+sequence_len:  3754
+[BertDebug] region_len:  1392 
+sequence_len:  1392
+[BertDebug] region_len:  204 
+sequence_len:  3312
+[BertDebug] region_len:  224 
+sequence_len:  1224
+[BertDebug] region_len:  1272 
+sequence_len:  1272
+[BertDebug] region_len:  115 
+sequence_len:  2376
+[BertDebug] region_len:  966 
+sequence_len:  5938
+[BertDebug] region_len:  99 
+sequence_len:  4313
+[BertDebug] region_len:  178 
+sequence_len:  1040
+[BertDebug] region_len:  5957 
+sequence_len:  9462
+[BertDebug] region_len:  290 
+sequence_len:  4226
+[BertDebug] region_len:  172 
+sequence_len:  1914
+[BertDebug] region_len:  382 
+sequence_len:  1959
+[BertDebug] region_len:  283 
+sequence_len:  3439
+[BertDebug] region_len:  1086 
+sequence_len:  1086
+[BertDebug] region_len:  1190 
+sequence_len:  4800
+[BertDebug] region_len:  14149 
+sequence_len:  14149
+[BertDebug] region_len:  242 
+sequence_len:  812
+[BertDebug] region_len:  221 
+sequence_len:  3968
+[BertDebug] region_len:  6389 
+sequence_len:  7049
+[BertDebug] region_len:  1311 
+sequence_len:  1311
+[BertDebug] region_len:  184 
+sequence_len:  599
+[BertDebug] region_len:  206 
+sequence_len:  4829
+[BertDebug] region_len:  294 
+sequence_len:  3798
+[BertDebug] region_len:  307 
+sequence_len:  975
+[BertDebug] region_len:  267 
+sequence_len:  1577
+[BertDebug] region_len:  495 
+sequence_len:  4745
+[BertDebug] region_len:  361 
+sequence_len:  1218
+[BertDebug] region_len:  1026 
+sequence_len:  1512
+[BertDebug] region_len:  161 
+sequence_len:  1962
+[BertDebug] region_len:  249 
+sequence_len:  4437
+[BertDebug] region_len:  2346 
+sequence_len:  2346
+[BertDebug] region_len:  358 
+sequence_len:  1537
+[BertDebug] region_len:  137 
+sequence_len:  3153
+[BertDebug] region_len:  207 
+sequence_len:  983
+[BertDebug] region_len:  368 
+sequence_len:  3455
+[BertDebug] region_len:  157 
+sequence_len:  168
+[BertDebug] region_len:  113 
+sequence_len:  3567
+[BertDebug] region_len:  259 
+sequence_len:  4966
+[BertDebug] region_len:  216 
+sequence_len:  1812
+[BertDebug] region_len:  3334 
+sequence_len:  6404
+[BertDebug] region_len:  213 
+sequence_len:  4876
+[BertDebug] region_len:  263 
+sequence_len:  2304
+[BertDebug] region_len:  1092 
+sequence_len:  3864
+[BertDebug] region_len:  281 
+sequence_len:  3666
+[BertDebug] region_len:  162 
+sequence_len:  4451
+[BertDebug] region_len:  323 
+sequence_len:  948
+[BertDebug] region_len:  200 
+sequence_len:  1454
+[BertDebug] region_len:  689 
+sequence_len:  2058
+[BertDebug] region_len:  266 
+sequence_len:  3175
+[BertDebug] region_len:  330 
+sequence_len:  4145
+[BertDebug] region_len:  2492 
+sequence_len:  4977
+[BertDebug] region_len:  287 
+sequence_len:  1728
+[BertDebug] region_len:  220 
+sequence_len:  2760
+[BertDebug] region_len:  333 
+sequence_len:  2595
+[BertDebug] region_len:  350 
+sequence_len:  1230
+[BertDebug] region_len:  46 
+sequence_len:  768
+[BertDebug] region_len:  166 
+sequence_len:  825
+[BertDebug] region_len:  2841 
+sequence_len:  2841
+[BertDebug] region_len:  417 
+sequence_len:  15730
+[BertDebug] region_len:  1123 
+sequence_len:  4548
+[BertDebug] region_len:  157 
+sequence_len:  1012
+[BertDebug] region_len:  4767 
+sequence_len:  8769
+[BertDebug] region_len:  288 
+sequence_len:  633
+[BertDebug] region_len:  182 
+sequence_len:  1815
+[BertDebug] region_len:  256 
+sequence_len:  2973
+[BertDebug] region_len:  2060 
+sequence_len:  2847
+[BertDebug] region_len:  5375 
+sequence_len:  5375
+[BertDebug] region_len:  235 
+sequence_len:  2521
+[BertDebug] region_len:  420 
+sequence_len:  1903
+[BertDebug] region_len:  195 
+sequence_len:  195
+[BertDebug] region_len:  220 
+sequence_len:  9991
+[BertDebug] region_len:  253 
+sequence_len:  1906
+[BertDebug] region_len:  4749 
+sequence_len:  6687
+[BertDebug] region_len:  556 
+sequence_len:  1434
+[BertDebug] region_len:  3024 
+sequence_len:  3024
+[BertDebug] region_len:  777 
+sequence_len:  777
+[BertDebug] region_len:  378 
+sequence_len:  441
+[BertDebug] region_len:  1422 
+sequence_len:  8429
+[BertDebug] region_len:  1110 
+sequence_len:  1687
+[BertDebug] region_len:  392 
+sequence_len:  2036
+[BertDebug] region_len:  160 
+sequence_len:  2096
+[BertDebug] region_len:  185 
+sequence_len:  2909
+[BertDebug] region_len:  5031 
+sequence_len:  5031
+[BertDebug] region_len:  143 
+sequence_len:  1563
+[BertDebug] region_len:  182 
+sequence_len:  1947
+[BertDebug] region_len:  113 
+sequence_len:  5583
+[BertDebug] region_len:  78 
+sequence_len:  1053
+[BertDebug] region_len:  112 
+sequence_len:  957
+[BertDebug] region_len:  1230 
+sequence_len:  1290
+[BertDebug] region_len:  739 
+sequence_len:  2756
+[BertDebug] region_len:  203 
+sequence_len:  6627
+[BertDebug] region_len:  346 
+sequence_len:  3276
+[BertDebug] region_len: {'loss': 7.8284, 'learning_rate': 5e-05, 'epoch': 0.0} 
+17385 
+sequence_len:  17385
+[BertDebug] region_len:  186 
+sequence_len:  999
+[BertDebug] region_len:  232 
+sequence_len:  2781
+[BertDebug] region_len:  214 
+sequence_len:  4146
+[BertDebug] region_len:  6759 
+sequence_len:  6759
+[BertDebug] region_len:  3434 
+sequence_len:  5316
+[BertDebug] region_len:  248 
+sequence_len:  20726
+[BertDebug] region_len:  1785 
+sequence_len:  5839
+[BertDebug] region_len:  4804 
+sequence_len:  7535
+[BertDebug] region_len:  1188 
+sequence_len:  1188
+[BertDebug] region_len:  525 
+sequence_len:  3130
+[BertDebug] region_len:  4449 
+sequence_len:  4449
+[BertDebug] region_len:  155 
+sequence_len:  1724
+[BertDebug] region_len:  1395 
+sequence_len:  1395
+[BertDebug] region_len:  225 
+sequence_len:  3408
+[BertDebug] region_len:  6201 
+sequence_len:  7960
+[BertDebug] region_len:  102 
+sequence_len:  4388
+[BertDebug] region_len:  909 
+sequence_len:  1527
+[BertDebug] region_len:  550 
+sequence_len:  2939
+[BertDebug] region_len:  252 
+sequence_len:  3577
+[BertDebug] region_len:  225 
+sequence_len:  2037
+[BertDebug] region_len:  151 
+sequence_len:  1149
+[BertDebug] region_len:  696 
+sequence_len:  9684
+[BertDebug] region_len:  2080 
+sequence_len:  4039
+[BertDebug] region_len:  1242 
+sequence_len:  2071
+[BertDebug] region_len:  2187 
+sequence_len:  3941
+[BertDebug] region_len:  2331 
+sequence_len:  2331
+[BertDebug] region_len:  301 
+sequence_len:  14555
+[BertDebug] region_len:  221 
+sequence_len:  6890
+[BertDebug] region_len:  287 
+sequence_len:  4334
+[BertDebug] region_len:  213 
+sequence_len:  878
+[BertDebug] region_len:  246 
+sequence_len:  1506
+[BertDebug] region_len:  343 
+sequence_len:  1475
+[BertDebug] region_len:  302 
+sequence_len:  1648
+[BertDebug] region_len:  151 
+sequence_len:  1758
+[BertDebug] region_len:  186 
+sequence_len:  2740
+[BertDebug] region_len:  109 
+sequence_len:  3079
+[BertDebug] region_len:  276 
+sequence_len:  4302
+[BertDebug] region_len:  151 
+sequence_len:  1489
+[BertDebug] region_len:  536 
+sequence_len:  1022
+[BertDebug] region_len:  200 
+sequence_len:  2896
+[BertDebug] region_len:  99 
+sequence_len:  4563
+[BertDebug] region_len:  2592 
+sequence_len:  2592
+[BertDebug] region_len:  197 
+sequence_len:  2320
+[BertDebug] region_len:  325 
+sequence_len:  3262
+[BertDebug] region_len:  2751 
+sequence_len:  3285
+[BertDebug] region_len:  95 
+sequence_len:  3021
+[BertDebug] region_len:  249 
+sequence_len:  5609
+[BertDebug] region_len:  274 
+sequence_len:  2806
+[BertDebug] region_len:  2196 
+sequence_len:  5605
+[BertDebug] region_len:  298 
+sequence_len:  1983
+[BertDebug] region_len:  210 
+sequence_len:  1230
+[BertDebug] region_len:  434 
+sequence_len:  3220
+[BertDebug] region_len:  168 
+sequence_len:  1195
+[BertDebug] region_len:  253 
+sequence_len:  3041
+[BertDebug] region_len:  316 
+sequence_len:  2718
+[BertDebug] region_len:  689 
+sequence_len:  3717
+[BertDebug] region_len:  260 
+sequence_len:  2376
+[BertDebug] region_len:  881 
+sequence_len:  891
+[BertDebug] region_len:  339 
+sequence_len:  339
+[BertDebug] region_len:  218 
+sequence_len:  2634
+[BertDebug] region_len:  990 
+sequence_len:  990
+[BertDebug] region_len:  108 
+sequence_len:  2855
+[BertDebug] region_len:  178 
+sequence_len:  1984
+[BertDebug] region_len:  574 
+sequence_len:  1278
+[BertDebug] region_len:  984 
+sequence_len:  984
+[BertDebug] region_len:  1278 
+sequence_len:  1278
+[BertDebug] region_len:  382 
+sequence_len:  2766
+[BertDebug] region_len:  225 
+sequence_len:  3122
+[BertDebug] region_len:  1246 
+sequence_len:  2277
+[BertDebug] region_len:  161 
+sequence_len:  3081
+[BertDebug] region_len:  633 
+sequence_len:  1538
+[BertDebug] region_len:  81 
+sequence_len:  3798
+[BertDebug] region_len:  484 
+sequence_len:  3964
+[BertDebug] region_len:  4480 
+sequence_len:  8276
+[BertDebug] region_len:  153 
+sequence_len:  1472
+[BertDebug] region_len:  242 
+sequence_len:  297
+[BertDebug] region_len:  218 
+sequence_len:  1019
+[BertDebug] region_len:  249 
+sequence_len:  1509
+[BertDebug] region_len:  197 
+sequence_len:  1770
+[BertDebug] region_len:  937 
+sequence_len:  1926
+[BertDebug] region_len:  1784 
+sequence_len:  1784
+[BertDebug] region_len:  183 
+sequence_len:  1568
+[BertDebug] region_len:  250 
+sequence_len:  1074
+[BertDebug] region_len:  238 
+sequence_len:  2906
+[BertDebug] region_len:  2607 
+sequence_len:  5667
+[BertDebug] region_len:  18 
+sequence_len:  2255
+[BertDebug] region_len:  115 
+sequence_len:  12967
+[BertDebug] region_len:  323 
+sequence_len:  4704
+[BertDebug] region_len:  193 
+sequence_len:  1743
+[BertDebug] region_len:  4035 
+sequence_len:  4035
+[BertDebug] region_len:  1177 
+sequence_len:  10718
+[BertDebug] region_len:  739 
+sequence_len:  1686
+[BertDebug] region_len:  31 
+sequence_len:  2714
+[BertDebug] region_len:  368 
+sequence_len:  1275
+[BertDebug] region_len:  1435 
+sequence_len:  2049
+[BertDebug] region_len:  129 
+sequence_len:  1874
+[BertDebug] region_len:  1421 
+sequence_len:  3897
+[BertDebug] region_len:  172 
+sequence_len:  1156
+[BertDebug] region_len:  519 
+sequence_len:  1987
+[BertDebug] region_len:  445 
+sequence_len:  1365
+[BertDebug] region_len:  636 
+sequence_len:  636
+[BertDebug] region_len:  218 
+sequence_len:  2629
+[BertDebug] region_len:  3090 
+sequence_len:  6280
+[BertDebug] region_len:  269 
+sequence_len:  2958
+[BertDebug] region_len:  255 
+sequence_len:  834
+[BertDebug] region_len:  267 
+sequence_len:  1329
+[BertDebug] region_len:  696 
+sequence_len:  696
+[BertDebug] region_len:  238 
+sequence_len:  4021
+[BertDebug] region_len:  351 
+sequence_len:  7696
+[BertDebug] region_len:  2845 
+sequence_len:  8454
+[BertDebug] region_len:  227 
+sequence_len:  7607
+[BertDebug] region_len:  542 
+sequence_len:  1348
+[BertDebug] region_len:  204 
+sequence_len:  3185
+[BertDebug] region_len:  541 
+sequence_len:  2744
+[BertDebug] region_len:  372 
+sequence_len:  9940
+[BertDebug] region_len:  2341 
+sequence_len:  2916
+[BertDebug] region_len:  155 
+sequence_len:  3927
+[BertDebug] region_len:  148 
+sequence_len:  5638
+[BertDebug] region_len:  2522 
+sequence_len:  2645
+[BertDebug] region_len:  304 
+sequence_len:  5619
+[BertDebug] region_len:  283 
+sequence_len:  831
+[BertDebug] region_len:  463 
+sequence_len:  1195
+[BertDebug] region_len:  199 
+sequence_len:  1767
+[BertDebug] region_len:  162 
+sequence_len:  3894
+[BertDebug] region_len:  409 
+sequence_len:  6718
+[BertDebug] region_len:  242 
+sequence_len:  1224
+[BertDebug] region_len:  583 
+sequence_len:  1738

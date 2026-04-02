@@ -1,0 +1,174 @@
+ERROR: Unable to locate a modulefile for 'anaconda3/2022.05'
+ERROR: Unable to locate a modulefile for 'profile/deeplrn'
+Loading cuda/11.8.0-none-none
+  ERROR: Conflicting cuda is loaded
+03/13/2026 17:34:52 - WARNING - graph_enc.src.model.run_mlm - Process rank: 1, device: cuda:1, n_gpu: 1distributed training: True, 16-bits training: False
+03/13/2026 17:34:52 - WARNING - graph_enc.src.model.run_mlm - Process rank: 0, device: cuda:0, n_gpu: 1distributed training: True, 16-bits training: False
+03/13/2026 17:34:52 - INFO - graph_enc.src.model.run_mlm - Training/evaluation parameters TrainingArguments(
+_n_gpu=1,
+adafactor=False,
+adam_beta1=0.9,
+adam_beta2=0.98,
+adam_epsilon=1e-06,
+auto_find_batch_size=False,
+bf16=False,
+bf16_full_eval=False,
+data_seed=None,
+dataloader_drop_last=False,
+dataloader_num_workers=0,
+dataloader_pin_memory=True,
+ddp_backend=None,
+ddp_bucket_cap_mb=None,
+ddp_find_unused_parameters=False,
+ddp_timeout=1800,
+debug=[],
+deepspeed=None,
+disable_tqdm=False,
+do_eval=True,
+do_predict=False,
+do_train=True,
+eval_accumulation_steps=None,
+eval_delay=0,
+eval_steps=None,
+evaluation_strategy=epoch,
+fp16=False,
+fp16_backend=auto,
+fp16_full_eval=False,
+fp16_opt_level=O1,
+fsdp=[],
+fsdp_config={'fsdp_min_num_params': 0, 'xla': False, 'xla_fsdp_grad_ckpt': False},
+fsdp_min_num_params=0,
+fsdp_transformer_layer_cls_to_wrap=None,
+full_determinism=False,
+gradient_accumulation_steps=1,
+gradient_checkpointing=False,
+greater_is_better=None,
+group_by_length=False,
+half_precision_backend=auto,
+hub_model_id=None,
+hub_private_repo=False,
+hub_strategy=every_save,
+hub_token=<HUB_TOKEN>,
+ignore_data_skip=False,
+include_inputs_for_metrics=False,
+jit_mode_eval=False,
+label_names=None,
+label_smoothing_factor=0.0,
+learning_rate=0.0005,
+length_column_name=length,
+load_best_model_at_end=False,
+local_rank=0,
+log_level=passive,
+log_level_replica=warning,
+log_on_each_node=True,
+logging_dir=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/runs/Mar13_17-34-52_rezzonico,
+logging_first_step=True,
+logging_nan_inf_filter=True,
+logging_steps=10,
+logging_strategy=steps,
+lr_scheduler_type=linear,
+max_grad_norm=1.0,
+max_steps=40000,
+metric_for_best_model=None,
+mp_parameters=,
+no_cuda=False,
+num_train_epochs=3.0,
+optim=adamw_hf,
+optim_args=None,
+output_dir=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs,
+overwrite_output_dir=True,
+past_index=-1,
+per_device_eval_batch_size=8,
+per_device_train_batch_size=8,
+prediction_loss_only=False,
+push_to_hub=False,
+push_to_hub_model_id=None,
+push_to_hub_organization=None,
+push_to_hub_token=<PUSH_TO_HUB_TOKEN>,
+ray_scope=last,
+remove_unused_columns=True,
+report_to=[],
+resume_from_checkpoint=None,
+run_name=/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs,
+save_on_each_node=False,
+save_safetensors=False,
+save_steps=20000,
+save_strategy=steps,
+save_total_limit=None,
+seed=42,
+sharded_ddp=[],
+skip_memory_metrics=True,
+tf32=None,
+torch_compile=False,
+torch_compile_backend=None,
+torch_compile_mode=None,
+torchdynamo=None,
+tpu_metrics_debug=False,
+tpu_num_cores=None,
+use_ipex=False,
+use_legacy_prediction_loop=False,
+use_mps_device=False,
+warmup_ratio=0.0,
+warmup_steps=1200,
+weight_decay=1e-05,
+xpu_backend=None,
+)
+03/13/2026 17:35:46 - INFO - graph_enc.src.model.run_mlm - Vocabulary size: 4096
+03/13/2026 17:35:46 - INFO - graph_enc.src.model.run_mlm - Training new model from scratch
+[Info] Computed num_train_epochs=1 (steps_per_epoch=1063839, effective_batch_size=16, world_size=2)
+[Info] Computed num_train_epochs=1 (steps_per_epoch=1063839, effective_batch_size=16, world_size=2)
+[DataCollatorForCDSMaskedLM] Tokenized sequence lengths: [362, 362, 362, 362, 362, 362, 362, 362]
+[BatchStats] sample=0 masked_tokens_pct=6.41 unique_token_ids=67
+[BatchStats] sample=1 masked_tokens_pct=6.78 unique_token_ids=89
+[BatchStats] sample=2 masked_tokens_pct=6.49 unique_token_ids=74
+[BatchStats] sample=3 masked_tokens_pct=12.86 unique_token_ids=112
+[BatchStats] sample=4 masked_tokens_pct=4.76 unique_token_ids=90
+[BatchStats] sample=5 masked_tokens_pct=9.00 unique_token_ids=149
+[BatchStats] sample=6 masked_tokens_pct=8.47 unique_token_ids=53
+[BatchStats] sample=7 masked_tokens_pct=12.15 unique_token_ids=235
+[DataCollatorForCDSMaskedLM] Tokenized sequence lengths: [299, 299, 299, 299, 299, 299, 299, 299]
+[BatchStats] sample=0 masked_tokens_pct=6.67 unique_token_ids=69
+[BatchStats] sample=1 masked_tokens_pct=11.39 unique_token_ids=66
+[BatchStats] sample=2 masked_tokens_pct=9.24 unique_token_ids=107
+[BatchStats] sample=3 masked_tokens_pct=11.24 unique_token_ids=78
+[BatchStats] sample=4 masked_tokens_pct=4.41 unique_token_ids=64
+[BatchStats] sample=5 masked_tokens_pct=4.90 unique_token_ids=107
+[BatchStats] sample=6 masked_tokens_pct=4.76 unique_token_ids=60
+[BatchStats] sample=7 masked_tokens_pct=11.37 unique_token_ids=224
+{'loss': 8.4784, 'learning_rate': 4.166666666666667e-07, 'epoch': 0.0}
+[DataCollatorForCDSMaskedLM] Tokenized sequence lengths: [523, 523, 523, 523, 523, 523, 523, 523]
+[DataCollatorForCDSMaskedLM] Tokenized sequence lengths: [495, 495, 495, 495, 495, 495, 495, 495]
+[BatchStats] sample=0 masked_tokens_pct=15.96 unique_token_ids=315
+[BatchStats] sample=1 masked_tokens_pct=13.51 unique_token_ids=33
+[BatchStats] sample=2 masked_tokens_pct=15.19 unique_token_ids=63
+[BatchStats] sample=3 masked_tokens_pct=4.63 unique_token_ids=96
+[BatchStats] sample=4 masked_tokens_pct=8.22 unique_token_ids=63
+[BatchStats] sample=5 masked_tokens_pct=8.70 unique_token_ids=42
+[BatchStats] sample=6 masked_tokens_pct=8.59 unique_token_ids=144
+[BatchStats] sample=7 masked_tokens_pct=10.13 unique_token_ids=69
+[BatchStats] sample=0 masked_tokens_pct=10.99 unique_token_ids=79
+[BatchStats] sample=1 masked_tokens_pct=8.22 unique_token_ids=358
+[BatchStats] sample=2 masked_tokens_pct=7.94 unique_token_ids=57
+[BatchStats] sample=3 masked_tokens_pct=6.50 unique_token_ids=161
+[BatchStats] sample=4 masked_tokens_pct=6.20 unique_token_ids=104
+[BatchStats] sample=5 masked_tokens_pct=9.89 unique_token_ids=78
+[BatchStats] sample=6 masked_tokens_pct=4.82 unique_token_ids=76
+[BatchStats] sample=7 masked_tokens_pct=3.92 unique_token_ids=49
+[DataCollatorForCDSMaskedLM] Tokenized sequence lengths: [1009, 1009, 1009, 1009, 1009, 1009, 1009, 1009]
+[BatchStats] sample=0 masked_tokens_pct=5.31 unique_token_ids=102
+[BatchStats] sample=1 masked_tokens_pct=0.00 unique_token_ids=27
+[BatchStats] sample=2 masked_tokens_pct=6.67 unique_token_ids=42
+[BatchStats] sample=3 masked_tokens_pct=6.67 unique_token_ids=102
+[BatchStats] sample=4 masked_tokens_pct=11.54 unique_token_ids=23
+[BatchStats] sample=5 masked_tokens_pct=8.72 unique_token_ids=555
+[BatchStats] sample=6 masked_tokens_pct=2.50 unique_token_ids=39
+[BatchStats] sample=7 masked_tokens_pct=6.25 unique_token_ids=44
+[DataCollatorForCDSMaskedLM] Tokenized sequence lengths: [1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024]
+[BatchStats] sample=0 masked_tokens_pct=10.00 unique_token_ids=85
+[BatchStats] sample=1 masked_tokens_pct=6.45 unique_token_ids=86
+[BatchStats] sample=2 masked_tokens_pct=7.27 unique_token_ids=89
+[BatchStats] sample=3 masked_tokens_pct=12.07 unique_token_ids=46
+[BatchStats] sample=4 masked_tokens_pct=9.30 unique_token_ids=38
+[BatchStats] sample=5 masked_tokens_pct=13.64 unique_token_ids=20
+[BatchStats] sample=6 masked_tokens_pct=12.89 unique_token_ids=434
+[BatchStats] sample=7 masked_tokens_pct=7.19 unique_token_ids=115
