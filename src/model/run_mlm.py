@@ -827,7 +827,8 @@ def main():
     if getattr(training_args, "max_steps", -1) <= 0:
         training_args.max_steps = 500000
     if getattr(training_args, "warmup_steps", None) is None:
-        training_args.warmup_steps = 30000
+        training_args.warmup_steps = training_args.max_steps * 3 // 25
+        print("[Info] warmup_steps set to: ", training_args.warmup_steps)
     if getattr(training_args, "learning_rate", None) is None:
         training_args.learning_rate = 5e-4
     # weight decay in TrainingArguments exists; ensure it matches desired default

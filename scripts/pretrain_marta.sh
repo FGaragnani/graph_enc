@@ -10,7 +10,7 @@
 #SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
-#SBATCH --time=13:00:00
+#SBATCH --time=24:00:00
 
 module load anaconda3/2022.05
 module load profile/deeplrn
@@ -25,6 +25,8 @@ export HF_HUB_CACHE="/work/tesi_fgaragnani/checkpoints/"
 export HF_HOME="/work/tesi_fgaragnani/checkpoints/"
 export TRANSFORMERS_OFFLINE=1
 export HF_HUB_OFFLINE=1
+export WANDB_MODE=offline
+export WANDB_PROJECT=dna_bert2_cs
 
 model_name="dnabert2_cs_marta" # <--
 
@@ -54,15 +56,15 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --per_device_train_batch_size 8 \
   --per_device_eval_batch_size 4 \
   --gradient_accumulation_steps 4 \
-  --learning_rate 4e-4 \
-  --max_steps 10000 \
-  --warmup_steps 1200 \
+  --learning_rate 2e-4 \
+  --max_steps 40000 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
   --adam_eps 1e-6 \
   --save_strategy steps \
-  --save_steps 5000 \
+  --save_steps 20000 \
+  --report_to wandb \
   --ddp_find_unused_parameters false \
   --evaluation_strategy epoch \
   --do_train \
