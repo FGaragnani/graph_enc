@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=pretrain_dna-ber2_cs-marta
+#SBATCH --job-name=pretrain_dna-bert2_cs-boost
 #SBATCH --output=/work/tesi_fgaragnani/logs_ai4bio/%x_%j.out
 #SBATCH --error=/work/tesi_fgaragnani/logs_ai4bio/%x_%j.err
 #SBATCH --open-mode=truncate
