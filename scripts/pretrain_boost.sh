@@ -43,8 +43,8 @@ output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/${model_name}"
 torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} src/train/train.py \
   --model_type bert \
   --config_name src/model/bert_config.json \
-  --hidden_dropout_prob 0.5 \
-  --attention_probs_dropout_prob 0.5 \
+  --hidden_dropout_prob 0.2 \
+  --attention_probs_dropout_prob 0.2 \
   --tokenizer_name ./src/model \
   --data_path /homes/fgaragnani/ai4bio/graph_enc/data/ \
   --use_cds_mask true \
