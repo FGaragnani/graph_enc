@@ -4,10 +4,10 @@
 #SBATCH --error=/work/tesi_fgaragnani/logs_ai4bio/%x_%j.err
 #SBATCH --open-mode=truncate
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-node=4
+#SBATCH --gpus-per-node=1
 #SBATCH --mem=120G
 #SBATCH --cpus-per-task=8
-#SBATCH --partition=boost_usr_prod
+#SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
 #SBATCH --time=24:00:00
