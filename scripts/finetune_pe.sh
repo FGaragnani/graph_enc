@@ -54,7 +54,6 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --adam_eps 1e-6 \
   --save_strategy steps \
   --save_steps 1000 \
-  --eval_strategy steps \
   --eval_steps 500 \
   --validation_split_percentage 10 \
   --ddp_find_unused_parameters false \
