@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from torch.utils.data import Dataset as TorchDataset
 
@@ -133,7 +133,7 @@ class PromoterEnhancerDataset(TorchDataset):
                 enhancers.append(PEDatasetItem(sequence_init, sequence_end, chr_idx, ItemType.ENHANCER))
         return enhancers
 
-    def _load_chromosome_sequences(self) -> dict[int, str]:
+    def _load_chromosome_sequences(self) -> Dict[int, str]:
         if self.genome_data_path is None:
             return {}
 
@@ -141,7 +141,7 @@ class PromoterEnhancerDataset(TorchDataset):
             raise ValueError(f"Provided genome_data_path '{self.genome_data_path}' is not a directory.")
 
         genome_dataset = ChromosomeDataset(data_path=self.genome_data_path)
-        chromosome_sequences: dict[int, str] = {}
+        chromosome_sequences: Dict[int, str] = {}
 
         subdirs = [
             os.path.join(self.genome_data_path, name)
