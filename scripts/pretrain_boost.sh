@@ -57,13 +57,13 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --per_device_eval_batch_size 4 \
   --gradient_accumulation_steps 4 \
   --learning_rate 4e-4 \
-  --max_steps 40000 \
+  --max_steps 10000 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
   --adam_eps 1e-6 \
   --save_strategy steps \
-  --save_steps 20000 \
+  --save_steps 5000 \
   --report_to wandb \
   --ddp_find_unused_parameters false \
   --evaluation_strategy epoch \
