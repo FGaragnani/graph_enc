@@ -24,6 +24,7 @@ export PYTHONPATH=.:..:$PYTHONPATH
 export HF_HUB_CACHE="/work/tesi_fgaragnani/checkpoints/"
 export HF_HOME="/work/tesi_fgaragnani/checkpoints/"
 export TRANSFORMERS_OFFLINE=1
+export WANDB_MODE=offline
 export HF_HUB_OFFLINE=1
 
 model_checkpoint="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs"
