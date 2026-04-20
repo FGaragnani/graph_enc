@@ -64,12 +64,9 @@ class PromoterEnhancerDataset(TorchDataset):
 
         chr_seq = self.chromosome_sequences.get(item.get_chr_idx())
         if chr_seq is None:
-            loaded = sorted(self.chromosome_sequences.keys())
             raise ValueError(
                 "Genome sequence not loaded for chromosome index "
-                f"{item.get_chr_idx()} (dataset index {idx}). "
-                f"Loaded chromosome indices: {loaded}. "
-                "Pass genome_data_path with chrN/ subfolders when creating PromoterEnhancerDataset."
+                f"{item.get_chr_idx()}. Pass genome_data_path when creating PromoterEnhancerDataset."
             )
         return item.get_sequence(chr_seq)
 
@@ -132,8 +129,6 @@ class PromoterEnhancerDataset(TorchDataset):
                     continue
 
                 enhancers.append(PEDatasetItem(sequence_init, sequence_end, chr_idx, ItemType.ENHANCER))
-        unique_chr_idxs = sorted({item.get_chr_idx() for item in enhancers})
-        print(f"[PE DEBUG] Loaded {len(enhancers)} enhancers. Referenced chromosome indices: {unique_chr_idxs}")
         return enhancers
 
     def _load_chromosome_sequences(self) -> Dict[int, str]:
@@ -146,40 +141,26 @@ class PromoterEnhancerDataset(TorchDataset):
 
         chromosome_sequences: Dict[int, str] = {}
 
-        print(f"[PE DEBUG] genome_data_path={self.genome_data_path}")
-
         subdirs = [
             os.path.join(self.genome_data_path, name)
             for name in os.listdir(self.genome_data_path)
             if os.path.isdir(os.path.join(self.genome_data_path, name))
         ]
-        print(f"[PE DEBUG] Found {len(subdirs)} immediate subdirectories under genome_data_path")
-
         for subdir in sorted(subdirs):
-            chromosome_name = os.path.basename(subdir)
-            if not chromosome_name.startswith("chr"):
-                print(f"[PE DEBUG] Skipping folder '{chromosome_name}': does not start with 'chr'")
-                continue
-
-            numeric_part = chromosome_name[3:]
-            if not numeric_part.isdigit():
-                print(f"[PE DEBUG] Skipping folder '{chromosome_name}': suffix is not numeric")
-                continue
-
             fasta_file = self._find_fasta_file(subdir)
             if fasta_file is None:
-                print(f"[PE DEBUG] Skipping folder '{chromosome_name}': no FASTA file found")
                 continue
-
             chromosome_sequence = self._load_fasta_file(fasta_file)
-            chromosome_idx = int(numeric_part)
+
+            chromosome_name = os.path.basename(subdir)
+            if chromosome_name.startswith("human_chr"):
+                chromosome_name = chromosome_name[3:]
+            if not chromosome_name.isdigit():
+                continue
+            chromosome_idx = int(chromosome_name)
 
             chromosome_sequences[chromosome_idx] = chromosome_sequence
-            print(
-                f"[PE DEBUG] Loaded {chromosome_name} -> index {chromosome_idx} "
-                f"from {fasta_file} (length={len(chromosome_sequence)})"
-            )
-        print(f"[PE DEBUG] Loaded chromosome sequences for indices: {sorted(chromosome_sequences.keys())}")
+        print(f"Loaded chromosome sequences for indices: {list(chromosome_sequences.keys())}")
 
         return chromosome_sequences
 
