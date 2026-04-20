@@ -1,6 +1,7 @@
 import os
+import re
 from enum import Enum
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 from torch.utils.data import Dataset as TorchDataset
 
@@ -64,9 +65,12 @@ class PromoterEnhancerDataset(TorchDataset):
 
         chr_seq = self.chromosome_sequences.get(item.get_chr_idx())
         if chr_seq is None:
+            loaded = sorted(self.chromosome_sequences.keys())
             raise ValueError(
                 "Genome sequence not loaded for chromosome index "
-                f"{item.get_chr_idx()}. Pass genome_data_path when creating PromoterEnhancerDataset."
+                f"{item.get_chr_idx()}. "
+                f"Loaded chromosome indices: {loaded}. "
+                "Pass a correct genome_data_path when creating PromoterEnhancerDataset."
             )
         return item.get_sequence(chr_seq)
 
@@ -141,25 +145,26 @@ class PromoterEnhancerDataset(TorchDataset):
 
         chromosome_sequences: Dict[int, str] = {}
 
-        subdirs = [
-            os.path.join(self.genome_data_path, name)
-            for name in os.listdir(self.genome_data_path)
-            if os.path.isdir(os.path.join(self.genome_data_path, name))
-        ]
-        for subdir in sorted(subdirs):
-            fasta_file = self._find_fasta_file(subdir)
-            if fasta_file is None:
-                continue
-            chromosome_sequence = self._load_fasta_file(fasta_file)
+        # Accept both layouts:
+        # 1) data_path/chr1/*.fa, data_path/chr2/*.fa, ...
+        # 2) data_path/*.fa (all chromosome FASTA files directly in root)
+        for fasta_file in self._iter_fasta_files(self.genome_data_path):
+            chromosome_sequence, first_header = self._load_fasta_file(fasta_file)
 
-            chromosome_name = os.path.basename(subdir)
-            if chromosome_name.startswith("chr"):
-                chromosome_name = chromosome_name[3:]
-            if not chromosome_name.isdigit():
+            chromosome_idx = self._extract_chromosome_idx(
+                file_path=fasta_file,
+                header=first_header,
+            )
+            if chromosome_idx is None:
                 continue
-            chromosome_idx = int(chromosome_name)
 
             chromosome_sequences[chromosome_idx] = chromosome_sequence
+
+        if not chromosome_sequences:
+            print(
+                "No chromosome sequences were loaded. "
+                "Check genome_data_path and FASTA naming/header format."
+            )
         print(f"Loaded chromosome sequences for indices: {list(chromosome_sequences.keys())}")
 
         return chromosome_sequences
@@ -176,12 +181,71 @@ class PromoterEnhancerDataset(TorchDataset):
             return None
         return sorted(fasta_files)[0]
 
-    def _load_fasta_file(self, fasta_path: str) -> str:
+    def _iter_fasta_files(self, root: str) -> List[str]:
+        fasta_files: List[str] = []
+
+        # Root-level FASTA files
+        root_fasta = self._find_fasta_file(root)
+        if root_fasta is not None:
+            fasta_files.append(root_fasta)
+            for name in os.listdir(root):
+                path = os.path.join(root, name)
+                if (
+                    os.path.isfile(path)
+                    and path != root_fasta
+                    and name.lower().endswith((".fa", ".fasta", ".fna"))
+                ):
+                    fasta_files.append(path)
+
+        # FASTA files one level below (common chromosome-per-folder layout)
+        for name in os.listdir(root):
+            subdir = os.path.join(root, name)
+            if not os.path.isdir(subdir):
+                continue
+            fasta_file = self._find_fasta_file(subdir)
+            if fasta_file is not None:
+                fasta_files.append(fasta_file)
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_fasta_files: List[str] = []
+        for path in fasta_files:
+            if path not in seen:
+                seen.add(path)
+                unique_fasta_files.append(path)
+        return unique_fasta_files
+
+    def _extract_chromosome_idx(self, file_path: str, header: Optional[str]) -> Optional[int]:
+        # Try to infer chromosome from filename, parent folder, or FASTA header.
+        candidates = [
+            os.path.basename(file_path),
+            os.path.basename(os.path.dirname(file_path)),
+            header or "",
+        ]
+
+        for candidate in candidates:
+            # Prefer explicit chrNN forms.
+            match = re.search(r"(?:^|[^a-zA-Z0-9])chr\s*0*([0-9]+)(?:[^0-9]|$)", candidate, flags=re.IGNORECASE)
+            if match:
+                return int(match.group(1))
+
+            # Fallback: token that is just an integer.
+            token_match = re.search(r"(?:^|\D)0*([0-9]{1,2})(?:\D|$)", candidate)
+            if token_match:
+                return int(token_match.group(1))
+
+        print(f"Unable to infer chromosome index from FASTA: {file_path}")
+        return None
+
+    def _load_fasta_file(self, fasta_path: str) -> Tuple[str, Optional[str]]:
         sequences = []
+        first_header: Optional[str] = None
         with open(fasta_path, "r") as fasta_file:
             sequence = ""
             for line in fasta_file:
                 if line.startswith(">"):
+                    if first_header is None:
+                        first_header = line[1:].strip()
                     if sequence:
                         sequences.append(sequence)
                         sequence = ""
@@ -189,4 +253,4 @@ class PromoterEnhancerDataset(TorchDataset):
                     sequence += line.strip()
             if sequence:
                 sequences.append(sequence)
-        return "".join(sequences)
+        return "".join(sequences), first_header
