@@ -80,6 +80,16 @@ class DataTrainingArguments:
         default=None,
         metadata={"help": "Optional genome path used to materialize enhancer sequences."},
     )
+    target_enhancer_fraction: Optional[float] = field(
+        default=None,
+        metadata={
+            "help": "Optional target enhancer fraction in dataset after undersampling majority class (e.g. 0.5 for balanced)."
+        },
+    )
+    balance_seed: int = field(
+        default=42,
+        metadata={"help": "Random seed used for deterministic class rebalancing."},
+    )
     validation_split_percentage: int = field(default=5)
     max_seq_length: Optional[int] = field(
         default=768,
@@ -106,6 +116,9 @@ class DataTrainingArguments:
             raise ValueError("--chunk_size_bases must be > 0")
         if self.max_seq_length is not None and self.max_seq_length <= 0:
             raise ValueError("--max_seq_length must be > 0")
+        if self.target_enhancer_fraction is not None:
+            if not (0.0 < self.target_enhancer_fraction < 1.0):
+                raise ValueError("--target_enhancer_fraction must be in (0, 1)")
 
 
 class PEDiscriminativeDataset(TorchDataset):
@@ -304,7 +317,12 @@ def main():
 
     set_seed(training_args.seed)
 
-    base_dataset = PromoterEnhancerDataset(dir=data_args.dataset_dir, genome_data_path=data_args.data_path)
+    base_dataset = PromoterEnhancerDataset(
+        dir=data_args.dataset_dir,
+        genome_data_path=data_args.data_path,
+        target_enhancer_fraction=data_args.target_enhancer_fraction,
+        balance_seed=data_args.balance_seed,
+    )
     dataset = PEDiscriminativeDataset(base_dataset)
 
     if training_args.do_eval:

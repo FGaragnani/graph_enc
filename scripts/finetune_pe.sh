@@ -42,6 +42,8 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --tokenizer_name ./src/model \
   --config_file ./src/model/bert_config.json \
   --dataset_dir ${dataset_dir} \
+  --target_enhancer_fraction 0.5 \
+  --balance_seed 42 \
   --max_seq_length 768 \
   --chunk_size_bases 2000 \
   --max_chunks_per_sample 10 \
@@ -50,8 +52,8 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --per_device_train_batch_size 8 \
   --per_device_eval_batch_size 8 \
   --learning_rate 5e-5 \
-  --max_steps 5000 \
-  --warmup_steps 500 \
+  --max_steps 500 \
+  --warmup_steps 50 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \

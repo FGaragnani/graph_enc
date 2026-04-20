@@ -1,4 +1,5 @@
 import os
+import random
 from enum import Enum
 from typing import List, Optional, Dict
 
@@ -44,15 +45,25 @@ class PEDatasetItem:
 
 class PromoterEnhancerDataset(TorchDataset):
 
-    def __init__(self, dir: str = "scripts/datasets", genome_data_path: Optional[str] = None):
+    def __init__(
+        self,
+        dir: str = "scripts/datasets",
+        genome_data_path: Optional[str] = None,
+        target_enhancer_fraction: Optional[float] = None,
+        balance_seed: int = 42,
+    ):
         """
             Build a Promoter / Enhancer Dataset by passing a directory containing 'enhancers.dat' and 'promoters.dat' files.
         """
         super().__init__()
         self.dir = dir
         self.genome_data_path = genome_data_path
+        self.target_enhancer_fraction = target_enhancer_fraction
+        self.balance_seed = balance_seed
         self.chromosome_sequences = self._load_chromosome_sequences() if self.genome_data_path is not None else {}
         self.data: List[PEDatasetItem] = self._load_data()
+        self.data = self._rebalance_data(self.data)
+        self._print_class_distribution(self.data, prefix="Final")
 
     def __len__(self) -> int:
         return len(self.data)
@@ -74,7 +85,55 @@ class PromoterEnhancerDataset(TorchDataset):
         data: List[PEDatasetItem] = []
         data.extend(self._load_enhancers())
         data.extend(self._load_promoters())
+        self._print_class_distribution(data, prefix="Loaded")
         return data
+
+    def _print_class_distribution(self, data: List[PEDatasetItem], prefix: str) -> None:
+        num_enhancers = sum(1 for item in data if item.is_enhancer())
+        num_promoters = len(data) - num_enhancers
+        total = len(data)
+        enh_fraction = (num_enhancers / total) if total > 0 else 0.0
+        print(
+            f"{prefix} PE dataset: total={total}, enhancers={num_enhancers}, "
+            f"promoters={num_promoters}, enhancer_fraction={enh_fraction:.4f}"
+        )
+
+    def _rebalance_data(self, data: List[PEDatasetItem]) -> List[PEDatasetItem]:
+        if self.target_enhancer_fraction is None:
+            return data
+
+        target = self.target_enhancer_fraction
+        enhancers = [item for item in data if item.is_enhancer()]
+        promoters = [item for item in data if item.is_promoter()]
+
+        if not enhancers or not promoters:
+            print("Skipping rebalancing because one class is empty.")
+            return data
+
+        rng = random.Random(self.balance_seed)
+        desired_enhancers = int(round((target / (1.0 - target)) * len(promoters)))
+
+        if desired_enhancers <= len(enhancers):
+            selected_enhancers = rng.sample(enhancers, desired_enhancers)
+            selected_promoters = promoters
+            dropped = len(enhancers) - len(selected_enhancers)
+            print(
+                f"Rebalancing PE dataset to enhancer_fraction~{target:.3f}: "
+                f"downsampled enhancers by {dropped} samples."
+            )
+        else:
+            desired_promoters = int(round(((1.0 - target) / target) * len(enhancers)))
+            selected_enhancers = enhancers
+            selected_promoters = rng.sample(promoters, desired_promoters)
+            dropped = len(promoters) - len(selected_promoters)
+            print(
+                f"Rebalancing PE dataset to enhancer_fraction~{target:.3f}: "
+                f"downsampled promoters by {dropped} samples."
+            )
+
+        balanced = selected_enhancers + selected_promoters
+        rng.shuffle(balanced)
+        return balanced
     
     def _load_promoters(self) -> List[PEDatasetItem]:
         promoters: List[PEDatasetItem] = []
