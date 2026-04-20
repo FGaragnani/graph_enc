@@ -135,6 +135,7 @@ class PromoterEnhancerDataset(TorchDataset):
 
     def _load_chromosome_sequences(self) -> Dict[int, str]:
         if self.genome_data_path is None:
+            print("No genome_data_path provided, chromosome sequences will not be loaded. Enhancer sequences will not be available.")
             return {}
 
         if not os.path.isdir(self.genome_data_path):
@@ -161,5 +162,6 @@ class PromoterEnhancerDataset(TorchDataset):
                 continue
 
             chromosome_sequences[chromosome_idx] = chromosome_sequence
+        print(f"Loaded chromosome sequences for indices: {list(chromosome_sequences.keys())}")
 
         return chromosome_sequences
