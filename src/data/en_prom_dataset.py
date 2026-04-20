@@ -4,8 +4,6 @@ from typing import List, Optional, Dict
 
 from torch.utils.data import Dataset as TorchDataset
 
-from .dataset import ChromosomeDataset
-
 class ItemType(Enum):
     PROMOTER = 0
     ENHANCER = 1
@@ -141,7 +139,6 @@ class PromoterEnhancerDataset(TorchDataset):
         if not os.path.isdir(self.genome_data_path):
             raise ValueError(f"Provided genome_data_path '{self.genome_data_path}' is not a directory.")
 
-        genome_dataset = ChromosomeDataset(data_path=self.genome_data_path)
         chromosome_sequences: Dict[int, str] = {}
 
         subdirs = [
@@ -150,18 +147,46 @@ class PromoterEnhancerDataset(TorchDataset):
             if os.path.isdir(os.path.join(self.genome_data_path, name))
         ]
         for subdir in sorted(subdirs):
-            fasta_file, _ = genome_dataset._find_fasta_gtf_files(subdir)
-            chromosome_sequence = genome_dataset._load_fasta_file(fasta_file)
+            fasta_file = self._find_fasta_file(subdir)
+            if fasta_file is None:
+                continue
+            chromosome_sequence = self._load_fasta_file(fasta_file)
 
             chromosome_name = os.path.basename(subdir)
             if chromosome_name.startswith("chr"):
                 chromosome_name = chromosome_name[3:]
-            elif chromosome_name.isdigit():
-                chromosome_idx = int(chromosome_name)
-            else:
+            if not chromosome_name.isdigit():
                 continue
+            chromosome_idx = int(chromosome_name)
 
             chromosome_sequences[chromosome_idx] = chromosome_sequence
         print(f"Loaded chromosome sequences for indices: {list(chromosome_sequences.keys())}")
 
         return chromosome_sequences
+
+    def _find_fasta_file(self, folder: str) -> Optional[str]:
+        fasta_exts = (".fa", ".fasta", ".fna")
+        fasta_files = []
+        for name in os.listdir(folder):
+            path = os.path.join(folder, name)
+            if os.path.isfile(path) and name.lower().endswith(fasta_exts):
+                fasta_files.append(path)
+        if not fasta_files:
+            print(f"No FASTA file found in {folder}, skipping.")
+            return None
+        return sorted(fasta_files)[0]
+
+    def _load_fasta_file(self, fasta_path: str) -> str:
+        sequences = []
+        with open(fasta_path, "r") as fasta_file:
+            sequence = ""
+            for line in fasta_file:
+                if line.startswith(">"):
+                    if sequence:
+                        sequences.append(sequence)
+                        sequence = ""
+                else:
+                    sequence += line.strip()
+            if sequence:
+                sequences.append(sequence)
+        return "".join(sequences)
