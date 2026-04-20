@@ -55,6 +55,7 @@ class ModelArguments:
     )
     config_name: Optional[str] = field(default=None, metadata={"help": "Config path/name if different from model"})
     tokenizer_name: Optional[str] = field(default=None, metadata={"help": "Tokenizer path/name if different from model"})
+    config_file: Optional[str] = field(default=None, metadata={"help": "Config file path."})
     cache_dir: Optional[str] = field(default=None)
     use_fast_tokenizer: bool = field(default=True)
     model_revision: str = field(default="main")
@@ -331,7 +332,7 @@ def main():
             return os.path.abspath(path_value)
         return path_value
 
-    model_args.config_name = _resolve_local_path(model_args.config_name)
+    model_args.config_name = model_args.config_name or model_args.model_name_or_path
     model_args.tokenizer_name = _resolve_local_path(model_args.tokenizer_name)
     model_args.model_name_or_path = _resolve_local_path(model_args.model_name_or_path)
 

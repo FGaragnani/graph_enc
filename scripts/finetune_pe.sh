@@ -37,6 +37,7 @@ export MASTER_PORT=`comm -23 <(seq 5000 6000 | sort) <(ss -Htan | awk '{print $4
 torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} src/task/discriminative.py \
   --model_name_or_path ${model_checkpoint} \
   --tokenizer_name ./src/model \
+  --config_file ./src/model \
   --dataset_dir ${dataset_dir} \
   --max_seq_length 768 \
   --chunk_size_bases 2000 \
