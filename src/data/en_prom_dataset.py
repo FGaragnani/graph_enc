@@ -153,8 +153,13 @@ class PromoterEnhancerDataset(TorchDataset):
             chromosome_sequence = self._load_fasta_file(fasta_file)
 
             chromosome_name = os.path.basename(subdir)
-            if chromosome_name.startswith("human_chr"):
+            if chromosome_name.startswith("human_chr_"):
+                chromosome_name = chromosome_name[len("human_chr_"):]
+            elif chromosome_name.startswith("human_chr"):
+                chromosome_name = chromosome_name[len("human_chr"):]
+            elif chromosome_name.startswith("chr"):
                 chromosome_name = chromosome_name[3:]
+
             if not chromosome_name.isdigit():
                 continue
             chromosome_idx = int(chromosome_name)
