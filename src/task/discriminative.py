@@ -3,6 +3,7 @@ import logging
 import math
 import os
 import sys
+import copy
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
@@ -98,6 +99,10 @@ class DataTrainingArguments:
     chunk_size_bases: int = field(
         default=2000,
         metadata={"help": "Split long promoter/enhancer sequences into chunks of this many bases."},
+    )
+    perform_kfold: bool = field(
+        default=False,
+        metadata={"help": "Whether to perform K-Fold cross validation instead of a single train/validation split."},
     )
     max_chunks_per_sample: Optional[int] = field(
         default=None,
@@ -327,21 +332,24 @@ def main():
 
     if training_args.do_eval:
         all_idx = torch.randperm(len(dataset), generator=torch.Generator().manual_seed(training_args.seed)).tolist()
+        
         split_idx = int(len(all_idx) * (data_args.validation_split_percentage / 100))
         split_idx = min(max(split_idx, 1), max(len(all_idx) - 1, 1))
-        eval_idx = all_idx[:split_idx]
-        train_idx = all_idx[split_idx:]
-
-        train_dataset = Subset(dataset, train_idx)
-        eval_dataset = Subset(dataset, eval_idx)
+        if data_args.perform_kfold:
+            folds = [
+                (all_idx[i * split_idx : (i + 1) * split_idx], all_idx[: i * split_idx] + all_idx[(i + 1) * split_idx :])
+                for i in range((len(all_idx) + split_idx - 1) // split_idx)
+            ]
+            folds = [fold for fold in folds if len(fold[0]) > 0 and len(fold[1]) > 0]
+        else:
+            eval_idx = all_idx[:split_idx]
+            train_idx = all_idx[split_idx:]
+            folds = [
+                (eval_idx,
+                train_idx)
+            ]
     else:
-        train_dataset = dataset
-        eval_dataset = None
-
-    if training_args.do_train and data_args.max_train_samples is not None:
-        train_dataset = Subset(train_dataset, list(range(min(len(train_dataset), data_args.max_train_samples))))
-    if training_args.do_eval and data_args.max_eval_samples is not None and eval_dataset is not None:
-        eval_dataset = Subset(eval_dataset, list(range(min(len(eval_dataset), data_args.max_eval_samples))))
+        folds = [(list(range(len(dataset))), [])]
 
     def _resolve_local_path(path_value: Optional[str]) -> Optional[str]:
         if path_value is None:
@@ -428,6 +436,7 @@ def main():
         num_labels=2,
         classifier_dropout=model_args.classifier_dropout,
     )
+    base_model = copy.deepcopy(model)
 
     data_collator = DataCollatorForChunkedPromoterEnhancer(
         tokenizer=tokenizer,
@@ -447,35 +456,58 @@ def main():
         accuracy = acc_metric.compute(predictions=predictions, references=labels)["accuracy"]
         f1 = f1_metric.compute(predictions=predictions, references=labels, average="binary")["f1"]
         return {"accuracy": accuracy, "f1": f1}
+    
+    results = {}
 
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset if training_args.do_train else None,
-        eval_dataset=eval_dataset if training_args.do_eval else None,
-        tokenizer=tokenizer,
-        data_collator=data_collator,
-        compute_metrics=compute_metrics if training_args.do_eval else None,
-    )
+    for fold_idx, fold in enumerate(folds):
+        eval_idx, train_idx = fold
+        logger.info(
+            f"Starting fold {fold_idx + 1}/{len(folds)} with {len(train_idx)} train and {len(eval_idx)} eval samples"
+        )
 
-    if training_args.do_train:
-        checkpoint = training_args.resume_from_checkpoint if training_args.resume_from_checkpoint is not None else last_checkpoint
-        train_result = trainer.train(resume_from_checkpoint=checkpoint)
-        trainer.save_model()
+        # Reinitialize model every fold to avoid training-state leakage across folds.
+        model = copy.deepcopy(base_model)
+        train_dataset = Subset(dataset, train_idx)
+        eval_dataset = Subset(dataset, eval_idx) if eval_idx else None
+        
+        if training_args.do_train and data_args.max_train_samples is not None:
+            train_dataset = Subset(train_dataset, list(range(min(len(train_dataset), data_args.max_train_samples))))
+        if training_args.do_eval and data_args.max_eval_samples is not None and eval_dataset is not None:
+            eval_dataset = Subset(eval_dataset, list(range(min(len(eval_dataset), data_args.max_eval_samples))))
+        
+        trainer = Trainer(
+            model=model,
+            args=training_args,
+            train_dataset=train_dataset if training_args.do_train else None,
+            eval_dataset=eval_dataset if training_args.do_eval else None,
+            tokenizer=tokenizer,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics if training_args.do_eval else None,
+        )
 
-        metrics = train_result.metrics
-        metrics["train_samples"] = len(train_dataset)
-        trainer.log_metrics("train", metrics)
-        trainer.save_metrics("train", metrics)
-        trainer.save_state()
+        if training_args.do_train:
+            checkpoint = training_args.resume_from_checkpoint if training_args.resume_from_checkpoint is not None else last_checkpoint
+            train_result = trainer.train(resume_from_checkpoint=checkpoint)
+            trainer.save_model()
 
-    if training_args.do_eval:
-        logger.info("*** Evaluate ***")
-        metrics = trainer.evaluate()
-        metrics["eval_samples"] = len(eval_dataset) if eval_dataset is not None else 0
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
+            metrics = train_result.metrics
+            metrics["train_samples"] = len(train_dataset)
+            train_metric_prefix = "train" if len(folds) == 1 else f"train_fold_{fold_idx}"
+            trainer.log_metrics(train_metric_prefix, metrics)
+            trainer.save_metrics(train_metric_prefix, metrics)
+            trainer.save_state()
 
+        if training_args.do_eval:
+            logger.info("*** Evaluate ***")
+            metrics = trainer.evaluate()
+            metrics["eval_samples"] = len(eval_dataset) if eval_dataset is not None else 0
+            eval_metric_prefix = "eval" if len(folds) == 1 else f"eval_fold_{fold_idx}"
+            trainer.log_metrics(eval_metric_prefix, metrics)
+            trainer.save_metrics(eval_metric_prefix, metrics)
+            results[len(results)] = metrics
+
+    for key, value in results.items():
+        logger.info(f"Fold {key}: {value}")
 
 if __name__ == "__main__":
     main()
