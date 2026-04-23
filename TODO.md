@@ -1,0 +1,3 @@
+- [ ] K-Fold Cross Validation (???)
+- [ ] Test su altre specie
+- [ ] Controllare lunghezze Enhancer e Promoter che abbiano senso
