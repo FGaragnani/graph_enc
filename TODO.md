@@ -1,4 +1,4 @@
-- [ ] K-Fold Cross Validation (???)
+- [ ] K-Fold Cross Validation --> Parameter --n_kfolds
 - [ ] Test su altre specie
 - [ ] Controllare lunghezze Enhancer e Promoter che abbiano senso
 
