@@ -1,0 +1,67 @@
+#!/bin/bash
+#SBATCH --job-name=finetune_pe
+#SBATCH --output=/work/tesi_fgaragnani/logs_ai4bio/%x_%j.out
+#SBATCH --error=/work/tesi_fgaragnani/logs_ai4bio/%x_%j.err
+#SBATCH --open-mode=truncate
+#SBATCH --ntasks-per-node=1
+#SBATCH --gpus-per-node=4
+#SBATCH --mem=120G
+#SBATCH --cpus-per-task=8
+#SBATCH --partition=all_usr_prod
+#SBATCH --account=ai4bio2025
+#SBATCH --nodes=1
+#SBATCH --time=12:00:00
+
+module load anaconda3/2022.05
+module load profile/deeplrn
+module load cuda/11.8
+
+source activate dna
+
+cd /homes/fgaragnani/ai4bio/graph_enc
+export PYTHONPATH=.:..:$PYTHONPATH
+
+export HF_HUB_CACHE="/work/tesi_fgaragnani/checkpoints/"
+export HF_HOME="/work/tesi_fgaragnani/checkpoints/"
+export TRANSFORMERS_OFFLINE=1
+export WANDB_MODE=offline
+export HF_HUB_OFFLINE=1
+
+model_checkpoint="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs"
+output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/finetuned_pe"
+dataset_dir="/homes/fgaragnani/ai4bio/graph_enc/scripts/datasets"
+
+IFS=',' read -r -a nodelist <<<$SLURM_NODELIST
+export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_PORT=`comm -23 <(seq 5000 6000 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1`
+
+torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} src/task/discriminative.py \
+  --model_type bert \
+  --data_path /homes/fgaragnani/ai4bio/graph_enc/data/ \
+  --tokenizer_name ./src/model \
+  --config_file ./src/model/bert_config.json \
+  --dataset_dir ${dataset_dir} \
+  --target_enhancer_fraction 0.5 \
+  --balance_seed 42 \
+  --max_seq_length 768 \
+  --chunk_size_bases 2000 \
+  --max_chunks_per_sample 10 \
+  --pad_to_max_length false \
+  --output_dir ${output_dir} \
+  --per_device_train_batch_size 8 \
+  --per_device_eval_batch_size 8 \
+  --learning_rate 5e-5 \
+  --max_steps 500 \
+  --warmup_steps 50 \
+  --weight_decay 1e-5 \
+  --adam_beta1 0.9 \
+  --adam_beta2 0.98 \
+  --adam_eps 1e-6 \
+  --save_strategy steps \
+  --save_steps 1000 \
+  --eval_steps 500 \
+  --validation_split_percentage 10 \
+  --ddp_find_unused_parameters false \
+  --do_train \
+  --do_eval \
+  --overwrite_output_dir
