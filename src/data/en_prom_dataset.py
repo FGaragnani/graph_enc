@@ -26,6 +26,9 @@ class PEDatasetItem:
     def get_chr_idx(self) -> int:
         return self.chr_idx
     
+    def len(self) -> int:
+        return self.sequence_end - self.sequence_init
+    
     def get_sequence(self, chr_seq: Optional[str] = None) -> str:
         """
             Get the sequence of this item. If the sequence is not already loaded, it will be loaded from the provided chromosome sequence.
@@ -96,6 +99,19 @@ class PromoterEnhancerDataset(TorchDataset):
         print(
             f"{prefix} PE dataset: total={total}, enhancers={num_enhancers}, "
             f"promoters={num_promoters}, enhancer_fraction={enh_fraction:.4f}"
+        )
+        
+        lengths_enhancers = [item.len() for item in data if item.is_enhancer()]
+        lengths_promoters = [item.len() for item in data if item.is_promoter()]
+        avg_enhancer_length = sum(lengths_enhancers) / len(lengths_enhancers) if lengths_enhancers else 0
+        avg_promoter_length = sum(lengths_promoters) / len(lengths_promoters) if lengths_promoters else 0
+        std_enhancer_length = (sum((l - avg_enhancer_length) ** 2 for l in lengths_enhancers) / len(lengths_enhancers)) ** 0.5 if lengths_enhancers else 0
+        std_promoter_length = (sum((l - avg_promoter_length) ** 2 for l in lengths_promoters) / len(lengths_promoters)) ** 0.5 if lengths_promoters else 0
+        print(
+            f"{prefix} PE dataset: average enhancer length={avg_enhancer_length:.2f}, "
+            f"average promoter length={avg_promoter_length:.2f}, "
+            f"std enhancer length={std_enhancer_length:.2f}, "
+            f"std promoter length={std_promoter_length:.2f}"
         )
 
     def _rebalance_data(self, data: List[PEDatasetItem]) -> List[PEDatasetItem]:
