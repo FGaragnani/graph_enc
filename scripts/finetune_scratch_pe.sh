@@ -64,4 +64,5 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --ddp_find_unused_parameters false \
   --do_train \
   --do_eval \
-  --overwrite_output_dir
+  --overwrite_output_dir \
+  --perform_kfold true
