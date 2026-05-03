@@ -7,6 +7,7 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --mem=180G
 #SBATCH --cpus-per-task=8
+#SBATCH --array=0-4
 #SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
@@ -30,6 +31,9 @@ export HF_HUB_OFFLINE=1
 model_checkpoint="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs"
 output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/finetuned_pe"
 dataset_dir="/homes/fgaragnani/ai4bio/graph_enc/scripts/datasets"
+seeds=(42 43 44 45 46)
+seed=${seeds[$SLURM_ARRAY_TASK_ID]}
+run_output_dir="${output_dir}/seed_${seed}"
 
 IFS=',' read -r -a nodelist <<<$SLURM_NODELIST
 export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
@@ -43,12 +47,12 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --config_file ./src/model/bert_config.json \
   --dataset_dir ${dataset_dir} \
   --target_enhancer_fraction 0.5 \
-  --balance_seed 42 \
+  --balance_seed ${seed} \
   --max_seq_length 768 \
   --chunk_size_bases 2000 \
   --max_chunks_per_sample 10 \
   --pad_to_max_length false \
-  --output_dir ${output_dir} \
+  --output_dir ${run_output_dir} \
   --per_device_train_batch_size 8 \
   --per_device_eval_batch_size 8 \
   --learning_rate 5e-5 \
@@ -66,4 +70,5 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --do_train \
   --do_eval \
   --overwrite_output_dir \
-  --perform_kfold true
+  --perform_kfold true \
+  --seed ${seed}
