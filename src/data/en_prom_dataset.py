@@ -27,6 +27,8 @@ class PEDatasetItem:
         return self.chr_idx
     
     def len(self) -> int:
+        if self.is_promoter():
+            return len(self.sequence) if self.sequence is not None else 0
         return self.sequence_end - self.sequence_init
     
     def get_sequence(self, chr_seq: Optional[str] = None) -> str:
