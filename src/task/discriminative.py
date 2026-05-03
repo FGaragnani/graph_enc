@@ -279,6 +279,9 @@ def main():
     if "--logging_first_step" not in sys.argv:
         training_args.logging_first_step = True
 
+    # Keep runs stateless by default; we only persist one selected fold below.
+    training_args.save_strategy = "no"
+
     # Trainer must keep sequence column for custom collator.
     training_args.remove_unused_columns = False
 
@@ -488,14 +491,15 @@ def main():
         if training_args.do_train:
             checkpoint = training_args.resume_from_checkpoint if training_args.resume_from_checkpoint is not None else last_checkpoint
             train_result = trainer.train(resume_from_checkpoint=checkpoint)
-            trainer.save_model()
 
             metrics = train_result.metrics
             metrics["train_samples"] = len(train_dataset)
             train_metric_prefix = "train" if len(folds) == 1 else f"train_fold_{fold_idx}"
             trainer.log_metrics(train_metric_prefix, metrics)
             trainer.save_metrics(train_metric_prefix, metrics)
-            trainer.save_state()
+
+            if training_args.seed == 42 and fold_idx == 0:
+                trainer.save_model()
 
         if training_args.do_eval:
             logger.info("*** Evaluate ***")

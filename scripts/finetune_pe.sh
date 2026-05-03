@@ -11,7 +11,7 @@
 #SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
-#SBATCH --time=00:15:00
+#SBATCH --time=00:30:00
 
 module load anaconda3/2022.05
 module load profile/deeplrn
@@ -62,8 +62,7 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
   --adam_eps 1e-6 \
-  --save_strategy steps \
-  --save_steps 1000 \
+  --save_strategy no \
   --eval_steps 500 \
   --validation_split_percentage 10 \
   --ddp_find_unused_parameters false \
