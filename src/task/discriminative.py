@@ -1,4 +1,5 @@
 import json
+import gc
 import logging
 import math
 import os
@@ -472,6 +473,8 @@ def main():
         model = copy.deepcopy(base_model)
         train_dataset = Subset(dataset, train_idx)
         eval_dataset = Subset(dataset, eval_idx) if eval_idx else None
+        trainer = None
+        train_result = None
         
         if training_args.do_train and data_args.max_train_samples is not None:
             train_dataset = Subset(train_dataset, list(range(min(len(train_dataset), data_args.max_train_samples))))
@@ -488,27 +491,40 @@ def main():
             compute_metrics=compute_metrics if training_args.do_eval else None,
         )
 
-        if training_args.do_train:
-            checkpoint = training_args.resume_from_checkpoint if training_args.resume_from_checkpoint is not None else last_checkpoint
-            train_result = trainer.train(resume_from_checkpoint=checkpoint)
+        try:
+            if training_args.do_train:
+                checkpoint = training_args.resume_from_checkpoint if training_args.resume_from_checkpoint is not None else last_checkpoint
+                train_result = trainer.train(resume_from_checkpoint=checkpoint)
 
-            metrics = train_result.metrics
-            metrics["train_samples"] = len(train_dataset)
-            train_metric_prefix = "train" if len(folds) == 1 else f"train_fold_{fold_idx}"
-            trainer.log_metrics(train_metric_prefix, metrics)
-            trainer.save_metrics(train_metric_prefix, metrics)
+                metrics = train_result.metrics
+                metrics["train_samples"] = len(train_dataset)
+                train_metric_prefix = "train" if len(folds) == 1 else f"train_fold_{fold_idx}"
+                trainer.log_metrics(train_metric_prefix, metrics)
+                trainer.save_metrics(train_metric_prefix, metrics)
 
-            if training_args.seed == 42 and fold_idx == 0:
-                trainer.save_model()
+                if training_args.seed == 42 and fold_idx == 0:
+                    trainer.save_model()
 
-        if training_args.do_eval:
-            logger.info("*** Evaluate ***")
-            metrics = trainer.evaluate()
-            metrics["eval_samples"] = len(eval_dataset) if eval_dataset is not None else 0
-            eval_metric_prefix = "eval" if len(folds) == 1 else f"eval_fold_{fold_idx}"
-            trainer.log_metrics(eval_metric_prefix, metrics)
-            trainer.save_metrics(eval_metric_prefix, metrics)
-            results[len(results)] = metrics
+            if training_args.do_eval:
+                logger.info("*** Evaluate ***")
+                metrics = trainer.evaluate()
+                metrics["eval_samples"] = len(eval_dataset) if eval_dataset is not None else 0
+                eval_metric_prefix = "eval" if len(folds) == 1 else f"eval_fold_{fold_idx}"
+                trainer.log_metrics(eval_metric_prefix, metrics)
+                trainer.save_metrics(eval_metric_prefix, metrics)
+                results[len(results)] = metrics
+        finally:
+            if trainer is not None and hasattr(trainer, "model") and trainer.model is not None:
+                trainer.model.cpu()
+            del trainer
+            del model
+            del train_dataset
+            del eval_dataset
+            del train_result
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
 
     for key, value in results.items():
         logger.info(f"Fold {key}: {value}")
