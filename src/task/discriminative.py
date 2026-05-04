@@ -67,7 +67,7 @@ class ModelArguments:
     attention_probs_dropout_prob: Optional[float] = field(default=None)
     classifier_dropout: float = field(default=0.1)
     freeze_bert: bool = field(
-        default=True,
+        default=False,
         metadata={"help": "Whether to freeze the BERT backbone and train only the classifier head."},
     )
 
