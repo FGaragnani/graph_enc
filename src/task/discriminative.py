@@ -66,6 +66,10 @@ class ModelArguments:
     hidden_dropout_prob: Optional[float] = field(default=None)
     attention_probs_dropout_prob: Optional[float] = field(default=None)
     classifier_dropout: float = field(default=0.1)
+    freeze_bert: bool = field(
+        default=True,
+        metadata={"help": "Whether to freeze the BERT backbone and train only the classifier head."},
+    )
 
     def __post_init__(self):
         if self.config_overrides is not None and (self.config_name is not None or self.model_name_or_path is not None):
@@ -208,11 +212,19 @@ class DataCollatorForChunkedPromoterEnhancer:
 
 
 class ChunkAveragedCLSClassifier(nn.Module):
-    """Encode each chunk, average CLS chunk embeddings per sample, classify."""
+    """Mean-pool BERT outputs per chunk, then average chunk vectors per sample."""
 
-    def __init__(self, backbone_mlm: BertForMaskedLM, hidden_size: int, num_labels: int, classifier_dropout: float):
+    def __init__(
+        self,
+        backbone_mlm: BertForMaskedLM,
+        hidden_size: int,
+        num_labels: int,
+        classifier_dropout: float,
+        freeze_backbone: bool = True,
+    ):
         super().__init__()
         self.backbone = backbone_mlm.bert
+        self.freeze_backbone = freeze_backbone
         self.num_labels = num_labels
         self.loss_fct = nn.CrossEntropyLoss()
         self.projection = nn.Sequential(
@@ -221,6 +233,17 @@ class ChunkAveragedCLSClassifier(nn.Module):
             nn.Dropout(classifier_dropout),
         )
         self.classifier = nn.Linear(hidden_size, num_labels)
+
+        if self.freeze_backbone:
+            for parameter in self.backbone.parameters():
+                parameter.requires_grad_(False)
+            self.backbone.eval()
+
+    def train(self, mode: bool = True):
+        super().train(mode)
+        if self.freeze_backbone:
+            self.backbone.eval()
+        return self
 
     def forward(
         self,
@@ -242,18 +265,25 @@ class ChunkAveragedCLSClassifier(nn.Module):
         )
 
         sequence_output = encoder_outputs[-1] if isinstance(encoder_outputs, list) else encoder_outputs
-        cls_per_chunk = sequence_output[:, 0, :]
+        if attention_mask is None:
+            chunk_mask = torch.ones(sequence_output.shape[:2], device=sequence_output.device, dtype=sequence_output.dtype)
+        else:
+            chunk_mask = attention_mask.to(dtype=sequence_output.dtype)
+
+        chunk_sum = (sequence_output * chunk_mask.unsqueeze(-1)).sum(dim=1)
+        chunk_count = chunk_mask.sum(dim=1).clamp_min(1).unsqueeze(-1)
+        chunk_vectors = chunk_sum / chunk_count
 
         if labels is not None:
             batch_size = labels.size(0)
         else:
             batch_size = int(chunk_to_sample.max().item()) + 1
 
-        pooled = cls_per_chunk.new_zeros((batch_size, cls_per_chunk.size(-1)))
-        pooled.index_add_(0, chunk_to_sample, cls_per_chunk)
+        pooled = chunk_vectors.new_zeros((batch_size, chunk_vectors.size(-1)))
+        pooled.index_add_(0, chunk_to_sample, chunk_vectors)
 
-        counts = torch.bincount(chunk_to_sample, minlength=batch_size).to(device=cls_per_chunk.device)
-        counts = counts.clamp_min(1).unsqueeze(-1).to(dtype=cls_per_chunk.dtype)
+        counts = torch.bincount(chunk_to_sample, minlength=batch_size).to(device=chunk_vectors.device)
+        counts = counts.clamp_min(1).unsqueeze(-1).to(dtype=chunk_vectors.dtype)
         pooled = pooled / counts
 
         pooled = self.projection(pooled)
@@ -439,6 +469,7 @@ def main():
         hidden_size=config.hidden_size,
         num_labels=2,
         classifier_dropout=model_args.classifier_dropout,
+        freeze_backbone=model_args.freeze_bert,
     )
     base_model = copy.deepcopy(model)
 
