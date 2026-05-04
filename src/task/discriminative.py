@@ -454,6 +454,7 @@ def main():
             revision=model_args.model_revision,
             use_auth_token=True if model_args.use_auth_token else None,
             low_cpu_mem_usage=model_args.low_cpu_mem_usage,
+            device_map="auto",
         )
     else:
         backbone_mlm = BertForMaskedLM(config)
