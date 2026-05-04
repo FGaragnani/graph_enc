@@ -228,7 +228,10 @@ class ChunkAveragedCLSClassifier(nn.Module):
         self.num_labels = num_labels
         self.loss_fct = nn.CrossEntropyLoss()
         self.projection = nn.Sequential(
-            nn.Linear(hidden_size, hidden_size),
+            nn.Linear(hidden_size, 4 * hidden_size),
+            nn.GELU(),
+            nn.Dropout(classifier_dropout),
+            nn.Linear(4 * hidden_size, hidden_size),
             nn.GELU(),
             nn.Dropout(classifier_dropout),
         )
