@@ -54,7 +54,7 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --pad_to_max_length false \
   --output_dir ${run_output_dir} \
   --per_device_train_batch_size 4 \
-  --per_device_eval_batch_size 84\
+  --per_device_eval_batch_size 4 \
   --learning_rate 5e-5 \
   --max_steps 1500 \
   --warmup_steps 50 \
