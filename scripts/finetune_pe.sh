@@ -49,7 +49,7 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --target_enhancer_fraction 0.5 \
   --balance_seed ${seed} \
   --max_seq_length 768 \
-  --chunk_size_bases 2000 \
+  --chunk_size_bases 500 \
   --max_chunks_per_sample 10 \
   --pad_to_max_length false \
   --output_dir ${run_output_dir} \
