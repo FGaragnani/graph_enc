@@ -370,23 +370,34 @@ def main():
     dataset = PEDiscriminativeDataset(base_dataset)
 
     if training_args.do_eval:
-        all_idx = torch.randperm(len(dataset), generator=torch.Generator().manual_seed(training_args.seed)).tolist()
+        # Group samples by chromosome for train/test split
+        from collections import defaultdict
+        chr_to_idx = defaultdict(list)
+        for idx, item in enumerate(base_dataset.data):
+            chr_to_idx[item.get_chr_idx()].append(idx)
         
-        split_idx = int(len(all_idx) * (data_args.validation_split_percentage / 100))
-        split_idx = min(max(split_idx, 1), max(len(all_idx) - 1, 1))
+        # Sort chromosomes for reproducibility
+        sorted_chrs = sorted(chr_to_idx.keys())
+        
+        # Split chromosomes (not samples) into train/test
+        split_point = int(len(sorted_chrs) * (data_args.validation_split_percentage / 100))
+        split_point = min(max(split_point, 1), max(len(sorted_chrs) - 1, 1))
+        
         if data_args.perform_kfold:
-            folds = [
-                (all_idx[i * split_idx : (i + 1) * split_idx], all_idx[: i * split_idx] + all_idx[(i + 1) * split_idx :])
-                for i in range((len(all_idx) + split_idx - 1) // split_idx)
-            ]
-            folds = [fold for fold in folds if len(fold[0]) > 0 and len(fold[1]) > 0]
+            folds = []
+            for i in range(len(sorted_chrs)):
+                eval_chrs = [sorted_chrs[i]]
+                train_chrs = sorted_chrs[:i] + sorted_chrs[i+1:]
+                eval_idx = [idx for chr_id in eval_chrs for idx in chr_to_idx[chr_id]]
+                train_idx = [idx for chr_id in train_chrs for idx in chr_to_idx[chr_id]]
+                if len(eval_idx) > 0 and len(train_idx) > 0:
+                    folds.append((eval_idx, train_idx))
         else:
-            eval_idx = all_idx[:split_idx]
-            train_idx = all_idx[split_idx:]
-            folds = [
-                (eval_idx,
-                train_idx)
-            ]
+            eval_chrs = sorted_chrs[:split_point]
+            train_chrs = sorted_chrs[split_point:]
+            eval_idx = [idx for chr_id in eval_chrs for idx in chr_to_idx[chr_id]]
+            train_idx = [idx for chr_id in train_chrs for idx in chr_to_idx[chr_id]]
+            folds = [(eval_idx, train_idx)]
     else:
         folds = [(list(range(len(dataset))), [])]
 
@@ -561,24 +572,24 @@ def main():
 
                 logits = pred_output.predictions
                 labels = pred_output.label_ids
-            
+
                 # Convert to probabilities
                 probs_pos = torch.softmax(torch.tensor(logits), dim=-1).numpy()[:, 1]
-            
+
                 from sklearn.metrics import roc_curve
-            
+
                 if len(np.unique(labels)) >= 2:
                     fpr, tpr, thresholds = roc_curve(labels, probs_pos)
-            
+
                     roc_data = {
                         "fpr": fpr.tolist(),
                         "tpr": tpr.tolist(),
                         "thresholds": thresholds.tolist(),
                     }
-            
+
                     with open(os.path.join(training_args.output_dir, f"roc_fold_{fold_idx}.json"), "w") as f:
                         json.dump(roc_data, f)
-            
+
                     logger.info(f"Saved ROC curve for fold {fold_idx}")
                 else:
                     logger.warning("Only one class present in labels. ROC curve undefined.")
