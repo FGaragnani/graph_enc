@@ -1,7 +1,7 @@
 import os
 import random
 from enum import Enum
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional, Tuple
 
 from torch.utils.data import Dataset as TorchDataset
 
@@ -10,12 +10,23 @@ class ItemType(Enum):
     ENHANCER = 1
 
 class PEDatasetItem:
-    def __init__(self, sequence_init: int, sequence_end: int, chr_idx: int, type: ItemType, sequence: Optional[str] = None):
+    def __init__(
+        self,
+        sequence_init: int,
+        sequence_end: int,
+        chr_idx: int,
+        type: ItemType,
+        strand: Optional[str] = None,
+        sequence: Optional[str] = None,
+        promoter_window_size: Optional[int] = None,
+    ):
         self.sequence_init: int = sequence_init
         self.sequence_end: int = sequence_end
         self.chr_idx: int = chr_idx
         self.type: ItemType = type
+        self.strand: Optional[str] = strand
         self.sequence: Optional[str] = sequence
+        self.promoter_window_size: Optional[int] = promoter_window_size
 
     def is_promoter(self) -> bool:
         return self.type == ItemType.PROMOTER
@@ -25,20 +36,58 @@ class PEDatasetItem:
     
     def get_chr_idx(self) -> int:
         return self.chr_idx
+
+    def get_start(self) -> int:
+        return self.sequence_init
+
+    def get_end(self) -> int:
+        return self.sequence_end
+
+    def get_strand(self) -> Optional[str]:
+        return self.strand
     
     def len(self) -> int:
         if self.is_promoter():
-            return len(self.sequence) if self.sequence is not None else 0
+            if self.sequence is not None:
+                return len(self.sequence)
+            if self.promoter_window_size is not None:
+                return self.promoter_window_size
+            return max(0, self.sequence_end - self.sequence_init)
         return self.sequence_end - self.sequence_init
     
-    def get_sequence(self, chr_seq: Optional[str] = None) -> str:
+    def _reverse_complement(self, sequence: str) -> str:
+        complement = str.maketrans("ACGTacgt", "TGCAtgca")
+        return sequence.translate(complement)[::-1]
+
+    def _get_promoter_bounds(self, chr_seq: str, window_size: int) -> Tuple[int, int]:
+        center = (self.sequence_init + self.sequence_end) // 2
+        half_window = window_size // 2
+        window_start = max(0, center - half_window)
+        window_end = window_start + window_size
+
+        if window_end > len(chr_seq):
+            window_end = len(chr_seq)
+            window_start = max(0, window_end - window_size)
+
+        return window_start, window_end
+
+    def get_sequence(self, chr_seq: Optional[str] = None, promoter_window_size: Optional[int] = None) -> str:
         """
             Get the sequence of this item. If the sequence is not already loaded, it will be loaded from the provided chromosome sequence.
             Practically: for enhancers, it has to be computed; for promoters, it is already loaded in the dataset.
         """
         if self.type == ItemType.PROMOTER:
             if self.sequence is None:
-                raise ValueError("Promoter sequence must be provided in the dataset.")
+                if chr_seq is None:
+                    raise ValueError("Chromosome sequence must be provided to compute the sequence of this item.")
+                window_size = promoter_window_size or self.promoter_window_size or max(0, self.sequence_end - self.sequence_init)
+                if window_size <= 0:
+                    raise ValueError("Promoter window size must be positive.")
+                window_start, window_end = self._get_promoter_bounds(chr_seq, window_size)
+                sequence = chr_seq[window_start:window_end]
+                if self.strand == "-":
+                    sequence = self._reverse_complement(sequence)
+                return sequence
             return self.sequence
         
         elif self.type == ItemType.ENHANCER:
@@ -57,6 +106,7 @@ class PromoterEnhancerDataset(TorchDataset):
         target_enhancer_fraction: Optional[float] = None,
         balance_seed: int = 42,
         apply_rebalancing: bool = True,
+        promoter_window_size: int = 2000,
     ):
         """
             Build a Promoter / Enhancer Dataset by passing a directory containing 'enhancers.dat' and 'promoters.dat' files.
@@ -66,6 +116,7 @@ class PromoterEnhancerDataset(TorchDataset):
         self.genome_data_path = genome_data_path
         self.target_enhancer_fraction = target_enhancer_fraction
         self.balance_seed = balance_seed
+        self.promoter_window_size = promoter_window_size
         self.chromosome_sequences = self._load_chromosome_sequences() if self.genome_data_path is not None else {}
         self.data: List[PEDatasetItem] = self._load_data()
         if apply_rebalancing:
@@ -79,16 +130,13 @@ class PromoterEnhancerDataset(TorchDataset):
     
     def __getitem__(self, idx: int) -> str:
         item = self.data[idx]
-        if item.is_promoter():
-            return item.get_sequence()
-
         chr_seq = self.chromosome_sequences.get(item.get_chr_idx())
         if chr_seq is None:
             raise ValueError(
                 "Genome sequence not loaded for chromosome index "
                 f"{item.get_chr_idx()}. Pass genome_data_path when creating PromoterEnhancerDataset."
             )
-        return item.get_sequence(chr_seq)
+        return item.get_sequence(chr_seq, self.promoter_window_size)
 
     def _load_data(self) -> List[PEDatasetItem]:
         data: List[PEDatasetItem] = []
@@ -159,7 +207,6 @@ class PromoterEnhancerDataset(TorchDataset):
     
     def _load_promoters(self) -> List[PEDatasetItem]:
         promoters: List[PEDatasetItem] = []
-        current_sequence_parts: List[str] = []
 
         with open(f"{self.dir}/promoters.dat", "r") as f:
             for line in f:
@@ -168,18 +215,37 @@ class PromoterEnhancerDataset(TorchDataset):
                 if line == "":
                     continue
 
-                if line.startswith(">"):
-                    if current_sequence_parts:
-                        promoters.append(
-                            PEDatasetItem(0, 0, -1, ItemType.PROMOTER, sequence="".join(current_sequence_parts))
-                        )
-                        current_sequence_parts = []
+                cols = line.split()
+                if len(cols) < 6:
                     continue
 
-                current_sequence_parts.append(line)
+                chr_name = cols[0].strip()
+                if chr_name.startswith("chr"):
+                    chr_name = chr_name[3:]
+                if not chr_name.isdigit():
+                    continue
+                chr_idx = int(chr_name)
 
-        if current_sequence_parts:
-            promoters.append(PEDatasetItem(0, 0, -1, ItemType.PROMOTER, sequence="".join(current_sequence_parts)))
+                try:
+                    sequence_init = int(cols[1])
+                    sequence_end = int(cols[2])
+                except ValueError:
+                    continue
+
+                strand = cols[5].strip()
+                if strand not in {"+", "-"}:
+                    continue
+
+                promoters.append(
+                    PEDatasetItem(
+                        sequence_init,
+                        sequence_end,
+                        chr_idx,
+                        ItemType.PROMOTER,
+                        strand=strand,
+                        promoter_window_size=self.promoter_window_size,
+                    )
+                )
 
         return promoters
     
