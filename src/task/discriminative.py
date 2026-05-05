@@ -385,10 +385,13 @@ def main():
         split_point = min(max(split_point, 1), max(len(sorted_chrs) - 1, 1))
         
         if data_args.perform_kfold:
+            # Determine number of folds (default 5)
+            num_folds = min(5, len(sorted_chrs))
             folds = []
-            for i in range(len(sorted_chrs)):
-                eval_chrs = [sorted_chrs[i]]
-                train_chrs = sorted_chrs[:i] + sorted_chrs[i+1:]
+            for fold_i in range(num_folds):
+                # Distribute chromosomes round-robin into folds
+                eval_chrs = [chr_id for i, chr_id in enumerate(sorted_chrs) if i % num_folds == fold_i]
+                train_chrs = [chr_id for i, chr_id in enumerate(sorted_chrs) if i % num_folds != fold_i]
                 eval_idx = [idx for chr_id in eval_chrs for idx in chr_to_idx[chr_id]]
                 train_idx = [idx for chr_id in train_chrs for idx in chr_to_idx[chr_id]]
                 if len(eval_idx) > 0 and len(train_idx) > 0:
