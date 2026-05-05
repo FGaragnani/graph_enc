@@ -364,8 +364,9 @@ def main():
     base_dataset = PromoterEnhancerDataset(
         dir=data_args.dataset_dir,
         genome_data_path=data_args.data_path,
-        target_enhancer_fraction=data_args.target_enhancer_fraction,
+        target_enhancer_fraction=None,  # Apply after split
         balance_seed=data_args.balance_seed,
+        apply_rebalancing=False,  # Rebalance each fold separately
     )
     dataset = PEDiscriminativeDataset(base_dataset)
 
@@ -398,6 +399,36 @@ def main():
             eval_idx = [idx for chr_id in eval_chrs for idx in chr_to_idx[chr_id]]
             train_idx = [idx for chr_id in train_chrs for idx in chr_to_idx[chr_id]]
             folds = [(eval_idx, train_idx)]
+        
+        # Rebalance each fold separately
+        def _rebalance_fold(idx_list):
+            if data_args.target_enhancer_fraction is None:
+                return idx_list
+            items = [base_dataset.data[i] for i in idx_list]
+            enhancers = [i for i, item in zip(idx_list, items) if item.is_enhancer()]
+            promoters = [i for i, item in zip(idx_list, items) if item.is_promoter()]
+            
+            if not enhancers or not promoters:
+                return idx_list
+            
+            import random
+            rng = random.Random(data_args.balance_seed)
+            target = data_args.target_enhancer_fraction
+            desired_enhancers = int(round((target / (1.0 - target)) * len(promoters)))
+            
+            if desired_enhancers <= len(enhancers):
+                selected_enhancers = rng.sample(enhancers, desired_enhancers)
+                selected_promoters = promoters
+            else:
+                desired_promoters = int(round(((1.0 - target) / target) * len(enhancers)))
+                selected_enhancers = enhancers
+                selected_promoters = rng.sample(promoters, desired_promoters)
+            
+            balanced = selected_enhancers + selected_promoters
+            rng.shuffle(balanced)
+            return balanced
+        
+        folds = [(eval_idx, _rebalance_fold(train_idx)) for eval_idx, train_idx in folds]
     else:
         folds = [(list(range(len(dataset))), [])]
 

@@ -56,6 +56,7 @@ class PromoterEnhancerDataset(TorchDataset):
         genome_data_path: Optional[str] = None,
         target_enhancer_fraction: Optional[float] = None,
         balance_seed: int = 42,
+        apply_rebalancing: bool = True,
     ):
         """
             Build a Promoter / Enhancer Dataset by passing a directory containing 'enhancers.dat' and 'promoters.dat' files.
@@ -67,8 +68,11 @@ class PromoterEnhancerDataset(TorchDataset):
         self.balance_seed = balance_seed
         self.chromosome_sequences = self._load_chromosome_sequences() if self.genome_data_path is not None else {}
         self.data: List[PEDatasetItem] = self._load_data()
-        self.data = self._rebalance_data(self.data)
-        self._print_class_distribution(self.data, prefix="Final")
+        if apply_rebalancing:
+            self.data = self._rebalance_data(self.data)
+            self._print_class_distribution(self.data, prefix="Final")
+        else:
+            self._print_class_distribution(self.data, prefix="Loaded")
 
     def __len__(self) -> int:
         return len(self.data)
