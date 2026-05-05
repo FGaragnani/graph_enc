@@ -98,6 +98,10 @@ class DataTrainingArguments:
         default=42,
         metadata={"help": "Random seed used for deterministic class rebalancing."},
     )
+    num_folds: int = field(
+        default=10,
+        metadata={"help": "Number of folds for K-Fold cross-validation (chromosome-stratified). Default 10."},
+    )
     validation_split_percentage: int = field(default=5)
     max_seq_length: Optional[int] = field(
         default=768,
@@ -389,7 +393,7 @@ def main():
             chr_sizes = {chr_id: len(chr_to_idx[chr_id]) for chr_id in sorted_chrs}
             sorted_chrs_by_size = sorted(chr_sizes.items(), key=lambda x: x[1], reverse=True)
             
-            num_folds = min(5, len(sorted_chrs))
+            num_folds = min(data_args.num_folds, len(sorted_chrs))
             fold_chrs = [[] for _ in range(num_folds)]
             
             # Greedy assignment: assign each chromosome to the fold with smallest current size
