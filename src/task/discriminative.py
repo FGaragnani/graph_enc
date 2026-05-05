@@ -12,6 +12,8 @@ import datasets
 import evaluate
 import torch
 import torch.nn as nn
+import numpy as np
+from sklearn.metrics import roc_auc_score
 import transformers
 from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import Subset
@@ -490,10 +492,23 @@ def main():
 
     def compute_metrics(eval_pred):
         logits, labels = eval_pred
-        predictions = logits.argmax(axis=-1)
-        accuracy = acc_metric.compute(predictions=predictions, references=labels)["accuracy"]
-        f1 = f1_metric.compute(predictions=predictions, references=labels, average="binary")["f1"]
-        return {"accuracy": accuracy, "f1": f1}
+
+        preds = logits.argmax(axis=-1)
+        accuracy = acc_metric.compute(predictions=preds, references=labels)["accuracy"]
+        f1 = f1_metric.compute(predictions=preds, references=labels, average="binary")["f1"]
+
+        try:
+            probs_pos = torch.softmax(torch.tensor(logits), dim=-1).numpy()[:, 1]
+            roc_auc = roc_auc_score(labels, probs_pos)
+        except Exception as e:
+            logger.warning(f"Could not compute ROC AUC: {e}")
+            roc_auc = float("nan")
+
+        return {
+            "accuracy": accuracy,
+            "f1": f1,
+            "roc_auc": roc_auc,
+        }
     
     results = {}
 
@@ -542,6 +557,32 @@ def main():
             if training_args.do_eval:
                 logger.info("*** Evaluate ***")
                 metrics = trainer.evaluate()
+                pred_output = trainer.predict(eval_dataset)
+
+                logits = pred_output.predictions
+                labels = pred_output.label_ids
+            
+                # Convert to probabilities
+                probs_pos = torch.softmax(torch.tensor(logits), dim=-1).numpy()[:, 1]
+            
+                from sklearn.metrics import roc_curve
+            
+                if len(np.unique(labels)) >= 2:
+                    fpr, tpr, thresholds = roc_curve(labels, probs_pos)
+            
+                    roc_data = {
+                        "fpr": fpr.tolist(),
+                        "tpr": tpr.tolist(),
+                        "thresholds": thresholds.tolist(),
+                    }
+            
+                    with open(os.path.join(training_args.output_dir, f"roc_fold_{fold_idx}.json"), "w") as f:
+                        json.dump(roc_data, f)
+            
+                    logger.info(f"Saved ROC curve for fold {fold_idx}")
+                else:
+                    logger.warning("Only one class present in labels. ROC curve undefined.")
+
                 metrics["eval_samples"] = len(eval_dataset) if eval_dataset is not None else 0
                 eval_metric_prefix = "eval" if len(folds) == 1 else f"eval_fold_{fold_idx}"
                 trainer.log_metrics(eval_metric_prefix, metrics)
