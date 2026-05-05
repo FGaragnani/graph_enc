@@ -89,9 +89,9 @@ class DataTrainingArguments:
         metadata={"help": "Optional genome path used to materialize enhancer sequences."},
     )
     target_enhancer_fraction: Optional[float] = field(
-        default=None,
+        default=0.5,
         metadata={
-            "help": "Optional target enhancer fraction in dataset after undersampling majority class (e.g. 0.5 for balanced)."
+            "help": "Target enhancer fraction in dataset after undersampling majority class (e.g. 0.5 for balanced). Defaults to 0.5."
         },
     )
     balance_seed: int = field(
@@ -413,14 +413,13 @@ def main():
             folds = [(eval_idx, train_idx)]
         
         # Rebalance each fold separately
-        def _rebalance_fold(idx_list):
-            if data_args.target_enhancer_fraction is None:
-                return idx_list
+        def _rebalance_fold(idx_list, fold_id: int):
             items = [base_dataset.data[i] for i in idx_list]
             enhancers = [i for i, item in zip(idx_list, items) if item.is_enhancer()]
             promoters = [i for i, item in zip(idx_list, items) if item.is_promoter()]
             
             if not enhancers or not promoters:
+                logger.warning(f"Fold {fold_id}: Cannot rebalance (enhancers={len(enhancers)}, promoters={len(promoters)})")
                 return idx_list
             
             import random
@@ -431,16 +430,18 @@ def main():
             if desired_enhancers <= len(enhancers):
                 selected_enhancers = rng.sample(enhancers, desired_enhancers)
                 selected_promoters = promoters
+                logger.info(f"Fold {fold_id}: Rebalancing - downsampling enhancers from {len(enhancers)} to {len(selected_enhancers)}, keeping {len(selected_promoters)} promoters (target fraction={target:.3f})")
             else:
                 desired_promoters = int(round(((1.0 - target) / target) * len(enhancers)))
                 selected_enhancers = enhancers
                 selected_promoters = rng.sample(promoters, desired_promoters)
+                logger.info(f"Fold {fold_id}: Rebalancing - keeping {len(selected_enhancers)} enhancers, downsampling promoters from {len(promoters)} to {len(selected_promoters)} (target fraction={target:.3f})")
             
             balanced = selected_enhancers + selected_promoters
             rng.shuffle(balanced)
             return balanced
         
-        folds = [(eval_idx, _rebalance_fold(train_idx)) for eval_idx, train_idx in folds]
+        folds = [(eval_idx, _rebalance_fold(train_idx, fold_idx)) for fold_idx, (eval_idx, train_idx) in enumerate(folds)]
     else:
         folds = [(list(range(len(dataset))), [])]
 
