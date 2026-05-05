@@ -385,13 +385,22 @@ def main():
         split_point = min(max(split_point, 1), max(len(sorted_chrs) - 1, 1))
         
         if data_args.perform_kfold:
-            # Determine number of folds (default 5)
+            # Calculate chromosome sizes and distribute evenly across folds
+            chr_sizes = {chr_id: len(chr_to_idx[chr_id]) for chr_id in sorted_chrs}
+            sorted_chrs_by_size = sorted(chr_sizes.items(), key=lambda x: x[1], reverse=True)
+            
             num_folds = min(5, len(sorted_chrs))
+            fold_chrs = [[] for _ in range(num_folds)]
+            
+            # Greedy assignment: assign each chromosome to the fold with smallest current size
+            for chr_id, size in sorted_chrs_by_size:
+                min_fold = min(range(num_folds), key=lambda i: sum(chr_sizes[c] for c in fold_chrs[i]))
+                fold_chrs[min_fold].append(chr_id)
+            
             folds = []
             for fold_i in range(num_folds):
-                # Distribute chromosomes round-robin into folds
-                eval_chrs = [chr_id for i, chr_id in enumerate(sorted_chrs) if i % num_folds == fold_i]
-                train_chrs = [chr_id for i, chr_id in enumerate(sorted_chrs) if i % num_folds != fold_i]
+                eval_chrs = fold_chrs[fold_i]
+                train_chrs = [c for i in range(num_folds) if i != fold_i for c in fold_chrs[i]]
                 eval_idx = [idx for chr_id in eval_chrs for idx in chr_to_idx[chr_id]]
                 train_idx = [idx for chr_id in train_chrs for idx in chr_to_idx[chr_id]]
                 if len(eval_idx) > 0 and len(train_idx) > 0:
