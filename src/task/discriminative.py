@@ -303,11 +303,7 @@ class ChunkAveragedCLSClassifier(nn.Module):
             device=chunk_feats.device,
         )
 
-        out.scatter_add_(
-            0,
-            chunk_to_sample[:, None].expand(-1, chunk_feats.size(-2)),
-            chunk_feats
-        )
+        out.index_add_(0, chunk_to_sample, chunk_feats)
 
         counts = torch.bincount(
             chunk_to_sample,
