@@ -275,24 +275,48 @@ class ChunkAveragedCLSClassifier(nn.Module):
 
         sequence_output = encoder_outputs[-1] if isinstance(encoder_outputs, list) else encoder_outputs
         if attention_mask is None:
-            chunk_mask = torch.ones(sequence_output.shape[:2], device=sequence_output.device, dtype=sequence_output.dtype)
+            chunk_mask = torch.ones(
+                sequence_output.shape[:2],
+                device=sequence_output.device,
+                dtype=sequence_output.dtype,
+            )
         else:
-            chunk_mask = attention_mask.to(dtype=sequence_output.dtype)
+            chunk_mask = attention_mask.to(sequence_output.dtype)
 
-        chunk_sum = sequence_output * chunk_mask.unsqueeze(-1)
-        # dim: b * n * d
+        chunk_feats = sequence_output * chunk_mask.unsqueeze(-1)
+        chunk_feats = self.projection(chunk_feats)
+
+        token_counts = chunk_mask.sum(dim=1, keepdim=True).clamp(min=1)
+        chunk_feats = (
+            chunk_feats.sum(dim=1)
+            / token_counts
+        )
 
         if labels is not None:
             batch_size = labels.size(0)
         else:
             batch_size = int(chunk_to_sample.max().item()) + 1
 
-        counts = torch.bincount(chunk_to_sample, minlength=batch_size).to(device=chunk_sum.device)
-        counts = counts.clamp_min(1).unsqueeze(-1).to(dtype=chunk_sum.dtype)
-        pooled = chunk_sum / counts
+        out = torch.zeros(
+            batch_size,
+            chunk_feats.size(-1),
+            device=chunk_feats.device,
+        )
 
-        pooled = self.projection(pooled)
-        logits = self.classifier(pooled)
+        out.scatter_add_(
+            0,
+            chunk_to_sample[:, None].expand(-1, chunk_feats.size(-2)),
+            chunk_feats
+        )
+
+        counts = torch.bincount(
+            chunk_to_sample,
+            minlength=batch_size
+        ).clamp(min=1)
+
+        out = out / counts[:, None]
+
+        logits = self.classifier(out)
 
         loss = None
         if labels is not None:
@@ -531,7 +555,7 @@ def main():
         classifier_dropout=model_args.classifier_dropout,
         freeze_backbone=model_args.freeze_bert,
     )
-    base_model = copy.deepcopy(model)
+    # base_model = copy.deepcopy(model)
 
     data_collator = DataCollatorForChunkedPromoterEnhancer(
         tokenizer=tokenizer,
@@ -574,7 +598,7 @@ def main():
         )
 
         # Reinitialize model every fold to avoid training-state leakage across folds.
-        model = copy.deepcopy(base_model)
+        # model = copy.deepcopy(base_model)
         train_dataset = Subset(dataset, train_idx)
         eval_dataset = Subset(dataset, eval_idx) if eval_idx else None
         trainer = None

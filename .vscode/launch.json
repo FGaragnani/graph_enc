@@ -1,0 +1,121 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "finetune_pe",
+            "type": "debugpy",
+            "python": "/homes/fgaragnani/.conda/envs/dpoenv/bin/python",
+            "program": "${workspaceFolder}/src/task/discriminative.py",
+            "request": "launch",
+
+            "cwd": "/homes/fgaragnani/ai4bio/graph_enc",
+
+            "env": {
+                "PYTHONPATH": ".:..:${env:PYTHONPATH}",
+                "HF_HUB_CACHE": "/work/tesi_fgaragnani/checkpoints/",
+                "HF_HOME": "/work/tesi_fgaragnani/checkpoints/",
+                "TRANSFORMERS_OFFLINE": "1",
+                "WANDB_MODE": "offline",
+                "HF_HUB_OFFLINE": "1"
+            },
+
+            "args": [
+                "--model_name_or_path",
+                "/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs",
+
+                "--model_type",
+                "bert",
+
+                "--data_path",
+                "/homes/fgaragnani/ai4bio/graph_enc/data/",
+
+                "--tokenizer_name",
+                "./src/model",
+
+                "--config_file",
+                "./src/model/bert_config.json",
+
+                "--dataset_dir",
+                "/homes/fgaragnani/ai4bio/graph_enc/scripts/datasets",
+
+                "--target_enhancer_fraction",
+                "0.5",
+
+                "--balance_seed",
+                "42",
+
+                "--max_seq_length",
+                "768",
+
+                "--chunk_size_bases",
+                "500",
+
+                "--max_chunks_per_sample",
+                "10",
+
+                "--pad_to_max_length",
+                "false",
+
+                "--output_dir",
+                "/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/finetuned_pe/seed_42",
+
+                "--per_device_train_batch_size",
+                "4",
+
+                "--per_device_eval_batch_size",
+                "4",
+
+                "--learning_rate",
+                "5e-2",
+
+                "--max_steps",
+                "1000",
+
+                "--warmup_steps",
+                "100",
+
+                "--weight_decay",
+                "1e-5",
+
+                "--adam_beta1",
+                "0.9",
+
+                "--adam_beta2",
+                "0.98",
+
+                "--adam_eps",
+                "1e-6",
+
+                "--save_strategy",
+                "no",
+
+                "--eval_steps",
+                "500",
+
+                "--validation_split_percentage",
+                "10",
+
+                "--ddp_find_unused_parameters",
+                "false",
+
+                "--do_train",
+                "--do_eval",
+                "--overwrite_output_dir",
+
+                "--perform_kfold",
+                "true",
+
+                "--seed",
+                "42",
+
+                "--low_cpu_mem_usage",
+                "true",
+
+                "--gradient_accumulation_steps",
+                "8"
+            ],
+
+            "console": "integratedTerminal"
+        }
+    ]
+}
