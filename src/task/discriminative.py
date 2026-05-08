@@ -279,21 +279,17 @@ class ChunkAveragedCLSClassifier(nn.Module):
         else:
             chunk_mask = attention_mask.to(dtype=sequence_output.dtype)
 
-        chunk_sum = (sequence_output * chunk_mask.unsqueeze(-1)).sum(dim=1)
-        chunk_count = chunk_mask.sum(dim=1).clamp_min(1).unsqueeze(-1)
-        chunk_vectors = chunk_sum / chunk_count
+        chunk_sum = sequence_output * chunk_mask.unsqueeze(-1)
+        # dim: b * n * d
 
         if labels is not None:
             batch_size = labels.size(0)
         else:
             batch_size = int(chunk_to_sample.max().item()) + 1
 
-        pooled = chunk_vectors.new_zeros((batch_size, chunk_vectors.size(-1)))
-        pooled.index_add_(0, chunk_to_sample, chunk_vectors)
-
-        counts = torch.bincount(chunk_to_sample, minlength=batch_size).to(device=chunk_vectors.device)
-        counts = counts.clamp_min(1).unsqueeze(-1).to(dtype=chunk_vectors.dtype)
-        pooled = pooled / counts
+        counts = torch.bincount(chunk_to_sample, minlength=batch_size).to(device=chunk_sum.device)
+        counts = counts.clamp_min(1).unsqueeze(-1).to(dtype=chunk_sum.dtype)
+        pooled = chunk_sum / counts
 
         pooled = self.projection(pooled)
         logits = self.classifier(pooled)
