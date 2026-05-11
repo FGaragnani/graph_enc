@@ -551,7 +551,7 @@ def main():
         classifier_dropout=model_args.classifier_dropout,
         freeze_backbone=model_args.freeze_bert,
     )
-    # base_model = copy.deepcopy(model)
+    base_model = copy.deepcopy(model)
 
     data_collator = DataCollatorForChunkedPromoterEnhancer(
         tokenizer=tokenizer,
@@ -594,7 +594,7 @@ def main():
         )
 
         # Reinitialize model every fold to avoid training-state leakage across folds.
-        # model = copy.deepcopy(base_model)
+        model = copy.deepcopy(base_model)
         train_dataset = Subset(dataset, train_idx)
         eval_dataset = Subset(dataset, eval_idx) if eval_idx else None
         trainer = None
