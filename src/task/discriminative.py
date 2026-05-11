@@ -592,6 +592,9 @@ def main():
         logger.info(
             f"Starting fold {fold_idx + 1}/{len(folds)} with {len(train_idx)} train and {len(eval_idx)} eval samples"
         )
+        logger.info(
+            f"Train class distribution: {np.bincount([dataset[i]['labels'] for i in train_idx])}, Eval class distribution: {np.bincount([dataset[i]['labels'] for i in eval_idx])}"
+        )
 
         # Reinitialize model every fold to avoid training-state leakage across folds.
         model = copy.deepcopy(base_model)
