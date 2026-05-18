@@ -1,3 +1,8 @@
 .vscode/settings.json
 uni_connect.bat
 *.pyc
+*.aux
+*.gz
+*.toc
+report/report.log
+report/report.out
