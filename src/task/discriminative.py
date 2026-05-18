@@ -461,7 +461,11 @@ def main():
             rng.shuffle(balanced)
             return balanced
         
-        folds = [(eval_idx, _rebalance_fold(train_idx, fold_idx)) for fold_idx, (eval_idx, train_idx) in enumerate(folds)]
+        # Rebalance both train and eval sets so metrics are computed on balanced splits
+        folds = [
+            (_rebalance_fold(eval_idx, fold_idx), _rebalance_fold(train_idx, fold_idx))
+            for fold_idx, (eval_idx, train_idx) in enumerate(folds)
+        ]
     else:
         folds = [(list(range(len(dataset))), [])]
 
