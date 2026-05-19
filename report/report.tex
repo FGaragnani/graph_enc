@@ -4,12 +4,16 @@
 % PACKAGES & FONT
 % -------------------------------------------------------------------
 \usepackage[T1]{fontenc}
+\usepackage{amsmath}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{mathpazo}                 % Palatino serif (elegant body text)
 \usepackage[scaled=0.95]{helvet}      % Helvetica sans-serif
 \usepackage{courier}                  % Courier monospace
 \usepackage{microtype}                % better text justification
+\usepackage[backend=bibtex,style=numeric]{biblatex}
+
+\addbibresource{references.bib}
 
 % -------------------------------------------------------------------
 % PAGE GEOMETRY
@@ -161,10 +165,11 @@
 \phantomsection
 \addcontentsline{toc}{section}{Abstract}
 \begin{abstractbox}
-	Promoters are ...
-	Enhancers are ...
-	In this project, we adapt the DNA-BERT architecture to the task of promoter and enhancer classification.
-	Our results show...
+	Promoters are regulatory DNA regions, usually located upstream of genes, that control the initiation of transcription by providing binding sites for RNA polymerase and transcription factors. 
+	Enhancers are distal cis-regulatory elements that modulate gene expression by increasing transcriptional activity, often acting over long genomic distances through complex chromatin interactions with promoters.
+	Accurate identification of promoters and enhancers is a fundamental problem in computational genomics, as these elements play a crucial role in gene regulation, cellular differentiation, and disease mechanisms. However, the precise location and functional boundaries of regulatory elements within the genome are often difficult to determine experimentally, making computational prediction methods particularly valuable. Traditional bioinformatics approaches rely heavily on handcrafted sequence features and motif discovery techniques, which may fail to capture the complex contextual dependencies present in genomic sequences.
+	
+	In this project, we adapt the DNA-BERT architecture to the tasks of promoter and enhancer classification. By leveraging transformer-based language modeling techniques originally developed for natural language processing, DNA-BERT2 is able to learn rich contextual representations of nucleotide sequences directly from raw DNA data. We investigate the effectiveness of this approach for distinguishing regulatory elements and evaluate its performance on genomic datasets.
 \end{abstractbox}
 \keywords{deep learning, BERT, promoter prediction, enhancer prediction, bioinformatics, transformer}
 
@@ -177,31 +182,18 @@
 \section{Introduction}
 \label{sec:intro}
 
-The rapid advancement of high‑throughput sequencing technologies has produced an unprecedented
-volume of genomic data. Identifying functional elements, such as promoters, directly from raw
-DNA sequence is a fundamental challenge in bioinformatics \cite{example1}. Traditional methods
-rely on conserved motifs (e.g., TATA box, GC‑box), but these motifs are often degenerate and
-fail to capture long‑range dependencies.
+The rapid advancement of high‑throughput sequencing technologies has produced an unprecedented volume of genomic data. Identifying functional elements, such as promoters, directly from raw DNA sequence is a fundamental challenge in bioinformatics, particularly because they are not defined structurally \cite{promoters}. Traditional methods rely on conserved motifs (e.g., TATA box, GC‑box), but these motifs are often degenerate and fail to capture long‑range dependencies.
 
-Recent breakthroughs in natural language processing (NLP), particularly the Transformer
-architecture and the BERT model, have inspired sequence‑based models in genomics. DNA can be
-viewed as a language with its own alphabet $\Sigma = \{\texttt{A},\texttt{C},\texttt{G},\texttt{T}\}$.
-This project investigates whether a DNA‑specific BERT model can outperform conventional
-position weight matrix (PWM) approaches in the binary classification of promoter versus
-non‑promoter sequences.
+Recent breakthroughs in natural language processing (NLP), particularly the Transformer architecture and the BERT model, have inspired sequence‑based models in genomics. DNA can be viewed as a language with its own alphabet $\Sigma = \{\texttt{A},\texttt{C},\texttt{G},\texttt{T}\}$.
+One of the main advantages of these attention-based architectures is the fact that they excel at efficiently comparing distant elements inside a sequence, a property that is required for a wide range of sequence analysis tasks.
+This project investigates how a DNA‑specific BERT model behaves in a binary classification scenario of promoter versus enhancer sequences.
 
 \subsection{Motivation}
-A precise computational promoter predictor can drastically reduce the experimental effort
-required for gene annotation and can uncover novel regulatory mechanisms. Machine learning,
-and especially deep learning, offers the possibility to learn complex sequence features
-without hand‑crafted rules.
+A precise computational promoter and enhancer predictor can drastically reduce the experimental effort required for gene annotation and can uncover novel regulatory mechanisms. Machine learning, and especially deep learning, offers the possibility to autonomously learn complex sequence features without hand‑crafted rules. ...
 
 \subsection{Objectives}
 \begin{itemize}
-  \item Pre‑train a nucleotide BERT model on a large genomic corpus.
-  \item Fine‑tune the model for promoter classification using a benchmark data set.
-  \item Compare performance against PWM‑based and CNN‑based baselines.
-  \item Visualise attention maps to interpret the learned sequence motifs.
+  \item ...
 \end{itemize}
 
 % ---------- 2. BACKGROUND ----------
@@ -209,35 +201,41 @@ without hand‑crafted rules.
 \label{sec:background}
 
 \subsection{Biological Foundations}
-A promoter is a DNA region typically located upstream of a gene's transcription start site
-(TSS). RNA polymerase II binds to the core promoter with the help of transcription factors,
-initiating mRNA synthesis. Core promoter elements include the initiator (Inr), TATA box,
-and downstream promoter element (DPE).
+A \textbf{promoter} is a DNA region typically located upstream of a gene's transcription start site (TSS) that plays a central role in initiating transcription. RNA polymerase II binds to the core promoter with the assistance of general transcription factors, forming the pre-initiation complex required for mRNA synthesis. Promoters are essential for defining where transcription begins and are often associated with gene-specific regulatory programs and cell-type-specific expression levels.
 
-\subsection{The Transformer and BERT}
-The Transformer \cite{vaswani2017} eschews recurrence in favour of self‑attention, enabling
-parallelisation and the capture of long‑range dependencies. BERT \cite{devlin2018} pre‑trains
-a bidirectional Transformer using masked language modelling (MLM) and next‑sentence prediction.
-Applied to DNA, the input sequence is tokenised into overlapping $k$-mers, and the model learns
-contextual representations of each nucleotide segment.
+An \textbf{enhancer} is a DNA regulatory element that can increase transcriptional activity of target genes, often acting independently of its orientation and at variable distances from the gene it regulates. Unlike promoters, enhancers do not directly recruit RNA polymerase II but instead function by interacting with promoters through chromatin looping and the recruitment of transcriptional co-activators and transcription factors. Enhancers can reside upstream, downstream, or within intronic regions of genes, and their activity is highly context-dependent, varying across cell types, developmental stages, and environmental conditions.
+
+\subsection{The Transformer}
+The Transformer \cite{vaswani2017} eschews recurrence and convolution operations in favour of \textbf{self‑attention}, enabling parallelisation and the capture of long‑range dependencies. 
+
+Attention is a sequence-to-sequence operation that mainly outputs elements in the input sequence into an updated version of them. More specifically, given an input sequence $X \in \mathbb{R}^{n \times d}$, we project each element through three different mappings:
+$$
+	Q = XW^Q,\quad K = XW^K,\quad V = XW^V
+$$
+
+Semantically, what these three projections -- called \textit{query, key} and \textit{value} -- are doing, is to extract from each vector in the sequence, respectively, what an element is looking for, what an element is offering and what an element is actually containing. The main attention operation:
+$$
+	A = \text{softmax}\left(\dfrac{Q\cdot K^T}{\sqrt{d_k}}\right)V
+$$
+then, does nothing more than understanding how much each couple of elements is compatible ($Q \cdot K^T$), converting the raw similarities values into a probability distribution ($\text{softmax}(\cdot)$) and then computing a weighted average of the vector values, using the similarity values as weights.
+The fact that in a single computation each element is immediately compared with every other element is one of the main reasons of the efficiency of the Transformer architecture, unlike Recurrent Neural Networks (RNNs) or Convolutional Neural Networks (CNNs).
+
+\subsection{BERT}
+BERT \cite{devlin2018} pre‑trains a bidirectional Transformer using masked language modelling (MLM) and next‑sentence prediction. MLM is a task that requires a language model to predict the nature of a set of masked elements in a sequence. Formally, given a sequence $\mathbf{x} = [x_1,\,x_2,\,\dots,\,x_n]$, each element is masked with probability $p$; it means that an element gets swapped for a made-up 'unknown' element $[MASK]$. The model is then trained to reconstruct the original token at the masked positions by leveraging both left and right context simultaneously, which forces it to learn bidirectional representations of the input sequence.
+
+This self-supervised learning approach is succesfully used to create meaningful internal representations of the possible elements in the sequence. This semantic embeddings can then be employed to perform supervised learning tasks on it by training an ad-hoc additional classification head.
+
+\subsection{DNA-BERT2}
 
 % ---------- 3. METHODS ----------
 \section{Methods}
 \label{sec:methods}
 
 \subsection{Data Collection and Preprocessing}
-We used the human promoter data set from the Eukaryotic Promoter Database (EPDnew).
-
-Negative examples were sampled from coding exons and shuffled intergenic regions,
-ensuring a balanced 1:1 ratio. After removing ambiguous nucleotides, the final data set
-contained 28,000 sequences. All sequences were one‑hot encoded and converted to $6$-mer
-tokens for the BERT input pipeline.
+...
 
 \subsection{Model Architecture}
-We adopted the \texttt{DNABERT} architecture \cite{ji2021}, which uses a vocabulary of
-$4^6 = 4096$ $k$-mers. The model consists of 12 Transformer layers, each with 12 attention
-heads and a hidden size of 768. The final hidden state of the \texttt{[CLS]} token is fed
-into a linear classifier with sigmoid activation.
+...
 
 \begin{figure}[H]
   \centering
@@ -247,97 +245,31 @@ into a linear classifier with sigmoid activation.
 \end{figure}
 
 \subsection{Training Protocol}
-Fine‑tuning was performed for 3 epochs with a batch size of 32. The AdamW optimiser was
-used with a learning rate of $3\times10^{-5}$ and a linear warm‑up over the first 10\%
-of steps. Early stopping on validation loss prevented overfitting.
-
-\begin{lstlisting}[caption={PyTorch training loop (simplified)}, label={lst:train}]
-for epoch in range(epochs):
-    model.train()
-    for batch in train_loader:
-        input_ids, labels = batch
-        outputs = model(input_ids, labels=labels)
-        loss = outputs.loss
-        loss.backward()
-        optimizer.step()
-        scheduler.step()
-        optimizer.zero_grad()
-\end{lstlisting}
+...
 
 \subsection{Evaluation Metrics}
-We measured precision, recall, F1‑score, area under the receiver operating characteristic
-curve (AUROC), and area under the precision‑recall curve (AUPRC). The AUPRC is particularly
-informative for the balanced data set we constructed.
+...
 
 % ---------- 4. RESULTS ----------
 \section{Results}
 \label{sec:results}
 
-Table~\ref{tab:results} summarises the performance of our DNABERT model compared with
-a baseline PWM scanner and a 1D‑CNN model.
-
-\begin{table}[H]
-  \centering
-  \caption{Performance comparison on the test set.}
-  \label{tab:results}
-  \begin{tabular}{lcccc}
-    \toprule
-    \textbf{Model} & \textbf{F1‑score} & \textbf{AUROC} & \textbf{AUPRC} & \textbf{Inference time}\\
-    \midrule
-    PWM (motif scan)   & 0.712 & 0.784 & 0.726 & 0.8\,ms \\
-    1D‑CNN             & 0.834 & 0.903 & 0.885 & 1.2\,ms \\
-    DNABERT (ours)     & \textbf{0.879} & \textbf{0.942} & \textbf{0.928} & 6.5\,ms \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-The transformer‑based model outperforms both baselines in all metrics, with a notable
-AUPRC improvement of 4.3\% over the CNN. Attention visualisation reveals that the model
-attends strongly to the canonical TATA‑box region (positions $-31$ to $-24$) and the
-initiator element, confirming that it learns biologically meaningful features.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.85\textwidth]{example-image}
-  \caption{Attention heatmap of a representative promoter sequence. The model focuses on
-           the TATA‑box (red rectangle) and the Inr element.}
-  \label{fig:attention}
-\end{figure}
+...
 
 % ---------- 5. DISCUSSION ----------
 \section{Discussion}
 \label{sec:discussion}
 
-Our results demonstrate that large‑scale language modelling of DNA sequences effectively
-captures the complex syntax of promoter regions. The contextual nature of BERT allows it
-to integrate information from distal elements that PWM methods ignore. However, the
-higher inference time of the transformer could be a bottleneck in genome‑wide scans,
-suggesting that model distillation or pruning may be required for production use.
-
-Ablation studies (not shown) indicate that the model benefits substantially from pre‑training
-on a diverse genomic corpus. Without pre‑training, performance drops to an F1‑score of 0.78,
-underscoring the value of transfer learning in genomics.
+...
 
 % ---------- 6. CONCLUSION ----------
 \section{Conclusion \& Future Work}
 \label{sec:conclusion}
 
-We have presented a BERT‑based framework for promoter prediction that achieves state‑of‑the‑art
-results on a standard benchmark. The approach is fully data‑driven and learns motif‑like
-features automatically. Future work will extend the model to other regulatory elements
-(e.g., enhancers, silencers) and explore multi‑species generalisation. Integrating epigenetic
-data (e.g., chromatin accessibility) as auxiliary input is another promising direction.
+...
 
 % ---------- REFERENCES ----------
 \newpage
-\begin{thebibliography}{9}
-\bibitem{example1} A.~Author, B.~Author, \textit{Title of a relevant paper}, Journal Name, vol.~X, pp.~100--110, 2023.
-\bibitem{vaswani2017} A.~Vaswani et al., \textit{Attention is all you need}, NeurIPS, 2017.
-\bibitem{devlin2018} J.~Devlin et al., \textit{BERT: Pre-training of deep bidirectional transformers}, NAACL, 2019.
-\bibitem{ji2021} Y.~Ji et al., \textit{DNABERT: pre-trained Bidirectional Encoder Representations from Transformers model for DNA-language in genome}, Bioinformatics, 2021.
-\end{thebibliography}
-
-% If using biblatex, replace the above with:
-% \printbibliography
+\printbibliography
 
 \end{document}

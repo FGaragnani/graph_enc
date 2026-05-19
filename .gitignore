@@ -6,3 +6,9 @@ uni_connect.bat
 *.toc
 report/report.log
 report/report.out
+report/report-blx.bib
+*.bbl
+*.bcf
+*.blg
+report/report.run.xml
+report/texput.log
