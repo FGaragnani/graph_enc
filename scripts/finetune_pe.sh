@@ -53,8 +53,8 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --max_chunks_per_sample 10 \
   --pad_to_max_length false \
   --output_dir ${run_output_dir} \
-  --per_device_train_batch_size 2 \
-  --per_device_eval_batch_size 2 \
+  --per_device_train_batch_size 1 \
+  --per_device_eval_batch_size 1 \
   --learning_rate 5e-3 \
   --max_steps 1000 \
   --warmup_steps 100 \
@@ -72,4 +72,4 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --perform_kfold true \
   --seed ${seed} \
   --low_cpu_mem_usage true \
-  --gradient_accumulation_steps 16
+  --gradient_accumulation_steps 32
