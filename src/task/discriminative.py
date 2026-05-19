@@ -556,6 +556,11 @@ def main():
         freeze_backbone=model_args.freeze_bert,
     )
     base_model = copy.deepcopy(model)
+    
+    # Delete backbone_mlm after model creation to free CUDA memory
+    del backbone_mlm
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     data_collator = DataCollatorForChunkedPromoterEnhancer(
         tokenizer=tokenizer,
@@ -579,6 +584,7 @@ def main():
         try:
             probs_pos = torch.softmax(torch.tensor(logits), dim=-1).numpy()[:, 1]
             roc_auc = roc_auc_score(labels, probs_pos)
+            del probs_pos
         except Exception as e:
             logger.warning(f"Could not compute ROC AUC: {e}")
             roc_auc = float("nan")
@@ -643,6 +649,9 @@ def main():
 
                 logits = pred_output.predictions
                 labels = pred_output.label_ids
+                
+                # Delete prediction output to free memory
+                del pred_output
 
                 # Convert to probabilities
                 probs_pos = torch.softmax(torch.tensor(logits), dim=-1).numpy()[:, 1]
@@ -662,8 +671,12 @@ def main():
                         json.dump(roc_data, f)
 
                     logger.info(f"Saved ROC curve for fold {fold_idx}")
+                    
+                    # Delete intermediate tensors
+                    del probs_pos, fpr, tpr, thresholds, roc_data
                 else:
                     logger.warning("Only one class present in labels. ROC curve undefined.")
+                    del probs_pos
 
                 metrics["eval_samples"] = len(eval_dataset) if eval_dataset is not None else 0
                 eval_metric_prefix = "eval" if len(folds) == 1 else f"eval_fold_{fold_idx}"
@@ -682,6 +695,12 @@ def main():
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
+
+    # Clean up after all folds
+    del base_model, base_dataset, dataset
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     for key, value in results.items():
         logger.info(f"Fold {key}: {value}")
