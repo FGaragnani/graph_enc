@@ -72,5 +72,4 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --overwrite_output_dir \
   --perform_kfold true \
   --seed ${seed} \
-  --low_cpu_mem_usage true \
-  --gradient_accumulation_steps 2
+  --low_cpu_mem_usage true
