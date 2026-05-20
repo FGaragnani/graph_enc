@@ -11,7 +11,7 @@
 #SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 
 module load anaconda3/2022.05
 module load profile/deeplrn
@@ -72,4 +72,4 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --perform_kfold true \
   --seed ${seed} \
   --low_cpu_mem_usage true \
-  --gradient_accumulation_steps 32
+  --gradient_accumulation_steps 8
