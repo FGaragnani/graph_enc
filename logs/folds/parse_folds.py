@@ -18,12 +18,12 @@ def divide_by_line(data: str) -> list[str]:
     return data.splitlines()
 
 
-def seed_from_filename(filename: str) -> int | None:
+def seed_from_filename(filename: str) -> int:
     m = re.search(r"(\d+)(?=\.[^.]+$)", filename)
     return int(m.group(1)) if m else None
 
 
-def parse_fold(line: str, seed: int | None) -> dict:
+def parse_fold(line: str, seed: int) -> dict:
     # Parse line format: "Fold k: {...}"
     parts = line.split("Fold ", 1)
     if len(parts) != 2:
@@ -37,8 +37,7 @@ def parse_fold(line: str, seed: int | None) -> dict:
     data = ast.literal_eval(data_str)
     data['fold'] = fold_num
     # include seed (if available) from filename
-    if seed is not None:
-        data['seed'] = seed
+    data['seed'] = seed
 
     data.pop('eval_runtime', None)
     data.pop('eval_samples_per_second', None)
