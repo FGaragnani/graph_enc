@@ -56,8 +56,8 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --per_device_train_batch_size 4 \
   --per_device_eval_batch_size 4 \
   --learning_rate 1e-3 \
-  --max_steps 4000 \
-  --warmup_steps 400 \
+  --max_steps 8000 \
+  --warmup_steps 800 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
