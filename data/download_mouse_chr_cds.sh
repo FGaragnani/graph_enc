@@ -23,8 +23,8 @@ process_chr () {
 
 	echo "Processing chromosome $chr..."
 
-	mkdir -p chr_$chr
-	cd chr_$chr || exit
+	mkdir -p mouse_chr_$chr
+	cd mouse_chr_$chr || exit
 
 	# FASTA
 	FASTA_FILE="Mus_musculus.${ASSEMBLY}.dna.chromosome.${chr}.fa.gz"
@@ -41,7 +41,7 @@ process_chr () {
 	gunzip ${GTF_FILE}
 
 	echo "Filtering CDS for chr $chr..."
-	grep -P "^${chr}\t" ${SPECIES^}.${ASSEMBLY}.${GTF_VERSION}.gtf | grep -w "CDS" > chr${chr}_CDS.gtf
+	grep -P "^${chr}\t" ${SPECIES^}.${ASSEMBLY}.${GTF_VERSION}.gtf | grep -w "CDS" > mouse_chr${chr}_CDS.gtf
 
 	rm ${SPECIES^}.${ASSEMBLY}.${GTF_VERSION}.gtf
 
