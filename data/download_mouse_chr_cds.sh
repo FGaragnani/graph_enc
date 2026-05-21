@@ -1,32 +1,67 @@
 #!/bin/bash
 
 if [ "$#" -ne 1 ]; then
-	echo "Pass the chromosome number (e.g. 1, 2, X, Y)"
+	echo "Usage: $0 <chr | start-end>"
+	echo "Example: $0 1"
+	echo "Example: $0 1-10"
+	echo "Example: $0 X"
 	exit 1
 fi
 
-num=$1
+INPUT=$1
 
-mkdir mouse_chr_$num
-cd mouse_chr_$num
+# Mouse genome settings
+SPECIES="mus_musculus"
+ASSEMBLY="GRCm39"
+GTF_VERSION="115"
 
-echo "Downloading chromosome $num FASTA for Mus musculus..."
+FASTA_BASE="https://ftp.ensembl.org/pub/current_fasta/${SPECIES}/dna"
+GTF_URL="https://ftp.ensembl.org/pub/current_gtf/${SPECIES}/${SPECIES^}.${ASSEMBLY}.${GTF_VERSION}.gtf.gz"
 
-wget https://ftp.ensembl.org/pub/current_fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.chromosome.$num.fa.gz
+process_chr () {
+	chr=$1
 
-echo Extracting the FASTA file...
-gunzip Mus_musculus.GRCm39.dna.chromosome.$num.fa.gz
+	echo "Processing chromosome $chr..."
 
-echo "Downloading GTF annotation..."
-wget https://ftp.ensembl.org/pub/current_gtf/mus_musculus/Mus_musculus.GRCm39.115.gtf.gz
+	mkdir -p chr_$chr
+	cd chr_$chr || exit
 
-echo Extracting the GTF file...
-gunzip Mus_musculus.GRCm39.115.gtf.gz
+	# FASTA
+	FASTA_FILE="Mus_musculus.${ASSEMBLY}.dna.chromosome.${chr}.fa.gz"
+	wget ${FASTA_BASE}/${FASTA_FILE}
 
-echo Generating the CDS annotation for chromosome $num...
+	echo "Extracting FASTA..."
+	gunzip ${FASTA_FILE}
 
-grep -P "^$num\t" Mus_musculus.GRCm39.115.gtf | grep -w "CDS" > chr${num}_CDS.gtf
+	# GTF (download once per chr folder for simplicity)
+	wget ${GTF_URL}
 
-rm Mus_musculus.GRCm39.115.gtf
+	echo "Extracting GTF..."
+	GTF_FILE="${SPECIES^}.${ASSEMBLY}.${GTF_VERSION}.gtf.gz"
+	gunzip ${GTF_FILE}
 
-echo "Done!"
+	echo "Filtering CDS for chr $chr..."
+	grep -P "^${chr}\t" ${SPECIES^}.${ASSEMBLY}.${GTF_VERSION}.gtf | grep -w "CDS" > chr${chr}_CDS.gtf
+
+	rm ${SPECIES^}.${ASSEMBLY}.${GTF_VERSION}.gtf
+
+	cd ..
+	echo "Done chr $chr"
+}
+
+# Parse input
+if [[ $INPUT =~ ^[0-9]+-[0-9]+$ ]]; then
+	START=${INPUT%-*}
+	END=${INPUT#*-}
+
+	for ((i=START; i<=END; i++)); do
+		process_chr $i
+	done
+
+elif [[ $INPUT =~ ^[0-9]+$ ]] || [[ $INPUT == "X" ]] || [[ $INPUT == "Y" ]] || [[ $INPUT == "MT" ]]; then
+	process_chr $INPUT
+
+else
+	echo "Invalid input format"
+	exit 1
+fi
