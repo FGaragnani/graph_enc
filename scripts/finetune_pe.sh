@@ -9,6 +9,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --array=0-0
 #SBATCH --partition=all_usr_prod
+#SBATCH --constraints="gpu_RTX_A5000_24G"
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
 #SBATCH --time=02:00:00
