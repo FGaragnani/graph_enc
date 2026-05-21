@@ -7,7 +7,7 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --mem=180G
 #SBATCH --cpus-per-task=8
-#SBATCH --array=0-0
+#SBATCH --array=1-4
 #SBATCH --partition=all_usr_prod
 #SBATCH --constraint="gpu_A40_45G|gpu_L40S_45G|gpu_RTX6000_24G|gpu_RTX_A5000_24G"
 #SBATCH --account=ai4bio2025
