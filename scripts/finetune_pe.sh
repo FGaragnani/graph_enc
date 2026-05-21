@@ -8,7 +8,7 @@
 #SBATCH --mem=180G
 #SBATCH --cpus-per-task=8
 #SBATCH --array=0-0
-#SBATCH --partition=all_usr_prod
+#SBATCH --partition=boost_usr_prod
 #SBATCH --constraint="gpu_A40_45G|gpu_L40S_45G"
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
