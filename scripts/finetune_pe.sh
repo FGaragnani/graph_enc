@@ -9,6 +9,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --array=0-0
 #SBATCH --partition=all_usr_prod
+#SBATCH --constraint="a100|h100"
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
 #SBATCH --time=02:00:00
