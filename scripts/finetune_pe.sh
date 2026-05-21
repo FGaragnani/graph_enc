@@ -7,9 +7,8 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --mem=180G
 #SBATCH --cpus-per-task=8
-#SBATCH --array=0-0
-#SBATCH --partition=boost_usr_prod
-#SBATCH --constraint="gpu_A40_45G|gpu_L40S_45G"
+#SBATCH --array=0-4
+#SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
 #SBATCH --time=02:00:00
@@ -57,8 +56,8 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --per_device_train_batch_size 4 \
   --per_device_eval_batch_size 4 \
   --learning_rate 1e-3 \
-  --max_steps 8000 \
-  --warmup_steps 800 \
+  --max_steps 4000 \
+  --warmup_steps 400 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
