@@ -7,7 +7,7 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --mem=180G
 #SBATCH --cpus-per-task=8
-#SBATCH --array=0-4
+#SBATCH --array=0-0
 #SBATCH --partition=all_usr_prod
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
@@ -62,7 +62,7 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
   --adam_eps 1e-6 \
-  --bf16 \
+  --fp16 \
   --save_strategy no \
   --eval_steps 500 \
   --validation_split_percentage 10 \
