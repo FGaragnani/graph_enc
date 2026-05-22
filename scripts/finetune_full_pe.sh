@@ -7,7 +7,6 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --mem=180G
 #SBATCH --cpus-per-task=8
-#SBATCH --array=0-4
 #SBATCH --partition=all_usr_prod
 #SBATCH --constraint="gpu_A40_45G|gpu_L40S_45G|gpu_RTX6000_24G|gpu_RTX_A5000_24G"
 #SBATCH --account=ai4bio2025
@@ -32,8 +31,7 @@ export HF_HUB_OFFLINE=1
 model_checkpoint="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs"
 output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/finetuned_pe_full"
 dataset_dir="/homes/fgaragnani/ai4bio/graph_enc/scripts/datasets"
-seeds=(42 43 44 45 46)
-seed=${seeds[$SLURM_ARRAY_TASK_ID]}
+seed=42
 run_output_dir="${output_dir}/seed_${seed}"
 
 IFS=',' read -r -a nodelist <<<$SLURM_NODELIST
@@ -56,8 +54,8 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --output_dir ${run_output_dir} \
   --per_device_train_batch_size 4 \
   --learning_rate 1e-3 \
-  --max_steps 4000 \
-  --warmup_steps 400 \
+  --max_steps 40000 \
+  --warmup_steps 4000 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
