@@ -396,7 +396,11 @@ def main():
     )
     dataset = PEDiscriminativeDataset(base_dataset)
 
-    if training_args.do_eval:
+    if training_args.do_eval and not training_args.do_train:
+        # Eval-only runs should use the full dataset as a single evaluation set.
+        # This avoids chromosome folds and train/test partitioning entirely.
+        folds = [(list(range(len(dataset))), [])]
+    elif training_args.do_eval:
         # Group samples by chromosome for train/test split
         from collections import defaultdict
         chr_to_idx = defaultdict(list)
