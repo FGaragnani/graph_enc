@@ -1,3 +1,4 @@
+import csv
 import os
 import random
 from enum import Enum
@@ -107,9 +108,11 @@ class PromoterEnhancerDataset(TorchDataset):
         balance_seed: int = 42,
         apply_rebalancing: bool = True,
         promoter_window_size: int = 2000,
+        is_human: bool = True,
     ):
         """
-            Build a Promoter / Enhancer Dataset by passing a directory containing 'enhancers.dat' and 'promoters.dat' files.
+            Build a Promoter / Enhancer Dataset by passing a directory containing promoter data and either
+            an 'enhancers.dat' file or a mouse-style 'enhancers.csv' file.
         """
         super().__init__()
         self.dir = dir
@@ -117,6 +120,7 @@ class PromoterEnhancerDataset(TorchDataset):
         self.target_enhancer_fraction = target_enhancer_fraction
         self.balance_seed = balance_seed
         self.promoter_window_size = promoter_window_size
+        self.is_human = is_human
         self.chromosome_sequences = self._load_chromosome_sequences() if self.genome_data_path is not None else {}
         self.data: List[PEDatasetItem] = self._load_data()
         if apply_rebalancing:
@@ -208,7 +212,12 @@ class PromoterEnhancerDataset(TorchDataset):
     def _load_promoters(self) -> List[PEDatasetItem]:
         promoters: List[PEDatasetItem] = []
 
-        with open(f"{self.dir}/promoters.dat", "r") as f:
+        promoters_path = self._resolve_dataset_file(
+            "promoters.dat" if self.is_human else "mouse/promoters.dat",
+            "mouse/promoters.dat" if self.is_human else "promoters.dat",
+        )
+
+        with open(promoters_path, "r") as f:
             for line in f:
                 line = line.strip()
 
@@ -250,8 +259,25 @@ class PromoterEnhancerDataset(TorchDataset):
         return promoters
     
     def _load_enhancers(self) -> List[PEDatasetItem]:
+        enhancer_path = self._resolve_dataset_file(
+            "enhancers.dat" if self.is_human else "mouse/enhancers.csv",
+            "enhancers.csv" if self.is_human else "mouse/enhancers.dat",
+            "mouse/enhancers.dat" if self.is_human else "enhancers.csv",
+            "mouse/enhancers.csv" if self.is_human else "enhancers.dat",
+        )
+
+        if enhancer_path.lower().endswith(".csv"):
+            return self._load_enhancers_csv(enhancer_path)
+        if enhancer_path.lower().endswith(".dat"):
+            return self._load_enhancers_dat(enhancer_path)
+
+        raise FileNotFoundError(
+            f"Unsupported enhancer file format: {enhancer_path}"
+        )
+
+    def _load_enhancers_dat(self, enhancers_path: str) -> List[PEDatasetItem]:
         enhancers: List[PEDatasetItem] = []
-        with open(f"{self.dir}/enhancers.dat", "r") as f:
+        with open(enhancers_path, "r") as f:
             for line in f:
                 line = line.strip()
                 if line == "":
@@ -261,7 +287,6 @@ class PromoterEnhancerDataset(TorchDataset):
                 if len(cols) < 4 or cols[0] == "Pubmed":
                     continue
 
-                # chr21 for instance -> 21
                 chr_name = cols[1].strip()
                 if chr_name.startswith("chr"):
                     chr_name = chr_name[3:]
@@ -276,7 +301,61 @@ class PromoterEnhancerDataset(TorchDataset):
                     continue
 
                 enhancers.append(PEDatasetItem(sequence_init, sequence_end, chr_idx, ItemType.ENHANCER))
+
         return enhancers
+
+    def _load_enhancers_csv(self, enhancers_path: str) -> List[PEDatasetItem]:
+        enhancers: List[PEDatasetItem] = []
+
+        with open(enhancers_path, "r", newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                expression = (row.get("Expression") or "").strip().lower()
+                if expression != "positive":
+                    continue
+
+                coordinates = (row.get("Element Coordinates") or "").strip()
+                if not coordinates:
+                    continue
+
+                try:
+                    chromosome_name, bounds = coordinates.split(":", 1)
+                    start_text, end_text = bounds.split("-", 1)
+                except ValueError:
+                    continue
+
+                chromosome_name = chromosome_name.strip()
+                if chromosome_name.startswith("chr"):
+                    chromosome_name = chromosome_name[3:]
+                if not chromosome_name.isdigit():
+                    continue
+
+                try:
+                    sequence_init = int(start_text)
+                    sequence_end = int(end_text)
+                except ValueError:
+                    continue
+
+                enhancers.append(
+                    PEDatasetItem(
+                        sequence_init,
+                        sequence_end,
+                        int(chromosome_name),
+                        ItemType.ENHANCER,
+                    )
+                )
+
+        return enhancers
+
+    def _resolve_dataset_file(self, *relative_paths: str) -> str:
+        for relative_path in relative_paths:
+            full_path = os.path.join(self.dir, relative_path)
+            if os.path.isfile(full_path):
+                return full_path
+
+        raise FileNotFoundError(
+            f"Could not find any of the expected dataset files in '{self.dir}': {', '.join(relative_paths)}"
+        )
 
     def _load_chromosome_sequences(self) -> Dict[int, str]:
         if self.genome_data_path is None:
@@ -293,6 +372,8 @@ class PromoterEnhancerDataset(TorchDataset):
             for name in os.listdir(self.genome_data_path)
             if os.path.isdir(os.path.join(self.genome_data_path, name))
         ]
+        
+        prefix = "human_chr_" if self.is_human else "mouse_chr_"
         for subdir in sorted(subdirs):
             fasta_file = self._find_fasta_file(subdir)
             if fasta_file is None:
@@ -300,10 +381,10 @@ class PromoterEnhancerDataset(TorchDataset):
             chromosome_sequence = self._load_fasta_file(fasta_file)
 
             chromosome_name = os.path.basename(subdir)
-            if chromosome_name.startswith("human_chr_"):
-                chromosome_name = chromosome_name[len("human_chr_"):]
-            elif chromosome_name.startswith("human_chr"):
-                chromosome_name = chromosome_name[len("human_chr"):]
+            if chromosome_name.startswith(prefix):
+                chromosome_name = chromosome_name[len(prefix):]
+            elif chromosome_name.startswith(prefix[:-1]):
+                chromosome_name = chromosome_name[len(prefix[:-1]):]
             elif chromosome_name.startswith("chr"):
                 chromosome_name = chromosome_name[3:]
 
