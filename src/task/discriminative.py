@@ -122,6 +122,10 @@ class DataTrainingArguments:
     pad_to_max_length: bool = field(default=False)
     max_train_samples: Optional[int] = field(default=None)
     max_eval_samples: Optional[int] = field(default=None)
+    is_human: bool = field(
+        default=True,
+        metadata={"help": "Whether the dataset and genome folders are human-specific (true) or mouse-specific (false)."},
+    )
 
     def __post_init__(self):
         if not os.path.isdir(self.dataset_dir):
@@ -381,12 +385,14 @@ def main():
 
     set_seed(training_args.seed)
 
+    apply_rebalancing = not training_args.do_eval
     base_dataset = PromoterEnhancerDataset(
         dir=data_args.dataset_dir,
         genome_data_path=data_args.data_path,
-        target_enhancer_fraction=None,  # Apply after split
+        target_enhancer_fraction=data_args.target_enhancer_fraction if apply_rebalancing else None,
         balance_seed=data_args.balance_seed,
-        apply_rebalancing=False,  # Rebalance each fold separately
+        apply_rebalancing=apply_rebalancing,
+        is_human=data_args.is_human,
     )
     dataset = PEDiscriminativeDataset(base_dataset)
 
@@ -555,6 +561,24 @@ def main():
         classifier_dropout=model_args.classifier_dropout,
         freeze_backbone=model_args.freeze_bert,
     )
+    # If a full-model checkpoint directory is provided, try loading a saved
+    # ChunkAveragedCLSClassifier state (classifier + projection weights).
+    if model_args.model_name_or_path is not None and os.path.isdir(model_args.model_name_or_path):
+        classifier_file = os.path.join(model_args.model_name_or_path, "chunked_classifier_state.pt")
+        if os.path.isfile(classifier_file):
+            try:
+                state = torch.load(classifier_file, map_location="cpu")
+                res = model.load_state_dict(state, strict=False)
+                try:
+                    missing = getattr(res, "missing_keys", None)
+                    unexpected = getattr(res, "unexpected_keys", None)
+                except Exception:
+                    missing = unexpected = None
+                logger.info(f"Loaded classifier state from {classifier_file}. missing={missing}, unexpected={unexpected}")
+            except Exception as e:
+                logger.warning(f"Failed to load classifier state from {classifier_file}: {e}")
+        else:
+            logger.info(f"No chunked classifier state found in {model_args.model_name_or_path}; skipping classifier load (only backbone will be used).")
     base_model = copy.deepcopy(model)
     
     # Delete backbone_mlm after model creation to free CUDA memory
@@ -639,8 +663,15 @@ def main():
                 trainer.log_metrics(train_metric_prefix, metrics)
                 trainer.save_metrics(train_metric_prefix, metrics)
 
-                if training_args.seed == 42 and fold_idx == 0:
+                if (not training_args.do_eval) or (training_args.seed == 42 and fold_idx == 0):
                     trainer.save_model()
+                    # Also persist the full ChunkAveragedCLSClassifier weights for later reload
+                    try:
+                        classifier_path = os.path.join(training_args.output_dir, "chunked_classifier_state.pt")
+                        torch.save(trainer.model.state_dict(), classifier_path)
+                        logger.info(f"Saved chunked classifier state to {classifier_path}")
+                    except Exception as e:
+                        logger.warning(f"Could not save chunked classifier state: {e}")
 
             if training_args.do_eval:
                 logger.info("*** Evaluate ***")
