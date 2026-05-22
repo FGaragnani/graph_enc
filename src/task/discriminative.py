@@ -473,7 +473,7 @@ def main():
             for fold_idx, (eval_idx, train_idx) in enumerate(folds)
         ]
     else:
-        folds = [(list(range(len(dataset))), [])]
+        folds = [([], list(range(len(dataset))))]
 
     def _resolve_local_path(path_value: Optional[str]) -> Optional[str]:
         if path_value is None:
