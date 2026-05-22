@@ -397,9 +397,39 @@ def main():
     dataset = PEDiscriminativeDataset(base_dataset)
 
     if training_args.do_eval and not training_args.do_train:
-        # Eval-only runs should use the full dataset as a single evaluation set.
-        # This avoids chromosome folds and train/test partitioning entirely.
-        folds = [(list(range(len(dataset))), [])]
+        # Eval-only runs should use a single balanced evaluation set and no
+        # training split. We rebalance the full dataset directly so the test
+        # set stays balanced even without folds.
+        def _rebalance_indices(idx_list):
+            items = [base_dataset.data[i] for i in idx_list]
+            enhancers = [i for i, item in zip(idx_list, items) if item.is_enhancer()]
+            promoters = [i for i, item in zip(idx_list, items) if item.is_promoter()]
+
+            if not enhancers or not promoters:
+                logger.warning(
+                    f"Eval-only: Cannot rebalance (enhancers={len(enhancers)}, promoters={len(promoters)})"
+                )
+                return idx_list
+
+            import random
+
+            rng = random.Random(data_args.balance_seed)
+            target = data_args.target_enhancer_fraction
+            desired_enhancers = int(round((target / (1.0 - target)) * len(promoters)))
+
+            if desired_enhancers <= len(enhancers):
+                selected_enhancers = rng.sample(enhancers, desired_enhancers)
+                selected_promoters = promoters
+            else:
+                desired_promoters = int(round(((1.0 - target) / target) * len(enhancers)))
+                selected_enhancers = enhancers
+                selected_promoters = rng.sample(promoters, desired_promoters)
+
+            balanced = selected_enhancers + selected_promoters
+            rng.shuffle(balanced)
+            return balanced
+
+        folds = [(_rebalance_indices(list(range(len(dataset)))), [])]
     elif training_args.do_eval:
         # Group samples by chromosome for train/test split
         from collections import defaultdict
