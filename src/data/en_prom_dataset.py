@@ -373,7 +373,7 @@ class PromoterEnhancerDataset(TorchDataset):
             if os.path.isdir(os.path.join(self.genome_data_path, name))
         ]
         
-        prefixes = ("human_chr_", "mouse_chr_")
+        prefix = "human_chr_" if self.is_human else "mouse_chr_"
         for subdir in sorted(subdirs):
             fasta_file = self._find_fasta_file(subdir)
             if fasta_file is None:
@@ -381,14 +381,11 @@ class PromoterEnhancerDataset(TorchDataset):
             chromosome_sequence = self._load_fasta_file(fasta_file)
 
             chromosome_name = os.path.basename(subdir)
-            for prefix in prefixes:
-                if chromosome_name.startswith(prefix):
-                    chromosome_name = chromosome_name[len(prefix):]
-                    break
-                if chromosome_name.startswith(prefix[:-1]):
-                    chromosome_name = chromosome_name[len(prefix[:-1]):]
-                    break
-            if chromosome_name.startswith("chr"):
+            if chromosome_name.startswith(prefix):
+                chromosome_name = chromosome_name[len(prefix):]
+            elif chromosome_name.startswith(prefix[:-1]):
+                chromosome_name = chromosome_name[len(prefix[:-1]):]
+            elif chromosome_name.startswith("chr"):
                 chromosome_name = chromosome_name[3:]
 
             if not chromosome_name.isdigit():
