@@ -12,3 +12,5 @@ report/report-blx.bib
 *.blg
 report/report.run.xml
 report/texput.log
+*.fdb_latexmk
+report/report.fls

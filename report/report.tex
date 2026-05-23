@@ -226,17 +226,63 @@ BERT \cite{devlin2018} pre‑trains a bidirectional Transformer using masked lan
 This self-supervised learning approach is succesfully used to create meaningful internal representations of the possible elements in the sequence. This semantic embeddings can then be employed to perform supervised learning tasks on it by training an ad-hoc additional classification head.
 
 \subsection{DNA-BERT2}
-...
+DNABERT-2 \cite{dna-bert2} represents a major leap compared to the severe computational inefficiencies that bottlenecked its predecessor. 
+While the original DNABERT model relied on overlapping k-mer tokenization \cite{dna-bert} -- a method that generates fixed-length permutations of nucleotides and has a few downsides -- DNABERT-2 introduces Byte Pair Encoding (BPE) to the genomic space.
+Moreover, it employs ALiBi for positional encodings \cite{alibi}, enabling the model to deal during evaluation with input sequences longer than those seen during training.
+
+\paragraph{Byte Pair Encoding.} A standard technique for tokenizing genomic sequences is the $k$-mer method, which generates all possible contiguous sequences of $k$ nucleotides. For instance, with $k=3$, the sequence \texttt{ACGT} would be tokenized into \texttt{ACG} and \texttt{CGT}. 
+This approach is, however, quite faulty. First of all, it presents a computational bottleneck, since the number of possible tokens is exponential in $k$. Then, for masked language modeling tasks, masking a single token is not enough, since the model could easily infer the masked token from the unmasked neighbouring ones -- meaning that $k$-mer need to be masked contigously.
+
+DNABERT-2, instead, uses Byte Pair Encoding (BPE), a data compression technique that iteratively determines the most frequent tokens.
+The approach works as follows: starting with a base vocabulary of single nucleotides, the algorithm identifies the most frequent pair of tokens in the training corpus and merges them into a new token. 
+This process is repeated until a predefined vocabulary size is reached, resulting in a set of tokens that can represent common sequences more efficiently and with a smaller vocabulary than fixed-length $k$-mers.
+
+\paragraph{ALiBi.} The attention function is inherently position-agnostic -- a permutation on the input elements in the sequence would produce the same output, albeit with a different order. 
+To overcome this problem, the original Transformer architecture introduced positional encodings, which are added to the input embeddings to inject information about the position of each token in the sequence. 
+However, these fixed positional encodings limit the model's ability to generalize to longer sequences than those seen during training.
+
+ALiBi (Attention with Linear Biases) is a method that modifies the attention mechanism to include a bias term that linearly increases with the distance between tokens.
+Formally, given a sequence of length $n$, the attention score between tokens at positions $i$ and $j$ is modified as follows:
+$$
+\text{Attention}(Q, K, V) = \text{softmax}\left(\dfrac{QK^T}{\sqrt{d_k}} + \alpha |i-j|\right)V
+$$
+with $\alpha$ a parameter that is head-specific and is fixed before training. Intuitively this bias encourages the model to attend more to nearby tokens, while still allowing it to capture long-range dependencies when necessary. 
+Moreover, as seen, unlike learned positional encodings, ALiBi does not require any additional learnable parameters.
 
 % ---------- 3. METHODS ----------
 \section{Methods}
 \label{sec:methods}
 
 \subsection{Data Collection and Preprocessing}
-...
+To construct the foundational sequence library for analysis, primary genomic assemblies and regulatory coordinates for Homo sapiens were compiled from several public repositories.
+
+\paragraph{Human Genome.}
+The complete reference genome sequence for Homo sapiens (Assembly version GRCh38) was acquired via the Ensembl FTP server \cite{ensembl}. 
+To facilitate modular processing and preserve chromosomal segmentation, files were fetched individually for each human chromosome ($1 \le \text{num} \le 22$) in a compressed FASTA layout.
+To isolate functional genomic regions, comprehensive gene feature annotations were still retrieved from the Ensembl FTP Server.
+The comprehensive Gene Transfer Format (GTF) file containing coordinate structures was then used in order to extract another FASTA file layout containing coding sequences, filtering out every non-coding portion of each chromosome (e.g., introns).
+
+\paragraph{Promoters and Enhancers.}
+In order to later apply our method to promoter and enhancer classification, the data has been collected from public sources.
+More specifically, the Eukaryotic Promoter Database (EPDNew) \cite{epdnew} was employed to retrieve the data relative to the human promoters.
+Additionally, from ... (add here the source of the enhancer data) the enhancer sequences were obtained.
 
 \subsection{Model Architecture}
-...
+The model architecture is based on the DNABERT-2 framework, which consists of a multi-layer bidirectional Transformer encoder. 
+
+\paragraph{Input.}
+The input to the model is a tokenized DNA sequence, where tokens are generated using Byte Pair Encoding (BPE) (see Section \ref{sec:background}). 
+The token vocabulary, consisting of $N = 4096$ distinct tokens, was retrieved from the original DNA-BERT2 implementation.
+Each token gets converted to a learnable embedding vector of dimension $d = 768$, which serves as the input to the Transformer layers.
+
+\paragraph{The Encoder.}
+Each Encoder Module consists of a multi-head self-attention mechanism, followed by a feed-forward network.
+After each sub-layer, residual connections and layer normalization are applied.
+Specifically, each self-attention counts $h = 12$ heads; the feed-forward network has an hidden dimensionality of $d_{ff} = 3072$.
+
+The Encoder, the core component of the architecture, is a stack of $L = 12$ identical layers of the aforementioned Encoder Module.
+The output of the final encoder layer is a contextualized representation of the input sequence, which captures both local and long-range dependencies among the tokens.
+It can be hence used to further perform downstream tasks, such as promoter and enhancer classification, by adding a simple classification head on top of it.
 
 \begin{figure}[H]
   \centering
@@ -246,7 +292,46 @@ This self-supervised learning approach is succesfully used to create meaningful 
 \end{figure}
 
 \subsection{Training Protocol}
-...
+
+\paragraph{Pretraining.}
+In order to give the architecture the capabilities of managing the complex patterns inherent in genomic data, a pretraining phase is conducted on a large-scale dataset of unlabeled DNA sequences.
+More specifically, in order to enhance its ability to understand the underlying structure behind the genome, the corpus used was entirely made up of only coding sequences, which are the most informative ones in terms of regulatory elements.
+
+The pretraining objective is masked language modeling (MLM), where a certain percentage of tokens in the input sequence are randomly masked, and the model is trained to predict the original tokens based on the context provided by the unmasked tokens.
+The prediction head is a stack of two components: the \textit{Transformation Layer}, comprising a single linear layer that does not change the dimensionality of the data, followed by a GELU and a layer normalization; and the \textit{Decoder Layer}, which is a linear layer that maps the output of the transformation layer to the size of the token vocabulary, producing a probability distribution over possible tokens for each masked position.
+More specifically, the CDS data is collected and split into training and testing sets. The split happens at the chromosome level in order to avoid data leakage, meaning that the model is tested on sequences from chromosomes that were not seen during training.
+
+The model is trained for $40000$ steps. 
+The learning rate is set to $1 \times 10^{-3}$, with $1200$ warmup steps and a weight decay of $1 \times 10^{-5}$. 
+The batch size is set to $8$, and the masking probability is set to $15\%$.
+The optimizer used is AdamW \cite{adamw}, which is a variant of the Adam optimizer \cite{adam}.
+
+After the pretraining stage, only the weights of the encoder are kept, while the prediction head is discarded.
+
+\paragraph{Fine-tuning.}
+The fine-tuning phase involves adapting the pre-trained encoder to the specific downstream task of promoter and enhancer prediction.
+The model is trained on a balanced dataset of promoter and enhancer sequences, still with a chromosome-based splitting to avoid data leakage.
+
+On top of the encoder, another classification head is added. This consists of a feedforward network, with hidden size $3072$ and with GELU as the activation function, and followed by a final layer with output dimension $2$ -- one for each possible class.
+
+The dataset contains promoters that are exactly $2000$ nucleotides long, while enhancers have variable length, sometimes even exceeding the model's input length. 
+If not handled, other than the length discrepancy, this could have lead the model to bypass the actual genomic semantics and simply learn to classify sequences based on their length. 
+Moreover, it was not possible to trim the sequences without risking to lose important information, since the functional boundaries of promoters and enhancers are not well defined.
+To overcome all these problems, the following strategy was adopted: each input sequence is split into non-overlapping segments of at most $2000$ nucleotides; each segment is passed through the model and then the resulting representations are mean-pooled together to produce a single representation for the whole sequence, which is then fed to the classification head.
+Formally, given an input sequence $S$ of length $L$, we split it into $m = \lceil L / 2000 \rceil$ non-overlapping segments $S_1, S_2, \dots, S_m$. 
+Each segment is processed independently through the encoder to obtain its contextualized representation: $S'_i = \text{Encoder}(S_i)$.
+Each segment $S_i$ is itself a sequence of token (or position) embeddings produced by the encoder. To obtain a fixed-size vector for a segment we first perform intra-segment pooling (mean pooling over the token dimension) to get a single vector $v_i$ for each segment:
+$$
+v_i = \frac{1}{|S_i|} \sum_{t=1}^{|S_i|} \text{Encoder}(S_i)_t,
+$$
+where $|S_i|$ is the number of tokens in segment $S_i$. The segment vectors $v_i$ are then aggregated via inter-segment pooling (mean across segments) to form the final sequence representation:
+$$
+S' = \frac{1}{m} \sum_{i=1}^{m} v_i,\quad \hat{y} = \text{CLSHead}(S').
+$$
+
+The model is fine-tuned for $4000$ steps, with a learning rate of $1 \times 10^{-3}$, a batch size of $4$ and a weight decay of $1 \times 10^{-5}$.
+During training, both the encoder and the classification head are updated.
+As the loss function, cross-entropy loss is used, which is appropriate for binary classification tasks.
 
 \subsection{Evaluation Metrics}
 ...
