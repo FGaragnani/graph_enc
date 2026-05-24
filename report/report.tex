@@ -334,7 +334,34 @@ During training, both the encoder and the classification head are updated.
 As the loss function, cross-entropy loss is used, which is appropriate for binary classification tasks.
 
 \subsection{Evaluation Metrics}
-...
+To assess the performance of the model, a few evaluation metrics are employed.
+
+\paragraph{Accuracy.}
+Accuracy is the proportion of correctly classified samples out of the total number of samples:
+$$
+\text{Accuracy} = \frac{T}{T + F}
+$$
+where $T$ is the number of correct predictions, and $F$ is the number of incorrect predictions.
+
+\paragraph{F1 Score.}
+The F1 score is the harmonic mean of precision and recall, providing a balance between the two:
+$$
+\text{F1 Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
+$$
+where precision is the ratio of true positives to the sum of true positives and false positives, and recall is the ratio of true positives to the sum of true positives and false negatives:
+$$
+\text{Precision} = \frac{TP}{TP + FP},\quad \text{Recall} = \frac{TP}{TP + FN}
+$$
+Assume, without loss of generality, that the positive class is the promoter class. 
+
+\paragraph{ROC-AUC.}
+The Receiver Operating Characteristic Area Under the Curve (ROC-AUC) is a metric that evaluates the model's ability to discriminate between classes across different classification thresholds. 
+It is calculated by plotting the true positive rate (TPR) against the false positive rate (FPR) at various threshold settings and computing the area under this curve:
+$$
+\text{ROC-AUC} = \int_{0}^{1} \text{TPR}(t) \, d\text{FPR}(t)
+$$
+where $t$ represents the classification threshold. A higher ROC-AUC value indicates better model performance in distinguishing between promoters and enhancers.
+
 
 % ---------- 4. RESULTS ----------
 \section{Results}
