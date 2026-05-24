@@ -12,6 +12,7 @@
 \usepackage{courier}                  % Courier monospace
 \usepackage{microtype}                % better text justification
 \usepackage[backend=bibtex,style=numeric]{biblatex}
+\usepackage{csquotes}
 
 \addbibresource{references.bib}
 
@@ -169,7 +170,7 @@
 	Enhancers are distal cis-regulatory elements that modulate gene expression by increasing transcriptional activity, often acting over long genomic distances through complex chromatin interactions with promoters.
 	Accurate identification of promoters and enhancers is a fundamental problem in computational genomics, as these elements play a crucial role in gene regulation, cellular differentiation, and disease mechanisms. However, the precise location and functional boundaries of regulatory elements within the genome are often difficult to determine experimentally, making computational prediction methods particularly valuable. Traditional bioinformatics approaches rely heavily on handcrafted sequence features and motif discovery techniques, which may fail to capture the complex contextual dependencies present in genomic sequences.
 	
-	In this project, we adapt the DNA-BERT architecture to the tasks of promoter and enhancer classification. By leveraging transformer-based language modeling techniques originally developed for natural language processing, DNA-BERT2 is able to learn rich contextual representations of nucleotide sequences directly from raw DNA data. We investigate the effectiveness of this approach for distinguishing regulatory elements and evaluate its performance on genomic datasets.
+	In this project, we adapt the DNA-BERT architecture to the tasks of promoter and enhancer classification. By leveraging transformer-based language modeling techniques originally developed for natural language processing, DNABERT-2 is able to learn rich contextual representations of nucleotide sequences directly from raw DNA data. We investigate the effectiveness of this approach for distinguishing regulatory elements and evaluate its performance on genomic datasets.
 \end{abstractbox}
 \keywords{deep learning, BERT, promoter prediction, enhancer prediction, bioinformatics, transformer}
 
@@ -185,7 +186,7 @@
 The rapid advancement of high‑throughput sequencing technologies has produced an unprecedented volume of genomic data. Identifying functional elements, such as promoters, directly from raw DNA sequence is a fundamental challenge in bioinformatics, particularly because they are not defined structurally \cite{promoters}. Traditional methods rely on conserved motifs (e.g., TATA box, GC‑box), but these motifs are often degenerate and fail to capture long‑range dependencies.
 
 Recent breakthroughs in natural language processing (NLP), particularly the Transformer architecture and the BERT model, have inspired sequence‑based models in genomics. DNA can be viewed as a language with its own alphabet $\Sigma = \{\texttt{A},\texttt{C},\texttt{G},\texttt{T}\}$.
-One of the main advantages of these attention-based architectures is the fact that they excel at efficiently comparing distant elements inside a sequence, a property that is required for a wide range of sequence analysis tasks.
+One of the principal advantages of attention-based architectures is their ability to efficiently model interactions between distant elements within a sequence, a property that is required for a wide range of sequence analysis tasks.
 This project investigates how a DNA‑specific BERT model behaves in a binary classification scenario of promoter versus enhancer sequences.
 
 \subsection{Motivation}
@@ -217,21 +218,21 @@ Semantically, what these three projections -- called \textit{query, key} and \te
 $$
 	A = \text{softmax}\left(\dfrac{Q\cdot K^T}{\sqrt{d_k}}\right)V
 $$
-then, does nothing more than understanding how much each couple of elements is compatible ($Q \cdot K^T$), converting the raw similarities values into a probability distribution ($\text{softmax}(\cdot)$) and then computing a weighted average of the vector values, using the similarity values as weights.
+then, computes pairwise similarity between each couple of elements ($Q \cdot K^T$), converting the raw similarities values into a probability distribution ($\text{softmax}(\cdot)$) and then computing a weighted average of the vector values, using the similarity values as weights.
 The fact that in a single computation each element is immediately compared with every other element is one of the main reasons of the efficiency of the Transformer architecture, unlike Recurrent Neural Networks (RNNs) or Convolutional Neural Networks (CNNs).
 
 \subsection{BERT}
 BERT \cite{devlin2018} pre‑trains a bidirectional Transformer using masked language modelling (MLM) and next‑sentence prediction. MLM is a task that requires a language model to predict the nature of a set of masked elements in a sequence. Formally, given a sequence $\mathbf{x} = [x_1,\,x_2,\,\dots,\,x_n]$, each element is masked with probability $p$; it means that an element gets swapped for a made-up 'unknown' element $[MASK]$. The model is then trained to reconstruct the original token at the masked positions by leveraging both left and right context simultaneously, which forces it to learn bidirectional representations of the input sequence.
 
-This self-supervised learning approach is succesfully used to create meaningful internal representations of the possible elements in the sequence. This semantic embeddings can then be employed to perform supervised learning tasks on it by training an ad-hoc additional classification head.
+This self-supervised learning approach is successfully used to create meaningful internal representations of the possible elements in the sequence. This semantic embeddings can then be employed to perform supervised learning tasks on it by training an ad-hoc additional classification head.
 
-\subsection{DNA-BERT2}
-DNABERT-2 \cite{dna-bert2} represents a major leap compared to the severe computational inefficiencies that bottlenecked its predecessor. 
-While the original DNABERT model relied on overlapping k-mer tokenization \cite{dna-bert} -- a method that generates fixed-length permutations of nucleotides and has a few downsides -- DNABERT-2 introduces Byte Pair Encoding (BPE) to the genomic space.
+\subsection{DNABERT-2}
+DNABERT-2 \cite{dnabert-2} represents a major leap compared to the severe computational inefficiencies that bottlenecked its predecessor. 
+While the original DNA-BERT model relied on overlapping k-mer tokenization \cite{dnabert} -- a method that generates fixed-length permutations of nucleotides and has a few downsides -- DNABERT-2 introduces Byte Pair Encoding (BPE) to the genomic space.
 Moreover, it employs ALiBi for positional encodings \cite{alibi}, enabling the model to deal during evaluation with input sequences longer than those seen during training.
 
 \paragraph{Byte Pair Encoding.} A standard technique for tokenizing genomic sequences is the $k$-mer method, which generates all possible contiguous sequences of $k$ nucleotides. For instance, with $k=3$, the sequence \texttt{ACGT} would be tokenized into \texttt{ACG} and \texttt{CGT}. 
-This approach is, however, quite faulty. First of all, it presents a computational bottleneck, since the number of possible tokens is exponential in $k$. Then, for masked language modeling tasks, masking a single token is not enough, since the model could easily infer the masked token from the unmasked neighbouring ones -- meaning that $k$-mer need to be masked contigously.
+This approach, however, has several limitations. First of all, it presents a computational bottleneck, since the number of possible tokens is exponential in $k$. Then, for masked language modeling tasks, masking a single token is not enough, since the model could easily infer the masked token from the unmasked neighbouring ones -- meaning that $k$-mer need to be masked contigously.
 
 DNABERT-2, instead, uses Byte Pair Encoding (BPE), a data compression technique that iteratively determines the most frequent tokens.
 The approach works as follows: starting with a base vocabulary of single nucleotides, the algorithm identifies the most frequent pair of tokens in the training corpus and merges them into a new token. 
@@ -244,12 +245,29 @@ However, these fixed positional encodings limit the model's ability to generaliz
 ALiBi (Attention with Linear Biases) is a method that modifies the attention mechanism to include a bias term that linearly increases with the distance between tokens.
 Formally, given a sequence of length $n$, the attention score between tokens at positions $i$ and $j$ is modified as follows:
 $$
-\text{Attention}(Q, K, V) = \text{softmax}\left(\dfrac{QK^T}{\sqrt{d_k}} + \alpha |i-j|\right)V
+\text{Attention}(Q, K, V) = \text{softmax}\left(\dfrac{QK^T}{\sqrt{d_k}} - m_h |i-j|\right)V
 $$
-with $\alpha$ a parameter that is head-specific and is fixed before training. Intuitively this bias encourages the model to attend more to nearby tokens, while still allowing it to capture long-range dependencies when necessary. 
+with $m_h$ a parameter that is head-specific and is fixed before training. Intuitively this bias encourages the model to attend more to nearby tokens, while still allowing it to capture long-range dependencies when necessary. 
 Moreover, as seen, unlike learned positional encodings, ALiBi does not require any additional learnable parameters.
 
-% ---------- 3. METHODS ----------
+% ---------- 3. RELATED WORKS ----------
+\section{Related Works}
+
+\paragraph{DNA-BERT.} 
+The original DNA-BERT model \cite{dnabert} was one of the first to apply the BERT architecture to genomic sequences, using $k$-mer tokenization. 
+It demonstrated that transformer-based models could learn meaningful representations of DNA sequences and achieve competitive performance on various genomic tasks, including promoter prediction.
+
+\paragraph{DNA-BERT2.}
+DNABERT-2 \cite{dnabert-2} builds upon the original DNA-BERT by introducing BPE tokenization and ALiBi positional encodings, which significantly improve the model's efficiency and ability to handle longer sequences.
+The model was pre-trained on a large corpus of genomic sequences from multiple species and evaluated on a variety of downstream tasks, showing superior performance compared to its predecessor and other baseline models.
+
+\paragraph{Nucleotide Transformer.}
+...
+
+\paragraph{EVO.}
+...
+
+% ---------- 4. METHODS ----------
 \section{Methods}
 \label{sec:methods}
 
@@ -272,7 +290,7 @@ The model architecture is based on the DNABERT-2 framework, which consists of a 
 
 \paragraph{Input.}
 The input to the model is a tokenized DNA sequence, where tokens are generated using Byte Pair Encoding (BPE) (see Section \ref{sec:background}). 
-The token vocabulary, consisting of $N = 4096$ distinct tokens, was retrieved from the original DNA-BERT2 implementation.
+The token vocabulary, consisting of $N = 4096$ distinct tokens, was retrieved from the original DNABERT-2 implementation.
 Each token gets converted to a learnable embedding vector of dimension $d = 768$, which serves as the input to the Transformer layers.
 
 \paragraph{The Encoder.}
@@ -292,6 +310,8 @@ It can be hence used to further perform downstream tasks, such as promoter and e
 \end{figure}
 
 \subsection{Training Protocol}
+
+Rather than directly fine-tuning a publicly available DNABERT-2 checkpoint, we reimplemented the architecture and conducted domain-specific pretraining on coding DNA sequences before fine-tuning the model for promoter vs enhancer classification.
 
 \paragraph{Pretraining.}
 In order to give the architecture the capabilities of managing the complex patterns inherent in genomic data, a pretraining phase is conducted on a large-scale dataset of unlabeled DNA sequences.
@@ -339,9 +359,10 @@ To assess the performance of the model, a few evaluation metrics are employed.
 \paragraph{Accuracy.}
 Accuracy is the proportion of correctly classified samples out of the total number of samples:
 $$
-\text{Accuracy} = \frac{T}{T + F}
+\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
 $$
-where $T$ is the number of correct predictions, and $F$ is the number of incorrect predictions.
+where $TP$ is the number of true positives, $TN$ is the number of true negatives, $FP$ is the number of false positives, and $FN$ is the number of false negatives.
+Assume, without loss of generality, that the positive class is the promoter class.
 
 \paragraph{F1 Score.}
 The F1 score is the harmonic mean of precision and recall, providing a balance between the two:
@@ -352,16 +373,15 @@ where precision is the ratio of true positives to the sum of true positives and 
 $$
 \text{Precision} = \frac{TP}{TP + FP},\quad \text{Recall} = \frac{TP}{TP + FN}
 $$
-Assume, without loss of generality, that the positive class is the promoter class. 
-
 \paragraph{ROC-AUC.}
-The Receiver Operating Characteristic Area Under the Curve (ROC-AUC) is a metric that evaluates the model's ability to discriminate between classes across different classification thresholds. 
+The Receiver Operating Characteristic Area Under the Curve (ROC-AUC) is a metric that evaluates the model's ability to discriminate between classes across different classification thresholds \cite{roc-auc}.
 It is calculated by plotting the true positive rate (TPR) against the false positive rate (FPR) at various threshold settings and computing the area under this curve:
 $$
 \text{ROC-AUC} = \int_{0}^{1} \text{TPR}(t) \, d\text{FPR}(t)
 $$
 where $t$ represents the classification threshold. A higher ROC-AUC value indicates better model performance in distinguishing between promoters and enhancers.
 
+\paragraph{Confidence Intervals.}
 
 % ---------- 4. RESULTS ----------
 \section{Results}
@@ -373,6 +393,9 @@ where $t$ represents the classification threshold. A higher ROC-AUC value indica
 \section{Discussion}
 \label{sec:discussion}
 
+...
+
+\subsection{Limitations}
 ...
 
 % ---------- 6. CONCLUSION ----------
