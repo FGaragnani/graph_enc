@@ -9,9 +9,10 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --array=0-4
 #SBATCH --partition=all_usr_prod
+#SBATCH --constraint="gpu_A40_45G|gpu_L40S_45G|gpu_RTX6000_24G|gpu_RTX_A5000_24G"
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
-#SBATCH --time=01:00:00
+#SBATCH --time=02:30:00
 
 module load anaconda3/2022.05
 module load profile/deeplrn
@@ -52,15 +53,16 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --max_chunks_per_sample 10 \
   --pad_to_max_length false \
   --output_dir ${run_output_dir} \
-  --per_device_train_batch_size 8 \
-  --per_device_eval_batch_size 8 \
-  --learning_rate 5e-5 \
-  --max_steps 500 \
-  --warmup_steps 50 \
+  --per_device_train_batch_size 4 \
+  --per_device_eval_batch_size 4 \
+  --learning_rate 1e-3 \
+  --max_steps 4000 \
+  --warmup_steps 400 \
   --weight_decay 1e-5 \
   --adam_beta1 0.9 \
   --adam_beta2 0.98 \
   --adam_eps 1e-6 \
+  --bf16 \
   --save_strategy no \
   --eval_steps 500 \
   --validation_split_percentage 10 \
@@ -69,4 +71,5 @@ torchrun --nproc_per_node=${SLURM_GPUS_PER_NODE} --master_port=${MASTER_PORT} sr
   --do_eval \
   --overwrite_output_dir \
   --perform_kfold true \
-  --seed ${seed}
+  --seed ${seed} \
+  --low_cpu_mem_usage true 
