@@ -13,6 +13,7 @@ import importlib.util
 from pathlib import Path
 from typing import Optional
 import numpy as np
+from collections import defaultdict
 import parse_folds
 
 HERE = Path(__file__).parent / "pretrained"
@@ -22,6 +23,14 @@ def main(dir: Optional[str] = None, out_dir: Optional[str] = None):
     dir = dir or str(HERE)
     out_dir_path = Path(HERE) if out_dir is None else Path(out_dir)
     out_dir_path.mkdir(parents=True, exist_ok=True)
+
+
+    def _aggregate_by_seed(folds, metric):
+        buckets = defaultdict(list)
+        for d in folds:
+            if metric in d and d[metric] is not None:
+                buckets[d.get('seed')].append(float(d[metric]))
+        return [float(np.mean(v)) for v in buckets.values()]
 
     items = parse_folds.data_from_files(dir)
     folds = []
@@ -37,6 +46,9 @@ def main(dir: Optional[str] = None, out_dir: Optional[str] = None):
     if not f1s and not roc_aucs:
         print('No eval_f1 or eval_roc_auc values found in parsed folds.')
         return
+    
+    f1s_by_seed = _aggregate_by_seed(folds, 'eval_f1')
+    roc_aucs_by_seed = _aggregate_by_seed(folds, 'eval_roc_auc')
 
     # import ci utilities
     from ci_utils import (
@@ -45,15 +57,15 @@ def main(dir: Optional[str] = None, out_dir: Optional[str] = None):
         plot_bootstrap_distribution,
     )
 
-    mean_rb, ci_rb, samples_rb = run_level_bootstrap_f1(f1s, n_boot=5000, random_state=0)
-    mean_t, ci_t = t_interval(f1s)
+    mean_rb, ci_rb, samples_rb = run_level_bootstrap_f1(f1s_by_seed, n_boot=5000, random_state=0)
+    mean_t, ci_t = t_interval(f1s_by_seed)
 
     print('Run-level bootstrap (mean, 95% CI):', mean_rb, ci_rb)
     print('t-interval (mean, 95% CI):', mean_t, ci_t)
 
     if roc_aucs:
-        mean_roc_rb, ci_roc_rb, samples_roc_rb = run_level_bootstrap_f1(roc_aucs, n_boot=5000, random_state=0)
-        mean_roc_t, ci_roc_t = t_interval(roc_aucs)
+        mean_roc_rb, ci_roc_rb, samples_roc_rb = run_level_bootstrap_f1(roc_aucs_by_seed, n_boot=5000, random_state=0)
+        mean_roc_t, ci_roc_t = t_interval(roc_aucs_by_seed)
         print('Run-level bootstrap ROC-AUC (mean, 95% CI):', mean_roc_rb, ci_roc_rb)
         print('t-interval ROC-AUC (mean, 95% CI):', mean_roc_t, ci_roc_t)
 
