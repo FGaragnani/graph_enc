@@ -15,7 +15,7 @@ from typing import Optional
 import numpy as np
 import parse_folds
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).parent / "pretrained"
 
 
 def main(dir: Optional[str] = None, out_dir: Optional[str] = None):
@@ -31,12 +31,12 @@ def main(dir: Optional[str] = None, out_dir: Optional[str] = None):
         if data:
             folds.append(data)
 
-        # collect eval_f1 / eval_roc_auc values
-        f1s = [float(d['eval_f1']) for d in folds if 'eval_f1' in d]
-        roc_aucs = [float(d['eval_roc_auc']) for d in folds if 'eval_roc_auc' in d]
-        if not f1s and not roc_aucs:
-            print('No eval_f1 or eval_roc_auc values found in parsed folds.')
-            return
+    # collect eval_f1 / eval_roc_auc values
+    f1s = [float(d['eval_f1']) for d in folds if 'eval_f1' in d]
+    roc_aucs = [float(d['eval_roc_auc']) for d in folds if 'eval_roc_auc' in d]
+    if not f1s and not roc_aucs:
+        print('No eval_f1 or eval_roc_auc values found in parsed folds.')
+        return
 
     # import ci utilities
     from ci_utils import (

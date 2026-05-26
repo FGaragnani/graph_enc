@@ -40,38 +40,29 @@ def f1_bootstrap_ci(y_true: np.ndarray, y_pred: np.ndarray, n_boot: int = 2000,
     return float(samples.mean()), (float(lo), float(hi)), samples
 
 
-def hierarchical_f1_bootstrap(runs: List[Tuple[np.ndarray, np.ndarray]], n_boot: int = 2000,
-                               alpha: float = 0.05, average: Literal['binary', 'micro', 'macro', 'weighted', 'samples'] = 'binary',
-                               random_state: Optional[int] = None) -> Tuple[float, Tuple[float, float], np.ndarray]:
-    """Hierarchical bootstrap: resample runs then examples within runs.
-
-    `runs` should be a list of (y_true, y_pred) arrays for each run (seed/fold).
-    """
+def hierarchical_f1_bootstrap(
+    runs: List[Tuple[np.ndarray, np.ndarray]],
+    n_boot: int = 2000,
+    alpha: float = 0.05,
+    average: Literal['binary', 'micro', 'macro', 'weighted', 'samples'] = 'binary',
+    random_state: Optional[int] = None,
+) -> Tuple[float, Tuple[float, float], np.ndarray]:
+    """Hierarchical bootstrap: resample runs then examples within runs."""
     rng = np.random.default_rng(random_state)
     m = len(runs)
     samples = np.empty(n_boot, dtype=float)
+
     for i in range(n_boot):
-        # sample run indices with replacement
         run_indices = rng.integers(0, m, m)
-        y_true_parts = []
-        y_pred_parts = []
+        f1s = []
         for ridx in run_indices:
             yt, yp = runs[ridx]
             if len(yt) == 0:
                 continue
             idx = rng.integers(0, len(yt), len(yt))
-            y_true_parts.append(yt[idx])
-            y_pred_parts.append(yp[idx])
-        if not y_true_parts:
-            samples[i] = np.nan
-            continue
-        f1s = []
-        for ridx in run_indices:
-            yt, yp = runs[ridx]
-            idx = rng.integers(0, len(yt), len(yt))
             f1s.append(f1_score(yt[idx], yp[idx], average=average))
+        samples[i] = np.mean(f1s) if f1s else np.nan
 
-        samples[i] = np.mean(f1s)
     samples = samples[~np.isnan(samples)]
     lo, hi = np.percentile(samples, [100 * (alpha / 2), 100 * (1 - alpha / 2)])
     return float(samples.mean()), (float(lo), float(hi)), samples
@@ -97,6 +88,30 @@ def roc_auc_bootstrap_ci(y_true: np.ndarray, y_score: np.ndarray, n_boot: int = 
     lo, hi = np.percentile(samples, [100 * (alpha / 2), 100 * (1 - alpha / 2)])
     return float(samples.mean()), (float(lo), float(hi)), samples
 
+def evaluate_cross_domain(
+    runs: list,           # [(y_true, y_pred), ...] — one per seed model
+    n_boot: int = 5000,
+    random_state: int = 0,
+) -> None:
+    from ci_utils import (
+        hierarchical_f1_bootstrap,
+        hierarchical_roc_auc_bootstrap,
+        plot_bootstrap_distribution,
+    )
+
+    mean_f1, ci_f1, samples_f1 = hierarchical_f1_bootstrap(
+        runs, n_boot=n_boot, alpha=0.05, average='binary', random_state=random_state
+    )
+    print(f"F1  — mean: {mean_f1:.4f}  95% CI: [{ci_f1[0]:.4f}, {ci_f1[1]:.4f}]")
+
+    # For ROC-AUC, runs should be (y_true, y_score) with continuous scores
+    mean_auc, ci_auc, samples_auc = hierarchical_roc_auc_bootstrap(
+        runs, n_boot=n_boot, alpha=0.05, random_state=random_state
+    )
+    print(f"AUC — mean: {mean_auc:.4f}  95% CI: [{ci_auc[0]:.4f}, {ci_auc[1]:.4f}]")
+
+    plot_bootstrap_distribution(samples_f1, ci_f1, title='Hierarchical bootstrap F1 (mice)')
+    plot_bootstrap_distribution(samples_auc, ci_auc, title='Hierarchical bootstrap AUC (mice)')
 
 def hierarchical_roc_auc_bootstrap(
     runs: List[Tuple[np.ndarray, np.ndarray]],
