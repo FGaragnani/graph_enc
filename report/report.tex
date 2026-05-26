@@ -381,13 +381,34 @@ $$
 $$
 where $t$ represents the classification threshold. A higher ROC-AUC value indicates better model performance in distinguishing between promoters and enhancers.
 
-\paragraph{Confidence Intervals.}
-
 % ---------- 4. RESULTS ----------
 \section{Results}
 \label{sec:results}
 
-...
+Two different models have been mainly evaluated. The first one has been a model pretrained on coding sequences only and later finetuned for the promoter vs enhancer classification task. The second model has been a model purely trained from scratch on the promoter vs enhancer classification.
+
+\subsection{Evaluation on Human Genome.}
+In order to estimate the model's capabilities, the following evaluation procedure has been carrried out: each evaluated model was trained on $10$-fold cross-validation; meaning, the whole dataset has been divided into $10$ folds, $1$ has been kept out for testing, and the model was trained on the remaining $9$ folds.
+This has been done for $n = 7$ different random seeds to estabilish the model's robustness against different training dynamics and weights initialization.
+In total, we gathered $7 \times 10 = 70$ values both for the F1 score and for the ROC-AUC. Of course, cross-fold evaluations on the same seeds are not indipendent -- two folds will never share the same sample to evaluate upon -- so the $10$ per-fold values within each seed were averaged into a single seed-level mean prior to any statistical estimation. This yields $7$ independent observations per model, which form the basis for all reported confidence intervals.
+
+Confidence intervals were estimated using a classical $t$-interval with $df = 6$, preferred over bootstrap at this sample size because the bootstrap distribution over $n = 7$ points is effectively discrete and underestimates tail uncertainty. All intervals are at the $95\%$ level. Per-model results are reported in Table~\ref{tab:human_eval}.
+
+\begin{table}[h]
+	\centering
+	\caption{Per-model performance on the human genome. Mean and $95\%$ $t$-interval over $7$ seed-level means ($10$-fold CV each).}
+	\label{tab:human_eval}
+	\begin{tabular}{lcccc}
+		\toprule
+		\textbf{Model} & \textbf{F1} & \textbf{F1 95\% CI} & \textbf{ROC-AUC} & \textbf{ROC-AUC 95\% CI} \\
+		\midrule
+		Pretrained + finetuned & $0.686$ & $(0.677,\ 0.692)$ & $0.776$ & $(0.771,\ 0.784)$ \\
+		From scratch           & $\textbf{0.691}$ & $(0.678,\ 0.703)$ & $\textbf{0.781}$ & $(0.780,\ 0.783)$ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsubsection{title}
 
 % ---------- 5. DISCUSSION ----------
 \section{Discussion}
