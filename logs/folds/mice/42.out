@@ -1,0 +1,1 @@
+05/27/2026 18:39:09 - INFO - __main__ - Fold 0: {'eval_loss': 0.315784215927124, 'eval_accuracy': 0.9193899782135077, 'eval_f1': 0.9227557411273486, 'eval_roc_auc': 0.9770885841627863, 'eval_runtime': 38.9262, 'eval_samples_per_second': 47.166, 'eval_steps_per_second': 11.792, 'eval_samples': 1836}
