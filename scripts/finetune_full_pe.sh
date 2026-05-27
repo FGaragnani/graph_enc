@@ -31,7 +31,7 @@ export HF_HUB_OFFLINE=1
 model_checkpoint="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs"
 output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/finetuned_pe_full"
 dataset_dir="/homes/fgaragnani/ai4bio/graph_enc/scripts/datasets"
-seed=43
+seed=44
 run_output_dir="${output_dir}/seed_${seed}"
 
 IFS=',' read -r -a nodelist <<<$SLURM_NODELIST
