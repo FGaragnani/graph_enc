@@ -4,14 +4,14 @@
 #SBATCH --error=/work/tesi_fgaragnani/logs_ai4bio/%x_%j.err
 #SBATCH --open-mode=truncate
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-node=4
-#SBATCH --mem=180G
-#SBATCH --cpus-per-task=8
+#SBATCH --gpus-per-node=1
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=4
+#SBATCH --array=0-4
 #SBATCH --partition=all_usr_prod
-#SBATCH --constraint="gpu_A40_45G|gpu_L40S_45G|gpu_RTX6000_24G|gpu_RTX_A5000_24G"
 #SBATCH --account=ai4bio2025
 #SBATCH --nodes=1
-#SBATCH --time=01:00:00
+#SBATCH --time=00:30:00
 
 module load anaconda3/2022.05
 module load profile/deeplrn
@@ -26,9 +26,11 @@ export HF_HUB_CACHE="/work/tesi_fgaragnani/checkpoints/"
 export HF_HOME="/work/tesi_fgaragnani/checkpoints/"
 export TRANSFORMERS_OFFLINE=1
 export WANDB_MODE=offline
+seeds=(42 43 44 45 46)
+seed=${seeds[$SLURM_ARRAY_TASK_ID]}
 export HF_HUB_OFFLINE=1
 
-model_checkpoint="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/finetuned_pe_full/seed_42"
+model_checkpoint="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/finetuned_pe_full/seed_${seed}"
 output_dir="/work/tesi_fgaragnani/checkpoints/ai4bio/dnabert2_cs/finetuned_pe_full/mouse_eval"
 dataset_dir="/homes/fgaragnani/ai4bio/graph_enc/scripts/datasets/mouse"
 
