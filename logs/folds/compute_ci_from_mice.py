@@ -22,7 +22,7 @@ import parse_folds
 
 HERE = Path(__file__).parent
 METRICS = ("eval_f1", "eval_roc_auc")
-
+DEFAULT_DIR = HERE / "mice" / "pretrained"
 
 # ============================================================================
 # Parsing
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--logs",
-        default=str(HERE / "mice"),
+        default=str(DEFAULT_DIR),
         help="Directory containing .out log files (default: ./mice/)",
     )
     parser.add_argument(
