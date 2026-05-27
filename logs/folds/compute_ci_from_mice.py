@@ -104,7 +104,7 @@ def _t_interval(
     se = float(stats.sem(values))
     t_crit = stats.t.ppf(1 - (1 - confidence) / 2, df=n - 1)
 
-    return mean, mean - t_crit * se, mean + t_crit * se
+    return mean, float(mean - t_crit * se), float(mean + t_crit * se)
 
 
 def _run_level_bootstrap(

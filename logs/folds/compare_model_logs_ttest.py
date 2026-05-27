@@ -1,26 +1,4 @@
-"""Compare two model log sets with statistically safer tests on per-run metrics.
-
-Features
---------
-- Uses paired t-test when runs share the same (seed, fold)
-- Falls back to Welch's t-test otherwise
-- Prints:
-    * sample sizes
-    * confidence intervals
-    * effect sizes
-    * standard deviations
-- Detects duplicate (seed, fold) entries
-- Supports bootstrap confidence intervals
-- More robust reporting
-
-Notes
------
-This is still not a fully rigorous repeated-CV statistical framework.
-For publishable ML evaluation, consider:
-    - corrected resampled t-test
-    - Dietterich 5x2cv
-    - permutation testing
-"""
+"""Compare two model log sets with statistically safer tests on per-run metrics."""
 
 from __future__ import annotations
 
@@ -92,15 +70,14 @@ def _wilcoxon_test(arr_a: np.ndarray, arr_b: np.ndarray) -> Dict:
         zero_method="wilcox",
         alternative="two-sided",
         correction=True,
-        mode="auto",
     )
 
     diff = arr_a - arr_b
 
     return {
         "test": "wilcoxon",
-        "statistic": float(result.statistic),
-        "pvalue": float(result.pvalue),
+        "statistic": float(result.statistic),   # type: ignore
+        "pvalue": float(result.pvalue),         # type: ignore
         "n": len(arr_a),
         "mean_diff": float(np.mean(diff)),
     }
@@ -155,8 +132,8 @@ def _load_model_runs(path: Path) -> List[ModelRun]:
 
             if not data:
                 continue
-
-            fold = int(data.get("fold"))
+            
+            fold = int(data.get("fold")) # type: ignore
 
             metrics = {
                 name: float(data[name])
@@ -238,7 +215,7 @@ def _cohens_d_paired(a: np.ndarray, b: np.ndarray) -> float:
     if std == 0:
         return 0.0
 
-    return np.mean(diff) / std
+    return float(np.mean(diff) / std)
 
 
 def _confidence_interval(
@@ -301,8 +278,8 @@ def _paired_test(
     return {
         "test": "paired",
         "n": len(arr_a),
-        "statistic": float(t_result.statistic),
-        "pvalue": float(t_result.pvalue),
+        "statistic": float(t_result.statistic), # type: ignore
+        "pvalue": float(t_result.pvalue),       # type: ignore
         "effect_size": float(_cohens_d_paired(arr_a, arr_b)),
         "ci": (ci_low, ci_high),
         "bootstrap_ci": (boot_low, boot_high),
@@ -353,11 +330,11 @@ def _welch_test(
 
     # Bootstrap CI for difference of means (independent resampling)
     rng = np.random.default_rng(42)
-    boot_diffs = [
+    boot_diffs = np.array([
         np.mean(rng.choice(arr_a, size=n_a, replace=True))
         - np.mean(rng.choice(arr_b, size=n_b, replace=True))
         for _ in range(10_000)
-    ]
+    ])
     boot_low = float(np.percentile(boot_diffs, 2.5))
     boot_high = float(np.percentile(boot_diffs, 97.5))
 
@@ -365,8 +342,8 @@ def _welch_test(
         "test": "welch",
         "n_a": n_a,
         "n_b": n_b,
-        "statistic": float(result.statistic),
-        "pvalue": float(result.pvalue),
+        "statistic": float(result.statistic),   # type: ignore
+        "pvalue": float(result.pvalue),         # type: ignore
         "effect_size": float(_cohens_d_independent(arr_a, arr_b)),
         "ci": (float(ci_low), float(ci_high)),
         "bootstrap_ci": (boot_low, boot_high),

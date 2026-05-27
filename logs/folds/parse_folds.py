@@ -18,14 +18,15 @@ def divide_by_line(data: str) -> list[str]:
     return data.splitlines()
 
 
-def seed_from_filename(filename: str):
+def seed_from_filename(filename: str) -> int:
 
     match = re.match(r"(\d+)", filename)
 
     if match:
         return int(match.group(1))
 
-    return None
+    else:
+        raise ValueError(f"Could not extract seed from filename: {filename}")
 
 
 def parse_fold(line: str, seed: int) -> dict:

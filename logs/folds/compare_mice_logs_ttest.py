@@ -1,12 +1,4 @@
-"""Compare two models on mice evaluation logs with a paired t-test.
-
-Each log file = one seed, one scalar F1 and ROC-AUC (no folds).
-Pairing is by seed, same as compare_models.py but without fold aggregation.
-
-Usage:
-    python compare_mice.py                                  # default paths
-    python compare_mice.py path/to/pretrained path/to/scratch
-"""
+"""Compare two models on mice evaluation logs with a paired t-test."""
 
 from __future__ import annotations
 
@@ -104,11 +96,13 @@ def _wilcoxon_test(arr_a: np.ndarray, arr_b: np.ndarray) -> Dict:
         zero_method="wilcox",
         alternative="two-sided",
         correction=True,
-        mode="auto",
     )
+    if not hasattr(result, "statistic") or not hasattr(result, "pvalue"):
+        raise ValueError("Unexpected result from wilcoxon test: "
+                         f"{result}")
     return {
-        "statistic": float(result.statistic),
-        "pvalue": float(result.pvalue),
+        "statistic": result.statistic,  # type: ignore
+        "pvalue": result.pvalue,        # type: ignore
     }
 
 
@@ -147,7 +141,7 @@ def _compare_metric(
     print(f"  model B mean:            {np.mean(arr_b):.6f}  "
           f"(std {np.std(arr_b, ddof=1):.6f})")
     print(f"  mean difference (A - B): {np.mean(diff):.6f}")
-    print(f"  paired t-test p-value:   {t_result.pvalue:.6g}")
+    print(f"  paired t-test p-value:   {t_result.pvalue:.6g}")  # type: ignore
     print(f"  Wilcoxon p-value:        {w_result['pvalue']:.6g}")
     print(f"  Wilcoxon statistic:      {w_result['statistic']:.6f}")
     print(f"  effect size (Cohen's d): {d:.6f}")

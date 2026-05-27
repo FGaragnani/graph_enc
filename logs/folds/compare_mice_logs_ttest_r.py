@@ -1,21 +1,4 @@
-"""Equivalence testing (TOST) for mice evaluation logs.
-
-Instead of testing H0: mu_A = mu_B (standard t-test), TOST tests:
-    H0: |mu_A - mu_B| >= delta  (models differ by at least delta)
-    H1: |mu_A - mu_B| <  delta  (models are practically equivalent)
-
-Equivalence is concluded when the 90% CI of the difference lies
-entirely within [-delta, +delta].
-
-The equivalence margin delta must be chosen from domain knowledge,
-NOT from the data. This script tries a range of plausible deltas
-and reports which ones yield equivalence.
-
-Usage:
-    python tost_mice.py                          # default paths
-    python tost_mice.py path/to/pretrained path/to/scratch
-    python tost_mice.py path/to/pretrained path/to/scratch --delta 0.005
-"""
+"""Equivalence testing (TOST) for mice evaluation logs."""
 
 from __future__ import annotations
 
