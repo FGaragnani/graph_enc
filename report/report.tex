@@ -168,9 +168,26 @@
 \begin{abstractbox}
 	Promoters are regulatory DNA regions, usually located upstream of genes, that control the initiation of transcription by providing binding sites for RNA polymerase and transcription factors. 
 	Enhancers are distal cis-regulatory elements that modulate gene expression by increasing transcriptional activity, often acting over long genomic distances through complex chromatin interactions with promoters.
-	Accurate identification of promoters and enhancers is a fundamental problem in computational genomics, as these elements play a crucial role in gene regulation, cellular differentiation, and disease mechanisms. However, the precise location and functional boundaries of regulatory elements within the genome are often difficult to determine experimentally, making computational prediction methods particularly valuable. Traditional bioinformatics approaches rely heavily on handcrafted sequence features and motif discovery techniques, which may fail to capture the complex contextual dependencies present in genomic sequences.
+	Accurate identification of promoters and enhancers - the two principal
+	classes of cis-regulatory DNA elements responsible for initiating and
+	modulating gene transcription, respectively - is a fundamental problem
+	in computational genomics, as these elements play a crucial role in gene
+	regulation, cellular differentiation, and disease mechanisms.
+	However, the precise location and functional boundaries of regulatory
+	elements within the genome are often difficult to determine experimentally,
+	making computational prediction methods particularly valuable.
+	Traditional bioinformatics approaches rely heavily on handcrafted sequence
+	features and motif discovery techniques, which may fail to capture the
+	complex contextual dependencies present in genomic sequences.
 	
-	In this project, we adapt the DNA-BERT architecture to the tasks of promoter and enhancer classification. By leveraging transformer-based language modeling techniques originally developed for natural language processing, DNABERT-2 is able to learn rich contextual representations of nucleotide sequences directly from raw DNA data. We investigate the effectiveness of this approach for distinguishing regulatory elements and evaluate its performance on genomic datasets.
+	In this project, we reimplement the DNABERT-2 architecture from scratch
+	and evaluate two training strategies for promoter vs.\ enhancer
+	classification: domain-specific pretraining on coding sequences followed
+	by fine-tuning, and direct fine-tuning without pretraining.
+	We find that both strategies yield statistically equivalent performance,
+	achieving F1\,$\approx$\,0.69 and ROC-AUC\,$\approx$\,0.78 on the human
+	genome, and generalise consistently to the mouse genome without additional
+	fine-tuning.
 \end{abstractbox}
 \keywords{deep learning, BERT, promoter prediction, enhancer prediction, bioinformatics, transformer}
 
@@ -183,19 +200,25 @@
 \section{Introduction}
 \label{sec:intro}
 
-The rapid advancement of high‑throughput sequencing technologies has produced an unprecedented volume of genomic data. Identifying functional elements, such as promoters, directly from raw DNA sequence is a fundamental challenge in bioinformatics, particularly because they are not defined structurally \cite{promoters}. Traditional methods rely on conserved motifs (e.g., TATA box, GC‑box), but these motifs are often degenerate and fail to capture long‑range dependencies.
+The rapid advancement of high‑throughput sequencing technologies has produced an unprecedented volume of genomic data. Identifying functional elements, such as promoters and enhancers, directly from raw DNA sequence is a fundamental challenge in bioinformatics, particularly because they are not defined structurally \cite{promoters}. Traditional methods rely on conserved motifs (e.g., TATA box, GC‑box), but these motifs are often degenerate and fail to capture long‑range dependencies.
 
 Recent breakthroughs in natural language processing (NLP), particularly the Transformer architecture and the BERT model, have inspired sequence‑based models in genomics. DNA can be viewed as a language with its own alphabet $\Sigma = \{\texttt{A},\texttt{C},\texttt{G},\texttt{T}\}$.
-One of the principal advantages of attention-based architectures is their ability to efficiently model interactions between distant elements within a sequence, a property that is required for a wide range of sequence analysis tasks.
-This project investigates how a DNA‑specific BERT model behaves in a binary classification scenario of promoter versus enhancer sequences.
+The analogy runs deeper than notation: just as BERT learns contextual
+word representations by predicting masked tokens in a sentence, a
+genomic BERT can learn contextual nucleotide representations by predicting
+masked tokens in a DNA sequence - capturing the long-range dependencies
+among regulatory motifs that traditional methods miss. This global comparison stands in contrast to Recurrent Neural Networks
+(RNNs), which process sequences step-by-step and struggle with long-range
+dependencies, and Convolutional Neural Networks (CNNs), whose receptive
+field is bounded by the kernel size.
+One of the principal advantages of attention-based architectures is
+precisely this ability to model interactions between distant elements
+within a sequence.
 
-\subsection{Motivation}
-A precise computational promoter and enhancer predictor can drastically reduce the experimental effort required for gene annotation and can uncover novel regulatory mechanisms. Machine learning, and especially deep learning, offers the possibility to autonomously learn complex sequence features without hand‑crafted rules. ...
-
-\subsection{Objectives}
-\begin{itemize}
-  \item ...
-\end{itemize}
+Sections~\ref{sec:background} and \ref{sec:related} introduces the biological and architectural background; Section~\ref{sec:methods} describes our data, model, and
+training protocol; Sections~\ref{sec:results} and~\ref{sec:discussion}
+report and interpret our findings; Section~\ref{sec:conclusion} concludes
+with directions for future work.
 
 % ---------- 2. BACKGROUND ----------
 \section{Background}
@@ -214,20 +237,26 @@ $$
 	Q = XW^Q,\quad K = XW^K,\quad V = XW^V
 $$
 
-Semantically, what these three projections -- called \textit{query, key} and \textit{value} -- are doing, is to extract from each vector in the sequence, respectively, what an element is looking for, what an element is offering and what an element is actually containing. The main attention operation:
+The three projections - termed \textit{query}, \textit{key}, and
+\textit{value} - encode, respectively, what information each element
+seeks, what information it exposes to others, and what content it
+contributes to the output. The attention output $A \in \mathbb{R}^{n \times d}$ is then computed as:
 $$
-	A = \text{softmax}\left(\dfrac{Q\cdot K^T}{\sqrt{d_k}}\right)V
+A = \text{softmax}\!\left(\frac{Q K^{\top}}{\sqrt{d_k}}\right)V,
 $$
-then, computes pairwise similarity between each couple of elements ($Q \cdot K^T$), converting the raw similarities values into a probability distribution ($\text{softmax}(\cdot)$) and then computing a weighted average of the vector values, using the similarity values as weights.
-The fact that in a single computation each element is immediately compared with every other element is one of the main reasons of the efficiency of the Transformer architecture, unlike Recurrent Neural Networks (RNNs) or Convolutional Neural Networks (CNNs).
+where $Q K^{\top}$ gives pairwise similarities between all pairs of
+elements, the softmax normalises these into a probability distribution
+over positions, and the result is used as weights for a convex combination
+of the value vectors.
 
 \subsection{BERT}
-BERT \cite{devlin2018} pre‑trains a bidirectional Transformer using masked language modelling (MLM) and next‑sentence prediction. MLM is a task that requires a language model to predict the nature of a set of masked elements in a sequence. Formally, given a sequence $\mathbf{x} = [x_1,\,x_2,\,\dots,\,x_n]$, each element is masked with probability $p$; it means that an element gets swapped for a made-up 'unknown' element $[MASK]$. The model is then trained to reconstruct the original token at the masked positions by leveraging both left and right context simultaneously, which forces it to learn bidirectional representations of the input sequence.
+BERT \cite{devlin2018} pre-trains a bidirectional Transformer using masked language modelling (MLM) as its primary objective. MLM is a task that requires a language model to predict the nature of a set of masked elements in a sequence. Formally, given a sequence $\mathbf{x} = [x_1,\,x_2,\,\dots,\,x_n]$, each element is masked with probability $p$; it means that an element gets swapped for a made-up 'unknown' element $[MASK]$. The model is then trained to reconstruct the original token at the masked positions by leveraging both left and right context simultaneously, which forces it to learn bidirectional representations of the input sequence.
 
-This self-supervised learning approach is successfully used to create meaningful internal representations of the possible elements in the sequence. This semantic embeddings can then be employed to perform supervised learning tasks on it by training an ad-hoc additional classification head.
+This self-supervised learning approach produces meaningful contextual
+representations of sequence elements. These embeddings can then be used for supervised downstream tasks by attaching a task-specific classification head to the pretrained encoder.
 
 \subsection{DNABERT-2}
-DNABERT-2 \cite{dnabert-2} represents a major leap compared to the severe computational inefficiencies that bottlenecked its predecessor. 
+DNABERT-2 \cite{dnabert-2} addresses two key limitations of its predecessor: the computational cost of $k$-mer tokenization and the inability to generalise to sequences longer than those seen during training. 
 While the original DNA-BERT model relied on overlapping k-mer tokenization \cite{dnabert} -- a method that generates fixed-length permutations of nucleotides and has a few downsides -- DNABERT-2 introduces Byte Pair Encoding (BPE) to the genomic space.
 Moreover, it employs ALiBi for positional encodings \cite{alibi}, enabling the model to deal during evaluation with input sequences longer than those seen during training.
 
@@ -248,18 +277,19 @@ $$
 \text{Attention}(Q, K, V) = \text{softmax}\left(\dfrac{QK^T}{\sqrt{d_k}} - m_h |i-j|\right)V
 $$
 with $m_h$ a parameter that is head-specific and is fixed before training. Intuitively this bias encourages the model to attend more to nearby tokens, while still allowing it to capture long-range dependencies when necessary. 
-Moreover, as seen, unlike learned positional encodings, ALiBi does not require any additional learnable parameters.
+Unlike learned absolute positional encodings, ALiBi introduces no additional learnable parameters, since the per-head slopes $m_h$ are fixed before training.
 
 % ---------- 3. RELATED WORKS ----------
 \section{Related Works}
+\label{sec:related}
 
-\paragraph{DNA-BERT.} 
-The original DNA-BERT model \cite{dnabert} was one of the first to apply the BERT architecture to genomic sequences, using $k$-mer tokenization. 
-It demonstrated that transformer-based models could learn meaningful representations of DNA sequences and achieve competitive performance on various genomic tasks, including promoter prediction.
+\paragraph{DNA-BERT.}
+The original DNA-BERT model \cite{dnabert} was one of the first to apply the BERT architecture to genomic sequences using $k$-mer tokenization, demonstrating competitive performance on promoter prediction and other genomic tasks.
+In this work we adopt its successor's architecture but do not use any publicly released checkpoint, instead training from scratch to enable a controlled comparison between pretraining strategies.
 
 \paragraph{DNA-BERT2.}
-DNABERT-2 \cite{dnabert-2} builds upon the original DNA-BERT by introducing BPE tokenization and ALiBi positional encodings, which significantly improve the model's efficiency and ability to handle longer sequences.
-The model was pre-trained on a large corpus of genomic sequences from multiple species and evaluated on a variety of downstream tasks, showing superior performance compared to its predecessor and other baseline models.
+DNABERT-2 \cite{dnabert-2} improves upon its predecessor by introducing BPE tokenization and ALiBi positional encodings, achieving superior performance across a broad range of genomic benchmarks.
+Our work reimplements this architecture and asks whether its published pretraining regime provides a meaningful advantage over task-specific training for the specific problem of promoter vs.\ enhancer classification.
 
 \paragraph{Nucleotide Transformer.}
 ...
@@ -276,14 +306,19 @@ To construct the foundational sequence library for analysis, primary genomic ass
 
 \paragraph{Human Genome.}
 The complete reference genome sequence for Homo sapiens (Assembly version GRCh38) was acquired via the Ensembl FTP server \cite{ensembl}. 
-To facilitate modular processing and preserve chromosomal segmentation, files were fetched individually for each human chromosome ($1 \le \text{num} \le 22$) in a compressed FASTA layout.
+Chromosome sequences ($1 \le \text{num} \le 22$) were downloaded individually in compressed FASTA format.
 To isolate functional genomic regions, comprehensive gene feature annotations were still retrieved from the Ensembl FTP Server.
 The comprehensive Gene Transfer Format (GTF) file containing coordinate structures was then used in order to extract another FASTA file layout containing coding sequences, filtering out every non-coding portion of each chromosome (e.g., introns).
+
+\paragraph{Mouse Genome.}
+For cross-species evaluation, the reference genome sequence for \textit{Mus musculus} (Assembly version GRCm39) was acquired from the Ensembl FTP server.
+Promoter and enhancer sequences were obtained from the same databases used for the human genome, retaining the same sequence-length handling strategy described in Section~\ref{sec:methods}.
+No mouse data was used during training; the mouse genome serves exclusively as a held-out test set for zero-shot generalisation.
 
 \paragraph{Promoters and Enhancers.}
 In order to later apply our method to promoter and enhancer classification, the data has been collected from public sources.
 More specifically, the Eukaryotic Promoter Database (EPDNew) \cite{epdnew} was employed to retrieve the data relative to the human promoters.
-Additionally, from ... (add here the source of the enhancer data) the enhancer sequences were obtained.
+Additionally, from ... (remember to add the source!!) the enhancer sequences were obtained.
 
 \subsection{Model Architecture}
 The model architecture is based on the DNABERT-2 framework, which consists of a multi-layer bidirectional Transformer encoder. 
@@ -304,7 +339,7 @@ It can be hence used to further perform downstream tasks, such as promoter and e
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.8\textwidth]{example-image}
+  \includegraphics[width=0.2\textwidth]{example-image}
   \caption{Architecture overview: DNABERT fine‑tuned for promoter prediction.}
   \label{fig:architecture}
 \end{figure}
@@ -315,7 +350,7 @@ Rather than directly fine-tuning a publicly available DNABERT-2 checkpoint, we r
 
 \paragraph{Pretraining.}
 In order to give the architecture the capabilities of managing the complex patterns inherent in genomic data, a pretraining phase is conducted on a large-scale dataset of unlabeled DNA sequences.
-More specifically, in order to enhance its ability to understand the underlying structure behind the genome, the corpus used was entirely made up of only coding sequences, which are the most informative ones in terms of regulatory elements.
+More specifically, the pretraining corpus consists exclusively of coding sequences (CDS), which were selected for their availability and annotation quality; we acknowledge that non-coding regulatory sequences might constitute a more task-aligned pretraining corpus (see Section~\ref{sec:limitations}).
 
 The pretraining objective is masked language modeling (MLM), where a certain percentage of tokens in the input sequence are randomly masked, and the model is trained to predict the original tokens based on the context provided by the unmasked tokens.
 The prediction head is a stack of two components: the \textit{Transformation Layer}, comprising a single linear layer that does not change the dimensionality of the data, followed by a GELU and a layer normalization; and the \textit{Decoder Layer}, which is a linear layer that maps the output of the transformation layer to the size of the token vocabulary, producing a probability distribution over possible tokens for each masked position.
@@ -324,7 +359,7 @@ More specifically, the CDS data is collected and split into training and testing
 The model is trained for $40000$ steps. 
 The learning rate is set to $1 \times 10^{-3}$, with $1200$ warmup steps and a weight decay of $1 \times 10^{-5}$. 
 The batch size is set to $8$, and the masking probability is set to $15\%$.
-The optimizer used is AdamW \cite{adamw}, which is a variant of the Adam optimizer \cite{adam}.
+The optimizer used is AdamW \cite{adamw}, which is a variant of the Adam optimizer \cite{adam}. All experiments were conducted on 4 NVIDIA A100 GPUs, with \texttt{bf16} optimization. Pretraining required approximately 4 hours.
 
 After the pretraining stage, only the weights of the encoder are kept, while the prediction head is discarded.
 
@@ -381,65 +416,217 @@ $$
 $$
 where $t$ represents the classification threshold. A higher ROC-AUC value indicates better model performance in distinguishing between promoters and enhancers.
 
+\paragraph{Statistical Comparison.}
+To compare the two models, we use a paired $t$-test across seed-level means as the primary parametric test, complemented by the non-parametric Wilcoxon signed-rank test \cite{wilcoxon}, which makes no assumption of normality and is more appropriate at small sample sizes.
+To assess practical equivalence --- rather than merely the absence of a significant difference --- we apply Two One-Sided Tests (TOST) \cite{tost}.
+Equivalence is declared when the $90\%$ confidence interval of the paired difference lies within $[-\delta, +\delta]$; we set $\delta = 0.02$ as the practical equivalence margin, corresponding to a difference smaller than two percentage points.
+
 % ---------- 4. RESULTS ----------
 \section{Results}
 \label{sec:results}
 
-Two different models have been mainly evaluated. The first one has been a model pretrained on coding sequences only and later finetuned for the promoter vs enhancer classification task. The second model has been a model purely trained from scratch on the promoter vs enhancer classification.
+We evaluate two models: a DNABERT-2 encoder pretrained on coding sequences
+and subsequently fine-tuned for promoter vs.\ enhancer classification
+(model~A), and an identically architected encoder trained directly on the
+classification task from random initialisation (model~B).
 
 \subsection{Evaluation on Human Genome}
-In order to estimate the model's capabilities, the following evaluation procedure has been carrried out: each evaluated model was trained on $10$-fold cross-validation; meaning, the whole dataset has been divided into $10$ folds, $1$ has been kept out for testing, and the model was trained on the remaining $9$ folds.
-This has been done for $n = 7$ different random seeds to estabilish the model's robustness against different training dynamics and weights initialization.
-In total, we gathered $7 \times 10 = 70$ values both for the F1 score and for the ROC-AUC. Of course, cross-fold evaluations on the same seeds are not indipendent -- two folds will never share the same sample to evaluate upon -- so the $10$ per-fold values within each seed were averaged into a single seed-level mean prior to any statistical estimation. This yields $7$ independent observations per model, which form the basis for all reported confidence intervals.
+In order to estimate the model's capabilities, the following evaluation procedure has been carried out: each evaluated model was trained on $10$-fold cross-validation; meaning, the whole dataset has been divided into $10$ folds, $1$ has been kept out for testing, and the model was trained on the remaining $9$ folds.
+This has been done for $n = 7$ different random seeds to establish the model's robustness against different training dynamics and weights initialization.
+In total, we gathered $7 \times 10 = 70$ values both for the F1 score and for the ROC-AUC. Of course, cross-fold evaluations on the same seeds are not independent -- two folds will never share the same sample to evaluate upon -- so the $10$ per-fold values within each seed were averaged into a single seed-level mean prior to any statistical estimation. This yields $7$ independent observations per model, which form the basis for all reported confidence intervals.
 
 Confidence intervals were estimated using a classical $t$-interval with $df = 6$, preferred over bootstrap at this sample size because the bootstrap distribution over $n = 7$ points is effectively discrete and underestimates tail uncertainty. All intervals are at the $95\%$ level. Per-model results are reported in Table~\ref{tab:human_eval}.
 
 \begin{table}[h]
 	\centering
-	\caption{Per-model performance on the human genome. Mean and $95\%$ $t$-interval over $7$ seed-level means ($10$-fold CV each).}
+	\caption{Per-model performance on the human genome. Mean and $95\%$ $t$-interval over $n = 7$ seed-level means ($10$-fold CV each).}
 	\label{tab:human_eval}
 	\begin{tabular}{lcccc}
 		\toprule
 		\textbf{Model} & \textbf{F1} & \textbf{F1 95\% CI} & \textbf{ROC-AUC} & \textbf{ROC-AUC 95\% CI} \\
 		\midrule
-		Pretrained + finetuned & $0.684$ & $(0.679,\ 0.689)$ & $0.777$ & $(0.774,\ 0.781)$ \\
-		From scratch           & $\textbf{0.688}$ & $(0.679,\ 0.697)$ & $\textbf{0.780}$ & $(0.778,\ 0.782)$ \\
+		Pretrained + fine-tuned & $0.684$ & $(0.679,\ 0.689)$ & $0.777$ & $(0.774,\ 0.781)$ \\
+		Fine-tuned from scratch           & $\textbf{0.688}$ & $(0.679,\ 0.697)$ & $\textbf{0.780}$ & $(0.778,\ 0.782)$ \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
-\subsection{Evaluation on Mice Genome.}
-To assess the cross-domain generalisation capabilities of the two models, each seed-model trained on the human genome was evaluated directly on a held-out mice genome test set, without any additional fine-tuning. This evaluation is conceptually simpler than the human one: since the models are already trained, no cross-validation is needed and each seed produces exactly one scalar value per metric. Since we chose $5$ different random seeds during training the models on the whole genome, we got $n = 5$ independent observations per model.
+We also report the average, best and worst results of accuracy; for each seed, we average out the accuracy on the evaluation test for every fold of the CV technique. It is shown in Table~\ref{tab:human_eval_acc}.
+
+\begin{table}[h]
+	\centering
+	\caption{Per-model accuracy results on the human genome.}
+	\label{tab:human_eval_acc}
+	\begin{tabular}{lccc}
+		\toprule
+		\textbf{Model} & \textbf{Average Accuracy} & \textbf{Best Accuracy} & \textbf{Worst Accuracy} \\
+		\midrule
+		Pretrained + fine-tuned & $0.7048$ & $0.7108$ & $0.6978$ \\
+		Fine-tuned from scratch & $\textbf{0.7084}$ & $0.7218$ & $0.6981$ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+Confidence intervals are not reported for accuracy, as this metric
+was recorded primarily for descriptive purposes; all formal
+comparisons are based on F1 and ROC-AUC (Table~\ref{tab:stats}).
+
+\paragraph{Wilcoxon Signed-Rank Test.}
+Given the small sample size ($n=7$ paired seed-level means), we
+complement the paired $t$-test with the non-parametric Wilcoxon
+signed-rank test \cite{wilcoxon}.
+Full results are reported in Table~\ref{tab:stats}; neither metric
+reaches significance at $\alpha = 0.05$.
+
+\paragraph{Statistical Equivalence Testing.}
+We applied TOST \cite{tost} with equivalence margin $\delta = 0.02$
+to the $n = 7$ paired seed-level means (see Table~\ref{tab:stats}).
+Both F1 ($p_{\mathrm{TOST}} = 0.00108$) and ROC-AUC
+($p_{\mathrm{TOST}} = 6.86\times10^{-5}$) fall within the equivalence
+margin, and the two models are declared \textbf{equivalent}.
+
+\subsection{Evaluation on Mouse Genome.}
+To assess the cross-domain generalisation capabilities of the two models, each seed-model trained on the human genome was evaluated directly on a held-out mouse genome test set, without any additional fine-tuning. This evaluation is conceptually simpler than the human one: since the models are already trained, no cross-validation is needed and each seed produces exactly one scalar value per metric. Since we chose $5$ different random seeds during training the models on the whole genome, we got $n = 5$ independent observations per model.
 
 Confidence intervals were again estimated using a classical $t$-interval with $df = 4$, for the same reasons discussed in the human evaluation. Results are reported in Table~\ref{tab:mice_eval}.
 
 \begin{table}[h]
 	\centering
-	\caption{Per-model performance on the mice genome. Mean and $95\%$ 
-		$t$-interval over $n = 5$ seeds. No cross-validation is applied 
-		since the models are evaluated directly on the full mice test set.}
+	\caption{Per-model performance on the mouse genome. Mean and $95\%$ 
+		$t$-interval over $n = 5$ seeds. }
 	\label{tab:mice_eval}
 	\begin{tabular}{lcccc}
 		\toprule
 		\textbf{Model} & \textbf{F1} & \textbf{F1 95\% CI} & 
 		\textbf{ROC-AUC} & \textbf{ROC-AUC 95\% CI} \\
 		\midrule
-		Pretrained + finetuned & $0.9252$ & $(0.9218,\ 0.9285)$ & 
+		Pretrained + fine-tuned & $0.9252$ & $(0.9218,\ 0.9285)$ & 
 		$0.9772$ & $(0.9769,\ 0.9775)$ \\
-		From scratch           & $\textbf{0.9260}$ & $(0.9230,\ 0.9291)$  & 
+		Fine-tuned from scratch           & $\textbf{0.9260}$ & $(0.9230,\ 0.9291)$  & 
 		$\textbf{0.9775}$ & $(0.9772,\ 0.9777)$  \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
+We also report the accuracy metric, both the best, the worst and the average over the seeds, for both models. It is shown in Table~\ref{tab:mice_eval_acc}.
+
+\begin{table}[h]
+	\centering
+	\caption{Per-model accuracy results on the mouse genome.}
+	\label{tab:mice_eval_acc}
+	\begin{tabular}{lccc}
+		\toprule
+		\textbf{Model} & \textbf{Average Accuracy} & \textbf{Best Accuracy} & \textbf{Worst Accuracy} \\
+		\midrule
+		Pretrained + fine-tuned & $0.9223$ & $0.9259$ & $0.9188$ \\
+		Fine-tuned from scratch & $\textbf{0.9233}$ & $0.9265$ & $0.9194$ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+As above, confidence intervals are not reported for accuracy; all formal
+comparisons are based on F1 and ROC-AUC (Table~\ref{tab:stats}).
+
+\subsection{Statistical Results on Comparisons.}
+
+\begin{table}[ht]
+	\centering
+	\caption{Paired statistical comparison between the pretrained-then-fine-tuned model (A)
+		and the from-scratch model (B) across genomes and metrics.
+		$W$ and $p_W$ denote the Wilcoxon signed-rank statistic and its two-sided $p$-value;
+		$d$ is Cohen's $d$; $p_{\mathrm{TOST}}$ is the equivalence test $p$-value at $\delta=0.02$.
+		90\% CIs are used for TOST; 95\% CIs are reported for the mean difference.}
+	\label{tab:stats}
+	\resizebox{\textwidth}{!}{%
+		\begin{tabular}{llcccccccc}
+			\toprule
+			\textbf{Genome} & \textbf{Metric} & $\bar{x}_A$ & $\bar{x}_B$ & $\mu_A - \mu_B$ & \textbf{95\% CI} & $W$ & $p_W$ & $d$ & $p_{\mathrm{TOST}}$ \\
+			\midrule
+			Human & F1       & 0.6838 & 0.6879 & $-$0.0041 & [$-$0.0117,\ $+$0.0035] & 5 & 0.156 & $-$0.50 & 0.00108 \\
+			Human & ROC-AUC  & 0.7773 & 0.7803 & $-$0.0030 & [$-$0.0078,\ $+$0.0019] & 5 & 0.156 & $-$0.57 & $6.86\times10^{-5}$ \\
+			\midrule
+			Mouse & F1       & 0.9252 & 0.9260 & $-$0.0009 & [$-$0.0045,\ $+$0.0028] & 4 & 0.855 & $-$0.29 & $6.37\times10^{-5}$ \\
+			Mouse & ROC-AUC  & 0.9772 & 0.9775 & $-$0.0003 & [$-$0.0007,\ $+$0.0000] & 0 & 0.063 & $-$1.10 & $3.70\times10^{-3}$ \\
+			\bottomrule
+		\end{tabular}%
+	}
+\end{table}
+
+\paragraph{Wilcoxon Signed-Rank Test.}
+Given the small sample size ($n=5$ paired seed-level means), we again complement the parametric paired $t$-test with the non-parametric Wilcoxon signed-rank test.
+For \textbf{F1}, the test yields $W=4$, $p=0.855$, and for \textbf{ROC-AUC}, $W=0$, $p=0.063$.
+Neither result reaches statistical significance at the $\alpha=0.05$ level, consistent with the paired $t$-test ($p=0.548$ and $p=0.069$, respectively).
+Cohen's $d=-0.29$ for F1 and $d=-1.10$ for ROC-AUC.
+
+\paragraph{Statistical Equivalence Testing.}
+We applied TOST to the $n=5$ paired seed-level means, retaining $\delta=0.02$ as the equivalence margin for consistency with the human genome analysis.
+For \textbf{F1}, the paired difference is $\mu_A - \mu_B = -0.00086$ with
+$90\%$ CI $[-0.00365, +0.00193]$.
+The interval falls comfortably within $[-0.02,+0.02]$ ($p_{\mathrm{TOST}}=6.37×10^{-5}$), and the two models are declared \textbf{equivalent}.
+For \textbf{ROC-AUC}, the paired difference is $\mu_A - \mu_B = -0.00033$
+with $90\%$ CI $[-0.00061, -0.00005]$.
+Equivalence is likewise confirmed at $\delta=0.02$ ($p_{\mathrm{TOST}}=3.70×10^{-3}$).
+
 % ---------- 5. DISCUSSION ----------
 \section{Discussion}
 \label{sec:discussion}
 
-...
+\subsection{Interpreting the Main Results}
+
+The central finding of this work is that a DNABERT-2 encoder trained entirely from scratch on the promoter vs.\ enhancer classification task is \textbf{statistically equivalent} to a model first pretrained on coding sequences and subsequently fine-tuned on the same task.
+Across both the human and mouse genomes, and across both evaluation metrics (F1 and ROC-AUC), the TOST procedure confirms equivalence within the practically motivated margin of $\pm 0.02$ at $p < 0.05$ in every configuration (Table~\ref{tab:stats}).
+
+This result is somewhat surprising.
+The main motivation for pretraining genomic language models is that self-supervised exposure to large unlabeled corpora should produce representations that generalise to downstream tasks with less supervised data \cite{pretraining}.
+Our findings suggest that, for the binary discrimination between promoter and enhancer sequences, the inductive bias provided by masked language modelling on coding sequences does not translate into a measurable performance advantage after the model is fine-tuned on the target task.
+One plausible explanation is that the classification signal in the fine-tuning dataset is rich enough for the encoder to learn all task-relevant sequence features (i.e., the acquired pretraining knowledge is redundant).
+An alternative explanation is that the pretraining corpus (coding sequences only) is not well-aligned with the regulatory grammar of promoters and enhancers, which may rely on sequence motifs that are underrepresented in CDS data.
+
+\subsection{Human Genome Performance}
+
+On the human genome, both models achieve an F1 score of approximately $0.684$--$0.688$ and a ROC-AUC of $0.777$--$0.780$ (Table~\ref{tab:human_eval}).
+The numerically small but consistent advantage of the from-scratch model (Cohen's $d \approx -0.5$ for both metrics) does not reach statistical significance under either the paired $t$-test or the Wilcoxon signed-rank test, and should therefore be interpreted with caution.
+The moderate effect sizes, despite non-significant $p$-values, are a direct consequence of the limited sample size ($n = 7$ seeds): the study is underpowered to detect differences of this magnitude, and the equivalence analysis is therefore the more informative procedure.
+
+The absolute performance levels -- roughly $70\%$ accuracy and $0.78$ ROC-AUC -- indicate that the task is non-trivial.
+Promoters and enhancers share many sequence-level characteristics (e.g., transcription factor binding site motifs), and their discrimination on the basis of raw sequence alone is inherently limited.
+The observed performance is broadly in line with sequence-only baselines reported in the literature for related regulatory element classification tasks \cite{dnabert}, suggesting that the architecture is behaving as expected.
+
+\subsection{Cross-Species Generalisation to the Mouse Genome}
+
+A particularly encouraging result is the markedly higher performance obtained when the human-trained models are applied zero-shot to the mouse genome (Table~\ref{tab:mice_eval}).
+Both models achieve F1 scores above $0.925$ and ROC-AUC values above $0.977$, a substantial improvement over the human evaluation.
+
+This counterintuitive result -- better performance on an unseen species than on the training species -- warrants careful interpretation.
+One contributing factor is that promoter and enhancer sequences are under strong evolutionary constraint across mammalian species: core regulatory motifs (e.g., TATA boxes) are highly conserved, so a model that has learned these motifs on human data may generalise well to mouse sequences that share the same conserved features.
+
+Regarding the comparison between the two models on the mouse genome, the statistical picture mirrors the human evaluation: neither the Wilcoxon signed-rank test nor the paired $t$-test yields significance, and TOST confirms equivalence within $\pm 0.02$ for both metrics.
+Notably, the ROC-AUC comparison approaches marginal significance ($p_W = 0.063$, $d = -1.10$), driven not by a large absolute difference ($\mu_A - \mu_B \approx -0.0003$) but by extremely low within-pair variability at this performance level.
+This is a methodological artifact rather than a meaningful biological signal, and the equivalence test correctly identifies it as such.
 
 \subsection{Limitations}
-...
+\label{sec:limitations}
+
+Several limitations of this study should be acknowledged.
+
+\paragraph{Dataset size and composition.}
+The fine-tuning dataset is balanced between promoter and enhancer sequences, which does not reflect the true genomic ratio of these elements.
+Moreover, the enhancer sequences were obtained from a single source (see Section~\ref{sec:methods}), and the choice of source may introduce a systematic bias toward enhancers with a particular experimental signature (e.g., those detected by a specific assay).
+
+\paragraph{Sequence-only modelling.}
+The model operates exclusively on raw nucleotide sequences and does not incorporate epigenomic context; such information is known to be highly predictive of regulatory element activity, and its inclusion would likely improve classification performance and biological interpretability.
+
+\paragraph{Pretraining corpus alignment.}
+Our pretraining corpus consists exclusively of human coding sequences.
+A more appropriate pretraining strategy might involve a broader corpus of non-coding regulatory sequences from multiple species, which would expose the model to the sequence grammar of the very elements it is later asked to classify.
+
+\paragraph{Statistical power.}
+With $n = 7$ seeds for the human evaluation and $n = 5$ for the mouse evaluation, the study is underpowered to detect small but potentially meaningful differences between the two models.
+Larger-scale experiments with more random seeds and, if computationally feasible, more cross-validation folds would provide more precise estimates and stronger statistical guarantees.
+
+\paragraph{Generalisability.}
+All results were obtained on one human genome assembly (GRCh38) and one mouse genome.
+Whether the equivalence between the two modelling strategies holds for other species, other regulatory element types, or other genomic datasets remains an open question.
 
 % ---------- 6. CONCLUSION ----------
 \section{Conclusion \& Future Work}
