@@ -119,6 +119,20 @@ class DataTrainingArguments:
         default=None,
         metadata={"help": "Optional cap on chunks per sequence (keep first N chunks)."},
     )
+    overlap_blocks: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "If True, add a second pass of chunks offset by chunk_size_bases // 2 "
+                "(50%% overlap). For a sequence [a0 a1 a2 a3] with chunk_size=2 blocks, "
+                "the non-overlapping pass produces (a0,a1) and (a2,a3); the overlap pass "
+                "adds (a1,a2). All chunks are sorted by start position before the "
+                "max_chunks_per_sample cap is applied, so the cap distributes evenly "
+                "across genomic coverage rather than discarding all overlap chunks. "
+                "Roughly doubles the number of BERT forward passes per sequence."
+            )
+        },
+    )
     pad_to_max_length: bool = field(default=False)
     max_train_samples: Optional[int] = field(default=None)
     max_eval_samples: Optional[int] = field(default=None)
@@ -168,6 +182,7 @@ class DataCollatorForChunkedPromoterEnhancer:
         pad_to_max_length: bool = False,
         max_chunks_per_sample: Optional[int] = None,
         pad_to_multiple_of: Optional[int] = None,
+        overlap_blocks: bool = False,
     ):
         self.tokenizer = tokenizer
         self.max_seq_length = max_seq_length
@@ -175,9 +190,20 @@ class DataCollatorForChunkedPromoterEnhancer:
         self.pad_to_max_length = pad_to_max_length
         self.max_chunks_per_sample = max_chunks_per_sample
         self.pad_to_multiple_of = pad_to_multiple_of
+        self.overlap_blocks = overlap_blocks
 
     def _split_sequence(self, sequence: str) -> List[str]:
-        chunks = [sequence[i : i + self.chunk_size_bases] for i in range(0, len(sequence), self.chunk_size_bases)]
+        stride = self.chunk_size_bases
+        # Non-overlapping chunks: starts at 0, stride, 2*stride, ...
+        starts = list(range(0, len(sequence), stride))
+        if self.overlap_blocks and len(sequence) > stride:
+            # Overlap chunks: starts at stride//2, 3*stride//2, ...
+            # Merge and sort by start position so max_chunks_per_sample
+            # distributes evenly over genomic coverage rather than
+            # preferentially keeping only the non-overlapping pass.
+            half = stride // 2
+            starts = sorted(starts + list(range(half, len(sequence), stride)))
+        chunks = [sequence[i : i + stride] for i in starts]
         if not chunks:
             chunks = ["N"]
         if self.max_chunks_per_sample is not None:
@@ -627,6 +653,7 @@ def main():
         pad_to_max_length=data_args.pad_to_max_length,
         max_chunks_per_sample=data_args.max_chunks_per_sample,
         pad_to_multiple_of=8 if training_args.fp16 and not data_args.pad_to_max_length else None,
+        overlap_blocks=data_args.overlap_blocks,
     )
 
     acc_metric = evaluate.load("accuracy")
