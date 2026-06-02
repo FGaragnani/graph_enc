@@ -203,17 +203,9 @@
 The rapid advancement of high‑throughput sequencing technologies has produced an unprecedented volume of genomic data. Identifying functional elements, such as promoters and enhancers, directly from raw DNA sequence is a fundamental challenge in bioinformatics, particularly because they are not defined structurally \cite{promoters}. Traditional methods rely on conserved motifs (e.g., TATA box, GC‑box), but these motifs are often degenerate and fail to capture long‑range dependencies.
 
 Recent breakthroughs in natural language processing (NLP), particularly the Transformer architecture and the BERT model, have inspired sequence‑based models in genomics. DNA can be viewed as a language with its own alphabet $\Sigma = \{\texttt{A},\texttt{C},\texttt{G},\texttt{T}\}$.
-The analogy runs deeper than notation: just as BERT learns contextual
-word representations by predicting masked tokens in a sentence, a
-genomic BERT can learn contextual nucleotide representations by predicting
-masked tokens in a DNA sequence - capturing the long-range dependencies
-among regulatory motifs that traditional methods miss. This global comparison stands in contrast to Recurrent Neural Networks
-(RNNs), which process sequences step-by-step and struggle with long-range
-dependencies, and Convolutional Neural Networks (CNNs), whose receptive
-field is bounded by the kernel size.
-One of the principal advantages of attention-based architectures is
-precisely this ability to model interactions between distant elements
-within a sequence.
+The analogy runs deeper than notation: just as BERT learns contextual word representations by predicting masked tokens in a sentence, a genomic BERT can learn contextual nucleotide representations by predicting masked tokens in a DNA sequence - capturing the long-range dependencies among regulatory motifs that traditional methods miss. 
+This global comparison stands in contrast to Recurrent Neural Networks (RNNs), which process sequences step-by-step and struggle with long-range dependencies, and Convolutional Neural Networks (CNNs), whose receptive field is bounded by the kernel size.
+One of the principal advantages of attention-based architectures is precisely this ability to model interactions between distant elements within a sequence quite efficiently.
 
 Sections~\ref{sec:background} and \ref{sec:related} introduces the biological and architectural background; Section~\ref{sec:methods} describes our data, model, and
 training protocol; Sections~\ref{sec:results} and~\ref{sec:discussion}
@@ -283,19 +275,29 @@ Unlike learned absolute positional encodings, ALiBi introduces no additional lea
 \section{Related Works}
 \label{sec:related}
 
-\paragraph{DNA-BERT.}
-The original DNA-BERT model \cite{dnabert} was one of the first to apply the BERT architecture to genomic sequences using $k$-mer tokenization, demonstrating competitive performance on promoter prediction and other genomic tasks.
-In this work we adopt its successor's architecture but do not use any publicly released checkpoint, instead training from scratch to enable a controlled comparison between pretraining strategies.
 
-\paragraph{DNA-BERT2.}
-DNABERT-2 \cite{dnabert-2} improves upon its predecessor by introducing BPE tokenization and ALiBi positional encodings, achieving superior performance across a broad range of genomic benchmarks.
-Our work reimplements this architecture and asks whether its published pretraining regime provides a meaningful advantage over task-specific training for the specific problem of promoter vs.\ enhancer classification.
+% \paragraph{DNA-BERT.}
+% The original DNA-BERT model \cite{dnabert} was one of the first to apply the BERT architecture to genomic sequences using $k$-mer tokenization, demonstrating competitive performance on promoter prediction and other genomic tasks.
+% In this work we adopt its successor's architecture but do not use any publicly released checkpoint, instead training from scratch to enable a controlled comparison between pretraining strategies.
+% 
+% \paragraph{DNA-BERT2.}
+% DNABERT-2 \cite{dnabert-2} improves upon its predecessor by introducing BPE tokenization and ALiBi positional encodings, achieving superior performance across a broad range of genomic benchmarks.
+% Our work reimplements this architecture and asks whether its published pretraining regime provides a meaningful advantage over task-specific training for the specific problem of promoter vs.\ enhancer classification.
+% 
+% \paragraph{Nucleotide Transformer.}
+% ...
+% 
+% \paragraph{EVO.}
+% ...
 
-\paragraph{Nucleotide Transformer.}
-...
+\paragraph{Hexamers.} Traditional machine learning techniques for promoter vs enhancer classification relied on hand-crafted feature vectors. For instance, \cite{hexamers} applied a Support Vector Machine (SVM) algorithm on hexamers vectors of sequences, i.e., vectors containing in position $i$ the total number of occurrences of the $i$-th hexamer inside the sequence. 
+Whereas simple, this approach serves a solid baseline for the problem.
 
-\paragraph{EVO.}
-...
+\paragraph{CNNs.} One of the main architectures employed for the task was that of Convolutional Neural Networks (CNNs). By converting each nucleotide into a one-hot encoding vector, the model is tasked to create a semantic representation through the application of convolutional operations before performing down-stream tasks \cite{cnns}. 
+While efficient in terms of the overall number of parameters, this methodology does not allow for the capture of long-range dependencies, which are crucial for the task at hand; moreover, the simple usage of one-hot encoding vectors does not allow the model to capture the complex semantics of the DNA language, which is instead better represented by contextual embeddings. 
+
+\paragraph{DNA-BERT2.} The only approach, as far as we are aware, of employing a BERT architecture for enhancer classification has been \cite{rivals}. The methodology involves the employment of a pre-trained BERT on multi-species genomic data; then, enhancer sequences are passed to the encoder to retrieve their representations. Afterwards, a CNN-head is employed to classify the sequence as enhancer along with its strength.
+The methodology, however, has some limitations. First of all, it is only enhancer-focused; secondly, the usage of a CNN as a learning head presents the same shortcomings stated above; finally, the work restricts the sequence to $300$ bp, which may be too short to capture the full regulatory context of the sequence.
 
 % ---------- 4. METHODS ----------
 \section{Methods}
@@ -317,8 +319,8 @@ No mouse data was used during training; the mouse genome serves exclusively as a
 
 \paragraph{Promoters and Enhancers.}
 In order to later apply our method to promoter and enhancer classification, the data has been collected from public sources.
-More specifically, the Eukaryotic Promoter Database (EPDNew) \cite{epdnew} was employed to retrieve the data relative to the human promoters.
-Additionally, from ... (remember to add the source!!) the enhancer sequences were obtained.
+More specifically, the Eukaryotic Promoter Database (EPDNew) \cite{epdnew} was employed to retrieve the data relative to the human promoters; specifically, a .BED file was obtained and by cross-referencing with the chromosome coordinates the actual promoter sequences were extracted.
+Additionally, from the ENdb \cite{endb} dataset, the enhancer sequences were obtained, still in .BED format and via an algorithmic approach identical to that used for the promoter sequences.
 
 \subsection{Model Architecture}
 The model architecture is based on the DNABERT-2 framework, which consists of a multi-layer bidirectional Transformer encoder. 
