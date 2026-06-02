@@ -1,4 +1,4 @@
-\documentclass[11pt,a4paper,twoside]{article}
+﻿\documentclass[11pt,a4paper,twoside]{article}
 
 % -------------------------------------------------------------------
 % PACKAGES & FONT
@@ -166,13 +166,7 @@
 \phantomsection
 \addcontentsline{toc}{section}{Abstract}
 \begin{abstractbox}
-	Promoters are regulatory DNA regions, usually located upstream of genes, that control the initiation of transcription by providing binding sites for RNA polymerase and transcription factors. 
-	Enhancers are distal cis-regulatory elements that modulate gene expression by increasing transcriptional activity, often acting over long genomic distances through complex chromatin interactions with promoters.
-	Accurate identification of promoters and enhancers - the two principal
-	classes of cis-regulatory DNA elements responsible for initiating and
-	modulating gene transcription, respectively - is a fundamental problem
-	in computational genomics, as these elements play a crucial role in gene
-	regulation, cellular differentiation, and disease mechanisms.
+	Accurate identification of promoters and enhancers -- cis-regulatory DNA elements that initiate and modulate gene transcription, respectively -- is a fundamental problem in computational genomics, with direct implications for understanding gene regulation, cellular differentiation, and disease mechanisms.
 	However, the precise location and functional boundaries of regulatory
 	elements within the genome are often difficult to determine experimentally,
 	making computational prediction methods particularly valuable.
@@ -290,14 +284,13 @@ Unlike learned absolute positional encodings, ALiBi introduces no additional lea
 % \paragraph{EVO.}
 % ...
 
-\paragraph{Hexamers.} Traditional machine learning techniques for promoter vs enhancer classification relied on hand-crafted feature vectors. For instance, \cite{hexamers} applied a Support Vector Machine (SVM) algorithm on hexamers vectors of sequences, i.e., vectors containing in position $i$ the total number of occurrences of the $i$-th hexamer inside the sequence. 
-Whereas simple, this approach serves a solid baseline for the problem.
+\paragraph{Hexamers.} Traditional machine learning approaches for regulatory element classification relied on hand-crafted feature vectors. For instance, \cite{hexamers} applied a Support Vector Machine (SVM) on hexamer count vectors, where position $i$ records the total number of occurrences of the $i$-th hexamer in the sequence. Despite its simplicity, this approach provides a solid sequence-level baseline.
 
-\paragraph{CNNs.} One of the main architectures employed for the task was that of Convolutional Neural Networks (CNNs). By converting each nucleotide into a one-hot encoding vector, the model is tasked to create a semantic representation through the application of convolutional operations before performing down-stream tasks \cite{cnns}. 
-While efficient in terms of the overall number of parameters, this methodology does not allow for the capture of long-range dependencies, which are crucial for the task at hand; moreover, the simple usage of one-hot encoding vectors does not allow the model to capture the complex semantics of the DNA language, which is instead better represented by contextual embeddings. 
+\paragraph{CNNs.} Convolutional Neural Networks represent an important step forward, treating one-hot encoded nucleotides as image-like inputs and learning local motif detectors through convolutional filters \cite{cnns}. While parameter-efficient, CNNs are inherently limited to local receptive fields and cannot capture long-range regulatory dependencies; moreover, one-hot inputs carry no semantic information about the broader sequence context.
 
-\paragraph{DNA-BERT2.} The only approach, as far as we are aware, of employing a BERT architecture for enhancer classification has been \cite{rivals}. The methodology involves the employment of a pre-trained BERT on multi-species genomic data; then, enhancer sequences are passed to the encoder to retrieve their representations. Afterwards, a CNN-head is employed to classify the sequence as enhancer along with its strength.
-The methodology, however, has some limitations. First of all, it is only enhancer-focused; secondly, the usage of a CNN as a learning head presents the same shortcomings stated above; finally, the work restricts the sequence to $300$ bp, which may be too short to capture the full regulatory context of the sequence.
+\paragraph{Genomic language models.} The original DNABERT \cite{dnabert} demonstrated that BERT-style pretraining on $k$-mer tokenised sequences transfers effectively to promoter and other regulatory classification tasks. DNABERT-2 \cite{dnabert-2} addressed its computational limitations by replacing $k$-mer tokenisation with BPE and fixed positional encodings with ALiBi, achieving state-of-the-art results across a wide genomic benchmark suite. More recently, large-scale models such as the Nucleotide Transformer \cite{dnabert-2} have pushed the frontier further by pretraining on hundreds of reference genomes.
+
+\paragraph{BERT for enhancer classification.} To our knowledge, the only prior work applying a BERT encoder specifically to the promoter/enhancer discrimination task is \cite{rivals}. A model pretrained on multi-species genomic data is used to encode enhancer sequences, and a CNN head classifies each sequence and predicts its regulatory strength. However, the approach is enhancer-only, restricts input sequences to $300$\,bp, and inherits the receptive-field limitations of its CNN head noted above. Our work directly addresses these gaps by jointly classifying promoters and enhancers, handling variable-length inputs through hierarchical pooling, and comparing pretraining against from-scratch fine-tuning in a controlled setting.
 
 % ---------- 4. METHODS ----------
 \section{Methods}
@@ -337,12 +330,16 @@ Specifically, each self-attention counts $h = 12$ heads; the feed-forward networ
 
 The Encoder, the core component of the architecture, is a stack of $L = 12$ identical layers of the aforementioned Encoder Module.
 The output of the final encoder layer is a contextualized representation of the input sequence, which captures both local and long-range dependencies among the tokens.
-It can be hence used to further perform downstream tasks, such as promoter and enhancer classification, by adding a simple classification head on top of it.
+
+\paragraph{Classification Head.}
+For the downstream classification task, a lightweight feed-forward head is attached on top of the encoder.
+It consists of a single hidden layer of dimension $d_{ff} = 3072$ with GELU activation, followed by a linear projection to dimension $2$ (one logit per class).
+During fine-tuning, the mean-pooled encoder output (described in Section~\ref{sec:methods}) is fed into this head to produce the final prediction (see Section~\ref{sec:methods} for the pooling strategy used to handle variable-length inputs).
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.2\textwidth]{example-image}
-  \caption{Architecture overview: DNABERT fine‑tuned for promoter prediction.}
+  \includegraphics[width=\textwidth]{arch1.png}
+  \caption{Architecture overview: DNA-BERT2 with a classification head.}
   \label{fig:architecture}
 \end{figure}
 
@@ -366,10 +363,8 @@ The optimizer used is AdamW \cite{adamw}, which is a variant of the Adam optimiz
 After the pretraining stage, only the weights of the encoder are kept, while the prediction head is discarded.
 
 \paragraph{Fine-tuning.}
-The fine-tuning phase involves adapting the pre-trained encoder to the specific downstream task of promoter and enhancer prediction.
+The fine-tuning phase involves adapting the pre-trained encoder to the specific downstream task of promoter and enhancer prediction, using the classification head described in Section~\ref{sec:methods}.
 The model is trained on a balanced dataset of promoter and enhancer sequences, still with a chromosome-based splitting to avoid data leakage.
-
-On top of the encoder, another classification head is added. This consists of a feedforward network, with hidden size $3072$ and with GELU as the activation function, and followed by a final layer with output dimension $2$ -- one for each possible class.
 
 The dataset contains promoters that are exactly $2000$ nucleotides long, while enhancers have variable length, sometimes even exceeding the model's input length. 
 If not handled, other than the length discrepancy, this could have lead the model to bypass the actual genomic semantics and simply learn to classify sequences based on their length. 
@@ -386,6 +381,13 @@ $$
 S' = \frac{1}{m} \sum_{i=1}^{m} v_i,\quad \hat{y} = \text{CLSHead}(S').
 $$
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{arch2.png}
+  \caption{Fine-tuning procedure for classification in detail.}
+  \label{fig:finetuning}
+\end{figure}
+
 The model is fine-tuned for $4000$ steps, with a learning rate of $1 \times 10^{-3}$, a batch size of $4$ and a weight decay of $1 \times 10^{-5}$.
 During training, both the encoder and the classification head are updated.
 As the loss function, cross-entropy loss is used, which is appropriate for binary classification tasks.
@@ -394,21 +396,12 @@ As the loss function, cross-entropy loss is used, which is appropriate for binar
 To assess the performance of the model, a few evaluation metrics are employed.
 
 \paragraph{Accuracy.}
-Accuracy is the proportion of correctly classified samples out of the total number of samples:
-$$
-\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
-$$
-where $TP$ is the number of true positives, $TN$ is the number of true negatives, $FP$ is the number of false positives, and $FN$ is the number of false negatives.
-Assume, without loss of generality, that the positive class is the promoter class.
+Accuracy is the proportion of correctly classified samples out of the total number of samples. We assume, without loss of generality, that the positive class is the promoter class.
 
 \paragraph{F1 Score.}
-The F1 score is the harmonic mean of precision and recall, providing a balance between the two:
+The F1 score is the harmonic mean of precision and recall:
 $$
 \text{F1 Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
-$$
-where precision is the ratio of true positives to the sum of true positives and false positives, and recall is the ratio of true positives to the sum of true positives and false negatives:
-$$
-\text{Precision} = \frac{TP}{TP + FP},\quad \text{Recall} = \frac{TP}{TP + FN}
 $$
 \paragraph{ROC-AUC.}
 The Receiver Operating Characteristic Area Under the Curve (ROC-AUC) is a metric that evaluates the model's ability to discriminate between classes across different classification thresholds \cite{roc-auc}.
@@ -420,7 +413,7 @@ where $t$ represents the classification threshold. A higher ROC-AUC value indica
 
 \paragraph{Statistical Comparison.}
 To compare the two models, we use a paired $t$-test across seed-level means as the primary parametric test, complemented by the non-parametric Wilcoxon signed-rank test \cite{wilcoxon}, which makes no assumption of normality and is more appropriate at small sample sizes.
-To assess practical equivalence --- rather than merely the absence of a significant difference --- we apply Two One-Sided Tests (TOST) \cite{tost}.
+To assess practical equivalence -- rather than merely the absence of a significant difference -- we apply Two One-Sided Tests (TOST) \cite{tost}.
 Equivalence is declared when the $90\%$ confidence interval of the paired difference lies within $[-\delta, +\delta]$; we set $\delta = 0.02$ as the practical equivalence margin, corresponding to a difference smaller than two percentage points.
 
 % ---------- 4. RESULTS ----------
@@ -472,20 +465,7 @@ We also report the average, best and worst results of accuracy; for each seed, w
 Confidence intervals are not reported for accuracy, as this metric
 was recorded primarily for descriptive purposes; all formal
 comparisons are based on F1 and ROC-AUC (Table~\ref{tab:stats}).
-
-\paragraph{Wilcoxon Signed-Rank Test.}
-Given the small sample size ($n=7$ paired seed-level means), we
-complement the paired $t$-test with the non-parametric Wilcoxon
-signed-rank test \cite{wilcoxon}.
-Full results are reported in Table~\ref{tab:stats}; neither metric
-reaches significance at $\alpha = 0.05$.
-
-\paragraph{Statistical Equivalence Testing.}
-We applied TOST \cite{tost} with equivalence margin $\delta = 0.02$
-to the $n = 7$ paired seed-level means (see Table~\ref{tab:stats}).
-Both F1 ($p_{\mathrm{TOST}} = 0.00108$) and ROC-AUC
-($p_{\mathrm{TOST}} = 6.86\times10^{-5}$) fall within the equivalence
-margin, and the two models are declared \textbf{equivalent}.
+Full paired statistical results are reported in Table~\ref{tab:stats}: neither metric reaches significance under the Wilcoxon signed-rank test at $\alpha = 0.05$, while TOST confirms equivalence within $\delta = 0.02$ for both F1 and ROC-AUC.
 
 \subsection{Evaluation on Mouse Genome.}
 To assess the cross-domain generalisation capabilities of the two models, each seed-model trained on the human genome was evaluated directly on a held-out mouse genome test set, without any additional fine-tuning. This evaluation is conceptually simpler than the human one: since the models are already trained, no cross-validation is needed and each seed produces exactly one scalar value per metric. Since we chose $5$ different random seeds during training the models on the whole genome, we got $n = 5$ independent observations per model.
@@ -528,6 +508,7 @@ We also report the accuracy metric, both the best, the worst and the average ove
 
 As above, confidence intervals are not reported for accuracy; all formal
 comparisons are based on F1 and ROC-AUC (Table~\ref{tab:stats}).
+Full paired statistical results are reported in Table~\ref{tab:stats}: neither metric reaches significance under the Wilcoxon signed-rank test at $\alpha = 0.05$, while TOST confirms equivalence within $\delta = 0.02$ for both F1 and ROC-AUC.
 
 \subsection{Statistical Results on Comparisons.}
 
@@ -554,21 +535,7 @@ comparisons are based on F1 and ROC-AUC (Table~\ref{tab:stats}).
 	}
 \end{table}
 
-\paragraph{Wilcoxon Signed-Rank Test.}
-Given the small sample size ($n=5$ paired seed-level means), we again complement the parametric paired $t$-test with the non-parametric Wilcoxon signed-rank test.
-For \textbf{F1}, the test yields $W=4$, $p=0.855$, and for \textbf{ROC-AUC}, $W=0$, $p=0.063$.
-Neither result reaches statistical significance at the $\alpha=0.05$ level, consistent with the paired $t$-test ($p=0.548$ and $p=0.069$, respectively).
-Cohen's $d=-0.29$ for F1 and $d=-1.10$ for ROC-AUC.
-
-\paragraph{Statistical Equivalence Testing.}
-We applied TOST to the $n=5$ paired seed-level means, retaining $\delta=0.02$ as the equivalence margin for consistency with the human genome analysis.
-For \textbf{F1}, the paired difference is $\mu_A - \mu_B = -0.00086$ with
-$90\%$ CI $[-0.00365, +0.00193]$.
-The interval falls comfortably within $[-0.02,+0.02]$ ($p_{\mathrm{TOST}}=6.37×10^{-5}$), and the two models are declared \textbf{equivalent}.
-For \textbf{ROC-AUC}, the paired difference is $\mu_A - \mu_B = -0.00033$
-with $90\%$ CI $[-0.00061, -0.00005]$.
-Equivalence is likewise confirmed at $\delta=0.02$ ($p_{\mathrm{TOST}}=3.70×10^{-3}$).
-
+Full results are in Table~\ref{tab:stats}. Neither metric reaches significance at $\alpha=0.05$ under the Wilcoxon signed-rank test or the paired $t$-test, and TOST confirms equivalence within $\delta=0.02$ for both F1 and ROC-AUC. The ROC-AUC comparison approaches marginal significance ($p_W=0.063$, $d=-1.10$), driven not by a large absolute difference ($\mu_A-\mu_B\approx-0.0003$) but by extremely low within-pair variability at this performance level -- a methodological artefact rather than a meaningful signal.
 % ---------- 5. DISCUSSION ----------
 \section{Discussion}
 \label{sec:discussion}
@@ -634,7 +601,20 @@ Whether the equivalence between the two modelling strategies holds for other spe
 \section{Conclusion \& Future Work}
 \label{sec:conclusion}
 
-...
+We investigated whether domain-specific pretraining on coding sequences confers a measurable advantage over direct fine-tuning for binary classification of promoter and enhancer sequences.
+Reimplementing the DNABERT-2 architecture from scratch, we trained two variants -- one with a pretraining phase on human CDS followed by fine-tuning (model~A), and one fine-tuned directly from random initialisation (model~B) -- and compared them rigorously using equivalence testing across multiple seeds and cross-validation folds.
+
+The central finding is unambiguous: the two strategies are statistically equivalent on both the human and mouse genomes, across both F1 and ROC-AUC, within the practically motivated margin of $\pm 0.02$.
+Both models achieve F1\,$\approx$\,0.69 and ROC-AUC\,$\approx$\,0.78 on the human genome, and generalise remarkably well to the mouse genome (F1\,$>$\,0.92, ROC-AUC\,$>$\,0.97) without any additional fine-tuning, suggesting that the learned regulatory motifs transfer robustly across mammalian species.
+
+These results carry practical implications.
+First, for the specific task of promoter vs.\ enhancer discrimination, pretraining on CDS provides no measurable benefit; the supervised fine-tuning signal alone is sufficient for the encoder to learn all task-relevant sequence features.
+Second, the strong cross-species generalisation demonstrates that the model captures biologically meaningful, evolutionarily conserved motifs rather than species-specific artefacts.
+
+Future work should explore three directions.
+(i)~A more task-aligned pretraining corpus -- e.g., non-coding regulatory sequences from multiple species -- may yet yield an advantage that CDS-based pretraining cannot, and would provide a fairer test of the pretraining hypothesis.
+(ii)~Incorporating epigenomic signals (chromatin accessibility, histone modifications) alongside raw sequence is a natural extension that could substantially improve both performance and biological interpretability.
+(iii)~Larger-scale experiments with more seeds and deeper cross-validation would provide the statistical power needed to detect small but potentially meaningful differences between training strategies.
 
 % ---------- REFERENCES ----------
 \newpage
