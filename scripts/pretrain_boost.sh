@@ -28,7 +28,7 @@ export HF_HUB_OFFLINE=1
 export WANDB_MODE=offline
 export WANDB_PROJECT=dna_bert2_cs
 
-model_name="dnabert2_cs_marta" # <--
+model_name="dnabert2_cs" # <--
 
 model_checkpoint="/work/tesi_fgaragnani/checkpoints/ai4bio/${model_name}"
 model_path="${model_checkpoint}"

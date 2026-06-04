@@ -16,7 +16,7 @@ import numpy as np
 from collections import defaultdict
 import parse_folds
 
-HERE = Path(__file__).parent / "pretrained"
+HERE = Path(__file__).parent / "scratch"
 
 
 def main(dir: Optional[str] = None, out_dir: Optional[str] = None):

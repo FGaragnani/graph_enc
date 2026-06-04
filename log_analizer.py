@@ -49,7 +49,7 @@ def analize_folder(logs_folder):
             'Training Name': base_name,
             'Learning Rate': 'N/D', 'Max Steps': 'N/D', 'Grad. Acc. Steps': 'N/D',
             'Eval Batch Size': 'N/D', 'Train Batch Size': 'N/D',
-            'Dropout': 0.5 if "marta" in base_name.lower() else 0.1,
+            'Dropout': 0.5,
             'Training Time': "N/D", 'State': 'Completed',
             '10-Mean Best Loss': None
         }

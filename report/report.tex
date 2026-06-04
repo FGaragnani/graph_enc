@@ -1,4 +1,4 @@
-﻿\documentclass[11pt,a4paper,twoside]{article}
+\documentclass[11pt,a4paper,twoside]{article}
 
 % -------------------------------------------------------------------
 % PACKAGES & FONT
@@ -13,6 +13,9 @@
 \usepackage{microtype}                % better text justification
 \usepackage[backend=bibtex,style=numeric]{biblatex}
 \usepackage{csquotes}
+
+\usepackage{graphicx}
+\usepackage{subcaption}
 
 \addbibresource{references.bib}
 
@@ -52,10 +55,9 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[LE]{\small\sffamily\color{mygray}\textbf{AI For Bioinformatics}}
-\fancyhead[RO]{\small\sffamily\color{mygray}\textbf{A DNA-BERT Architecture for Promoter and Enhancer Classification}}
+\fancyhead[RO]{\small\sffamily\color{mygray}\textbf{A DNA-BERT2 Architecture for Promoter and Enhancer Classification}}
 \fancyhead[RE,LO]{\small\sffamily\color{mygray}\nouppercase{\leftmark}}
 \fancyfoot[LE,RO]{\small\sffamily\color{mygray}\thepage\ / \pageref{LastPage}}
-\fancyfoot[LO,RE]{\small\sffamily\color{mygray}\textit{...}}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0pt}
 \fancypagestyle{plain}{%           for chapter pages (like TOC)
@@ -139,9 +141,8 @@
 % -------------------------------------------------------------------
 % TITLE PAGE CUSTOMISATION
 % -------------------------------------------------------------------
-\title{\vspace{-2cm}\includegraphics[width=0.35\textwidth]{example-image}\\[1.5em]
-       {\Huge\sffamily\bfseries\color{myblue} A DNA-BERT Architecture for \\[0.2em] Promoter and Enhancer Classification}\\[0.5em]
-       {\Large\sffamily\color{myteal} ...}}
+\title{
+       {\Huge\sffamily\bfseries\color{myblue} A DNA-BERT2 Architecture for \\[0.2em] Promoter and Enhancer Classification}}
 \author{\Large\textbf{Garagnani Filippo, Veronese Alex}\\[0.3em]
         \normalsize\textit{Dipartimento di Ingegneria `Enzo Ferrari', Modena, Italy}\\[0.3em]
         \normalsize\textit{Università degli Studi di Modena e Reggio Emilia}}
@@ -268,21 +269,6 @@ Unlike learned absolute positional encodings, ALiBi introduces no additional lea
 % ---------- 3. RELATED WORKS ----------
 \section{Related Works}
 \label{sec:related}
-
-
-% \paragraph{DNA-BERT.}
-% The original DNA-BERT model \cite{dnabert} was one of the first to apply the BERT architecture to genomic sequences using $k$-mer tokenization, demonstrating competitive performance on promoter prediction and other genomic tasks.
-% In this work we adopt its successor's architecture but do not use any publicly released checkpoint, instead training from scratch to enable a controlled comparison between pretraining strategies.
-% 
-% \paragraph{DNA-BERT2.}
-% DNABERT-2 \cite{dnabert-2} improves upon its predecessor by introducing BPE tokenization and ALiBi positional encodings, achieving superior performance across a broad range of genomic benchmarks.
-% Our work reimplements this architecture and asks whether its published pretraining regime provides a meaningful advantage over task-specific training for the specific problem of promoter vs.\ enhancer classification.
-% 
-% \paragraph{Nucleotide Transformer.}
-% ...
-% 
-% \paragraph{EVO.}
-% ...
 
 \paragraph{Hexamers.} Traditional machine learning approaches for regulatory element classification relied on hand-crafted feature vectors. For instance, \cite{hexamers} applied a Support Vector Machine (SVM) on hexamer count vectors, where position $i$ records the total number of occurrences of the $i$-th hexamer in the sequence. Despite its simplicity, this approach provides a solid sequence-level baseline.
 
@@ -446,7 +432,7 @@ Confidence intervals were estimated using a classical $t$-interval with $df = 6$
 	\end{tabular}
 \end{table}
 
-We also report the average, best and worst results of accuracy; for each seed, we average out the accuracy on the evaluation test for every fold of the CV technique. It is shown in Table~\ref{tab:human_eval_acc}.
+We also report the average, best and worst results of accuracy; for each seed, we average out the accuracy on the evaluation test for every fold of the CV technique. It is shown in Table~\ref{tab:human_eval_acc}. 
 
 \begin{table}[h]
 	\centering
