@@ -254,3 +254,7 @@ omegaconf==2.3.0
 ```
 
 The scripts assume 4× GPU for training (A100 or RTX A5000). Single-GPU runs work by dropping `torchrun` and running `python` directly, with `--nproc_per_node=1` or by removing the DDP flags.
+
+## Report
+
+The [report](report/report.pdf) is in `report/report.pdf` and the source LaTeX files are in `report/`.
